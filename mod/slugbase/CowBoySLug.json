@@ -1,0 +1,55 @@
+{
+	"id": "CowBoySLug",
+	"name": "The CowBoy",
+	"description": "CowBoy know how to use rope to call back spear",
+	"features": {
+		"color": "e1834a",
+		"custom_colors": [
+			{
+				"name": "Body",
+				"story": "e1834a",
+				"arena": [ "e8e8e8", "ffefc8","dd6b8a", "2db8bf" ]
+			},
+			{
+				"name": "Eyes",
+				"story": "010101",
+				"arena": [   "010101","010101","010101", "0866ba" ]
+			},
+			{
+				"name": "Scarf",
+				"story": "3d8ca0",
+				"arena": [   "ee74aa","ffcd44", "a6be97","e8e8e8" ]
+			},
+			{
+				"name": "Rope",
+				"story": "feec3d",
+				"arena": [  "e8e8e8","feec3d","a6be97", "2db8bf"]
+			}
+		],
+		
+		
+		"cowboyslug/rock_shot" : true,
+		"cowboyslug/rope_master":true,
+		"cowboyslug/scarf":true,
+
+		"tunnel_speed": 1.2,  
+		"throw_skill": 1.3,
+
+		"walk_speed": 1.1,
+		"food_min": 0,
+		"food_max": 8,
+		
+		"world_state": [ "Spear", "Red" ],
+		"timeline_after": [ "Spear", "Red" ],
+
+		"diet":
+		{
+			"base": "Red"
+		  },
+
+		  "select_menu_scene": "CowBoy_Menu",
+		"sleep_scene":"CowBoy_sleep",
+		"select_menu_scene_ascended": "CowBoy_die"
+		
+	}
+}

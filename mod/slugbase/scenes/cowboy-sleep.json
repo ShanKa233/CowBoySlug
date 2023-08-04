@@ -1,0 +1,14 @@
+{
+	"id": "CowBoy_sleep",
+	"scene_folder": "scenes/cowboy-sleep",
+	"images": [
+		
+		{ "name": "backLine",  "pos": [750,50], "depth": 4, "shader": "Basic" },
+		{ "name": "backLine",  "pos": [750,50], "depth": 4, "shader": "Basic" },
+		{ "name": "grassB",    "pos": [750,50], "depth": 2.8, "shader": "Basic" },
+		{ "name": "player",    "pos": [750,50], "depth": 2.6, "shader": "Basic" },
+		{ "name": "frontLine", "pos": [750,50], "depth": 2.2, "shader": "Basic" },
+		{ "name": "grassA",    "pos": [750,50], "depth": 2.1, "shader": "Basic" }
+	],
+	"idle_depths": [ 2.8 ]
+}

@@ -1,0 +1,10 @@
+{
+	"id": "CowBoy_die",
+	"scene_folder": "scenes/cowboy-die",
+	"images": [
+		
+		{ "name": "cowboy-back",  "pos": [560,250], "depth": 4, "shader": "Basic" },
+		{ "name": "die-slug",  "pos": [560,250], "depth": 4, "shader": "Basic" }
+	],
+	"idle_depths": [ 2.8 ]
+}
