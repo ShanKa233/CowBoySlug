@@ -7,15 +7,15 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace CowBoySlug
+namespace CowBoySlug.Menu
 {
     class RemixMenu : OptionInterface
     {
         public RemixMenu()
         {
-            foodMod = this.config.Bind<bool>("CnowBoy_Food_Bool_Checkbox", true);
-            whiteDrop = this.config.Bind<bool>("CowBoy_WhiteDrop_Bool_Checkbox", true);
-            jumpDrone = this.config.Bind<bool>("CowBoy_JumpDrone_Bool_Checkbox", false);
+            foodMod = config.Bind("CnowBoy_Food_Bool_Checkbox", true);
+            whiteDrop = config.Bind("CowBoy_WhiteDrop_Bool_Checkbox", true);
+            jumpDrone = config.Bind("CowBoy_JumpDrone_Bool_Checkbox", false);
         }
         public readonly Configurable<bool> foodMod;
         public readonly Configurable<bool> whiteDrop;
@@ -25,7 +25,7 @@ namespace CowBoySlug
         public override void Initialize()
         {
             var opTab1 = new OpTab(this, "CowBoy Game Setting");
-            this.Tabs = new[] { opTab1 }; // Add the tabs into your list of tabs. If there is only a single tab, it will not show the flap on the side because there is not need to.
+            Tabs = new[] { opTab1 }; // Add the tabs into your list of tabs. If there is only a single tab, it will not show the flap on the side because there is not need to.
 
 
             int sizeTest = 100;

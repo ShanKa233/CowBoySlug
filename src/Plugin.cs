@@ -7,6 +7,8 @@ using CowBoySlug;
 using SlugBase.DataTypes;
 using SlugBase;
 using Fisobs.Core;
+using CowBoySlug.Menu;
+using CowBoySlug.CowBoy.Ability.RopeUse;
 
 namespace CowBoySLug
 {
@@ -36,6 +38,7 @@ namespace CowBoySLug
 
             PlayerHook.Hook();
             PlayerGraphicsHook.Hook();
+            RopeUseHook.Hook();
 
             SewHook.Hook();
 

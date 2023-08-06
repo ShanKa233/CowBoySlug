@@ -11,6 +11,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using CowBoySlug.CowBoy.Ability.RopeUse;
 
 namespace CowBoySlug
 {
@@ -23,7 +24,7 @@ namespace CowBoySlug
         public int callBackCD = 0;
 
 
-        public int scarfIndex;
+        public int scarfIndex;//围巾的下标
 
         public int handTochRopeCont = 0;
 
@@ -469,59 +470,6 @@ namespace CowBoySlug
                 }
             }
         }//唤回矛
-
-
-        public void SpawnRopeSpear(Player self, Spear spear)
-        {
-            NewRope umbilical = null;
-            //检测房间里面    有没有线    而且   线的链接的是我的矛
-            foreach (var obj in self.room.updateList)
-            {
-                var umbilicalText = obj as NewRope;
-                if (umbilicalText != null && umbilicalText.spear == spear)
-                {
-                    bool connect2 = true;
-                    for (int i = 0; i < umbilicalText.points.GetLength(0); i++)
-                    {//检查线有没有断
-                        connect2 = umbilicalText.points[i, 3].x >= 0f ? connect2 : false;
-                    }
-                    //如果找到线了而且没断就把正确的线变成这个线然后跳出循环
-                    if (connect2)
-                    {
-                        umbilical = umbilicalText;
-                        break;
-                    }
-                    // 不然线断了就把线的其他部分也弄断
-                    else
-                    {
-                        for (int i = 0; i < umbilicalText.points.GetLength(0); i++)
-                        {
-                            umbilicalText.points[i, 3].x = 0f;
-                        }
-                    }
-                }
-            }
-
-            //找到符合条件的矛
-            if (umbilical != null && umbilical.points.GetLength(0) > 10)
-            {
-                for (int i = 0; i < umbilical.points.GetLength(0); i++)
-                {
-                    umbilical.points[i, 3].x = 25f;
-                }
-            }
-            else if (umbilical != null)
-            {
-                umbilical.Destroy();
-                UseCowBoyRope.SpawnRope(spear, self, ropeColor, Color.white);
-            }
-            //如果没有就创造一个丝线
-            else
-            {
-                UseCowBoyRope.SpawnRope(spear, self, ropeColor, Color.white);
-            }
-        }//生成拉丝矛
-
 
         public void RopeAndHandKeepMove(Vector2 start, Vector2 end)
         {

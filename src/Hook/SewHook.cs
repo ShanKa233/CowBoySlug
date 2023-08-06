@@ -44,7 +44,7 @@ namespace CowBoySlug
             if (!modules.TryGetValue(self, out var sewModule))
             {
                 Spear spear = source.owner as Spear;
-                if (spear != null && spear.thrownBy as Player != null && PlayerHook.modules.TryGetValue(spear.thrownBy as Player, out var cowBoyModule))
+                if (spear != null && spear.thrownBy as Player != null && PlayerHook.cowboyModules.TryGetValue(spear.thrownBy as Player, out var cowBoyModule))
                 {
                     modules.Add(self, new SewModule(self, cowBoyModule.ropeColor));
                 }
@@ -68,7 +68,7 @@ namespace CowBoySlug
             if (!modules.TryGetValue(self,out var sewModule)) 
             {
                 Spear spear = source.owner as Spear;
-                if (spear != null && spear.thrownBy as Player != null && PlayerHook.modules.TryGetValue(spear.thrownBy as Player, out var cowBoyModule))
+                if (spear != null && spear.thrownBy as Player != null && PlayerHook.cowboyModules.TryGetValue(spear.thrownBy as Player, out var cowBoyModule))
                 {
                     modules.Add(self, new SewModule(self, cowBoyModule.ropeColor));
                 }

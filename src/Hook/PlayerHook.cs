@@ -9,13 +9,14 @@ using CowBoySLug;
 using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
 using RWCustom;
+using CowBoySlug.CowBoy.Ability.RopeUse;
 
 namespace CowBoySLug
 {
     internal class PlayerHook
     {
 
-        public static ConditionalWeakTable<Player, CowBoyModule> modules = new ConditionalWeakTable<Player, CowBoyModule>();
+        public static ConditionalWeakTable<Player, CowBoyModule> cowboyModules = new ConditionalWeakTable<Player, CowBoyModule>();
         public static ConditionalWeakTable<Rock,SuperRockModule> rockModule = new ConditionalWeakTable<Rock, SuperRockModule>();
         public static void Hook()
         {
@@ -30,8 +31,6 @@ namespace CowBoySLug
 
             On.Player.ThrowObject += CowBoy_Throw;//超级石头射击和加速
             On.Creature.SwitchGrasps += Player_SwitchGrasps;//换手时增加一个计数来确认是否换手
-
-            On.Player.ThrownSpear += RopeSpear;
 
             On.Rock.Update += SuperRock_Stop;//超级石头撞到东西停下
             On.Creature.Violence += SuperRock_CreatureViolence;//超级石头对生物造成伤害
@@ -94,7 +93,9 @@ namespace CowBoySLug
             orig.Invoke(self, abstractCreature, world);
             if ((Plugin.RockShot.TryGet(self, out var value) && value))
             {
-                modules.Add(self, new CowBoyModule(self));
+                cowboyModules.Add(self, new CowBoyModule(self));
+
+                //特殊饱腹度系统相关
                 if (Plugin.menu.foodMod.Value&& self.room.world.game.session.characterStats.name.value == "CowBoySLug")
                 {
                     if (self.PlaceKarmaFlower)
@@ -122,8 +123,10 @@ namespace CowBoySLug
             bool flag = Plugin.RockShot.TryGet(self, out var flag2) && flag2;
 
 
-            if (flag && modules.TryGetValue(self, out var cowBoyModule))
+            if (flag && cowboyModules.TryGetValue(self, out var cowBoyModule))
             {
+                
+
                 cowBoyModule.BackToNormal();
                 cowBoyModule.NotMove();
 
@@ -133,21 +136,6 @@ namespace CowBoySLug
                 if (Plugin.menu.foodMod.Value&& self.room.world.game.session.characterStats.name.value == "CowBoySLug")
                 {
                     cowBoyModule.UseFood();
-                }
-                
-
-            }
-        }
-
-        private static void RopeSpear(On.Player.orig_ThrownSpear orig, Player self, Spear spear)
-        {
-            orig.Invoke(self, spear);
-            if (Plugin.RopeMaster.TryGet(self, out var value) && value)
-            {
-                if (modules.TryGetValue(self, out var playerModule))
-                {
-                    spear.vibrate += 2;
-                    playerModule.SpawnRopeSpear(self, spear);
                 }
             }
         }
@@ -163,7 +151,7 @@ namespace CowBoySLug
             if (player != null)
             {
                 bool flag = Plugin.RockShot.TryGet(player, out var flag2) && flag2;
-                if (flag && modules.TryGetValue(player, out var cowBoyModule))
+                if (flag && cowboyModules.TryGetValue(player, out var cowBoyModule))
                 {
                     cowBoyModule.ChangeHand();
                 }
@@ -173,7 +161,7 @@ namespace CowBoySLug
         {
             Rock rook = self.grasps[grasp].grabbed as Rock;
             bool flag = Plugin.RockShot.TryGet(self, out var flag2) && flag2;
-            bool flag3 = modules.TryGetValue(self, out var cowBoyModule) && rook != null;
+            bool flag3 = cowboyModules.TryGetValue(self, out var cowBoyModule) && rook != null;
 
             if (flag && flag3)
             {

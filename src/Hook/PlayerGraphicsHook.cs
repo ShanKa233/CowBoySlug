@@ -47,7 +47,7 @@ namespace CowBoySlug
             orig.Invoke(self, sLeaser, rCam, newContatiner);
             if (Plugin.HaveScarf.TryGet(self.player, out var flag3) && flag3)
             {
-                if (PlayerHook.modules.TryGetValue(self.player, out var cowBoyModule))
+                if (PlayerHook.cowboyModules.TryGetValue(self.player, out var cowBoyModule))
                 {
                     //防止重复执行的flag
                     bool flag = cowBoyModule.scarfIndex > 0 && sLeaser.sprites.Length > cowBoyModule.scarfIndex;
@@ -64,13 +64,13 @@ namespace CowBoySlug
         private static void CowBoy_InitiateSprites(On.PlayerGraphics.orig_InitiateSprites orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
         {
             orig.Invoke(self, sLeaser, rCam);
-            if (!PlayerHook.modules.TryGetValue(self.player, out var cowBoy)){return;}
+            if (!PlayerHook.cowboyModules.TryGetValue(self.player, out var cowBoy)){return;}
 
             bool flag = Plugin.HaveScarf.TryGet(self.player, out bool flag1) && flag1;//玩家是否可以获取特征,并开启特征
             bool flag2 = atlas._elementsByName.TryGetValue("CowBoy-HeadA0", out var element);//玩家是否加载材质
             if (flag && flag2)// 满足条件开始给玩家的精灵数组(灵魂容器)扩容并添加各类精灵要素
             {
-                if (PlayerHook.modules.TryGetValue(self.player, out var cowBoyModule))
+                if (PlayerHook.cowboyModules.TryGetValue(self.player, out var cowBoyModule))
                 {
                     cowBoyModule.ropeColor = Plugin.RopeColor.GetColor(self).Value;
                 }
@@ -87,7 +87,7 @@ namespace CowBoySlug
         private static void CowBoy_DrawSprites(On.PlayerGraphics.orig_DrawSprites orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
         {
             orig.Invoke(self, sLeaser, rCam, timeStacker, camPos);
-            if (!PlayerHook.modules.TryGetValue(self.player, out var cowBoy)) { return; }
+            if (!PlayerHook.cowboyModules.TryGetValue(self.player, out var cowBoy)) { return; }
             bool flag = Plugin.HaveScarf.TryGet(self.player, out bool flag1) && flag1;//玩家是否可以获取仙女特征,并开启仙女特征
             bool flag2 = atlas._elementsByName.TryGetValue("CowBoy-HeadA0", out var element);//玩家是否加载仙女材质
 
@@ -233,7 +233,7 @@ namespace CowBoySlug
             {
                 return;
             }
-            if (PlayerHook.modules.TryGetValue(self.player, out var cowBoyModule) && cowBoyModule.playerHandWantTochPos != null && cowBoyModule.handTochRopeCont > 0)
+            if (PlayerHook.cowboyModules.TryGetValue(self.player, out var cowBoyModule) && cowBoyModule.playerHandWantTochPos != null && cowBoyModule.handTochRopeCont > 0)
             {
                 if (self.player.FreeHand() != -1)
                 {
