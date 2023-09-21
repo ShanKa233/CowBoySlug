@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UnityEngine;
 using Vector2 = UnityEngine.Vector2;
@@ -175,7 +176,9 @@ namespace CowBoySlug
             sLeaser.sprites[scarfIndex].color = scarfColor;
 
             //材质赋值
-            sLeaser.sprites[scarfIndex].element = new FSprite("CowBoy-" + sLeaser.sprites[3].element.name, true).element;
+            string headName = sLeaser.sprites[3].element.name;
+            headName = headName.Replace("HeadC", "HeadA");
+            sLeaser.sprites[scarfIndex].element = new FSprite("CowBoy-" + headName, true).element;
 
             //坐标的旋转角度设定
             sLeaser.sprites[scarfIndex].scaleX = sLeaser.sprites[3].scaleX;

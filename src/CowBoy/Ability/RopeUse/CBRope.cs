@@ -18,11 +18,7 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
 
         public static void SpawnRope(Spear spear, Player self, Color start, Color end)
         {
-            if (!PlayerHook.cowboyModules.TryGetValue(self, out var cowBoyModule))
-            {
-                return;
-            }
-            var rope = new NewRope(spear.room, spear, self, spear.firstChunk.vel, cowBoyModule.ropeColor, cowBoyModule.ropeColor);//新建一个在矛上的丝线
+            var rope = new NewRope(spear.room, spear, self, spear.firstChunk.vel, start, end);//新建一个在矛上的丝线
             self.room.AddObject(rope);//召唤这个线
         }
 
@@ -98,6 +94,7 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
         public override void Update(bool eu)
         {
             base.Update(eu);
+            if (this.room!=this.player.room|| this.room != this.spear.room) { ClearNullRope(this); }
             bool flag = true;
             for (int i = 0; i < points.GetLength(0); i++)
             {
@@ -150,7 +147,9 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
                 }
                 else
                 {
+                    ClearNullRope(this);
                     brocked = true;
+                    
                 }
             }
             if (LifeOfSegment(0) > 0f)

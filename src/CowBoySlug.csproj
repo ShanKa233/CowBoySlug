@@ -11,6 +11,12 @@
         </Reference>
     </ItemGroup>
     
+    <ItemGroup>
+      <Reference Include="CatPunchPunchDP">
+        <HintPath>C:\Program Files (x86)\Steam\steamapps\workshop\content\312520\2987261371\plugins\CatPunchPunchDP.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+    
     <Target Name="GenerateMod" AfterTargets="PostBuildEvent">
 		<ItemGroup>
 			<RemovePlugins Include="../mod/plugins/*.dll" />
