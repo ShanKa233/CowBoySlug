@@ -23,9 +23,6 @@ namespace CowBoySlug
         public int spearPower = 0;//拉矛力
         public int callBackCD = 0;
 
-
-        public int scarfIndex;//围巾的下标
-
         public int handTochRopeCont = 0;
 
         public bool playerGraphicsHandChanged=false;
