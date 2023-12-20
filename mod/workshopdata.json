@@ -1,8 +1,8 @@
 {
   "Title": "CowBoySLugCat",
-  "Description": "Add new slug ,CowBoySlug\u003CLINE\u003EOnly put [pickup]to drag your spear\u003CLINE\u003Eif you want spear go back more fast use [up]\u002B[pickup]\u003CLINE\u003Eonly click onece you can use spear damege other creature\u003CLINE\u003Ewhen your spear stack in some place than you hold [jump]\u002B[pickup]to move that direction\u003CLINE\u003E\u003CLINE\u003Ewhen you damage lot of time you can make hat use creature throw than use your head catch to wear hat",
+  "Description": "Add new slug ,CowBoySlug",
   "ID": "CowBoySLug.ShanKa",
-  "Version": "0.2.36",
+  "Version": "0.2.38",
   "TargetGameVersion": "v1.9.06",
   "Requirements": "slime-cubed.slugbase,moreslugcats,fisobs",
   "RequirementNames": "SlugBase",

@@ -44,6 +44,7 @@ namespace CowBoySlug
             orig.Invoke(self);
             //在读取mod的时候加载材质
             atlas = Futile.atlasManager.LoadAtlas("atlases/CowBoyHead");
+            Futile.atlasManager.LoadAtlas("fisobs/icon_CowBoyHat");
         }
         //扩容
         private static void CowBoy_InitiateSprites(On.PlayerGraphics.orig_InitiateSprites orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
@@ -61,32 +62,10 @@ namespace CowBoySlug
             DrawUseRopeAnimetion(self, sLeaser, rCam, timeStacker, camPos);
         }
 
-        public static int HeadRotation(PlayerGraphics self, Vector2 vector, Vector2 per, Vector2 dir, out Vector2 vector2)
-        {
-            var player = self.player;
-            if (player.bodyMode == Player.BodyModeIndex.Crawl)
-            {
-                if (player.mainBodyChunk.pos.x > player.bodyChunks[1].pos.x)
-                {
-                    vector2 = vector - per * 2 + dir;
-                    return -1;
-                }
-                else
-                {
-                    vector2 = vector - per + dir;
-                    return 1;
-                }
-
-            }
-            else
-            {
-                vector2 = vector;
-                return 1;
-            }
-        }
 
         //精灵图位置
         public static FAtlas atlas;
+        public static FAtlas hatAtlas;
         #endregion
 
 

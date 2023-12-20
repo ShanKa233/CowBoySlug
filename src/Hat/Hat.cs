@@ -19,10 +19,25 @@ namespace CowBoySlug
         {
             On.RainWorld.OnModsInit += LoadHatTextrue;
             On.Player.ctor += PlayerHat_ctor;
+            On.Player.CanBeSwallowed += Hat_CanBeSwallowed;
+
 
             On.PlayerGraphics.InitiateSprites += Hat_InitiateSprites;
             On.PlayerGraphics.AddToContainer += Hat_AddToContainer;
             On.PlayerGraphics.DrawSprites += Hat_DrawSprites;
+
+        }
+
+        private static bool Hat_CanBeSwallowed(On.Player.orig_CanBeSwallowed orig, Player self, PhysicalObject testObj)
+        {
+            if (testObj is CowBoyHat)
+            {
+                return true;
+            }
+            else
+            {
+                return orig.Invoke(self, testObj);
+            }
 
         }
 

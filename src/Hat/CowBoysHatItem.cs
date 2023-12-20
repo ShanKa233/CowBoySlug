@@ -84,8 +84,6 @@ namespace CowBoySlug
             // The Mosquitoes example from the Fisobs github demonstrates this.
             return properties;
         }
-
-
     }
     
     sealed class CowBoyHatIcon : Icon

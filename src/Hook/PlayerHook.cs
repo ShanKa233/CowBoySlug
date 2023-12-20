@@ -24,7 +24,7 @@ namespace CowBoySLug
 
             On.Player.Update += Player_Update;//
 
-            On.Player.CanBeSwallowed += Hat_CanBeSwallowed;
+            
             On.Player.GrabUpdate += Player_GrabUpdate;
             On.Player.SleepUpdate += Player_SleepUpdate;
 
@@ -35,19 +35,6 @@ namespace CowBoySLug
             On.Rock.Update += SuperRock_Stop;//超级石头撞到东西停下
             On.Creature.Violence += SuperRock_CreatureViolence;//超级石头对生物造成伤害
 
-        }
-
-        private static bool Hat_CanBeSwallowed(On.Player.orig_CanBeSwallowed orig, Player self, PhysicalObject testObj)
-        {
-            if (testObj is CowBoyHat)
-            {
-                return true;
-            }
-            else
-            {
-                return orig.Invoke(self, testObj);
-            }
-            
         }
 
         private static void Player_SleepUpdate(On.Player.orig_SleepUpdate orig, Player self)
