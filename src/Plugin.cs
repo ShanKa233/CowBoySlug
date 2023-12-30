@@ -23,12 +23,12 @@ namespace CowBoySLug
         public const string MOD_ID = "CowBoySLug.ShanKa";
 
         public static readonly PlayerFeature<bool> RockShot = PlayerBool("cowboyslug/rock_shot");//扔石头
-        public static readonly PlayerFeature<bool> RopeMaster = PlayerBool("cowboyslug/rope_master");//控制绳子
+
 
         //public static readonly PlayerFeature<bool> HaveScarf = PlayerBool("cowboyslug/scarf");//有围巾
 
         //public static readonly PlayerColor ScarfColor = new PlayerColor("Scarf");//围巾颜色
-        public static readonly PlayerColor RopeColor = new PlayerColor("Rope");//绳子颜色
+        
 
 
         #region 检查其他mod是否启用
@@ -49,6 +49,8 @@ namespace CowBoySLug
             Content.Register(new CowBoyHatFisob());
             // Put your custom hooks here!
             Hat.Hook();
+
+            RopeMaster.Hook();
 
             PlayerHook.Hook();
             PlayerGraphicsHook.Hook();

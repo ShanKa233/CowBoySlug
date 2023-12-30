@@ -1,5 +1,6 @@
 ﻿
 using CowBoySlug.CowBoy;
+using CowBoySlug.CowBoy.Ability.RopeUse;
 using CowBoySLug;
 using RWCustom;
 using SlugBase.DataTypes;
@@ -50,8 +51,8 @@ namespace CowBoySlug
         private static void CowBoy_InitiateSprites(On.PlayerGraphics.orig_InitiateSprites orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
         {
             orig.Invoke(self, sLeaser, rCam);
-            if (!PlayerHook.cowboyModules.TryGetValue(self.player, out var cowBoy)){return;}
-            cowBoy.ropeColor = Plugin.RopeColor.GetColor(self).Value;
+            if (!RopeMaster.modules.TryGetValue(self.player, out var cowBoy)){return;}
+            cowBoy.ropeColor = RopeMaster.RopeColor.GetColor(self).Value;
         }
 
         //绘制蛞蝓猫
@@ -94,40 +95,6 @@ namespace CowBoySlug
             else
             {
                 return;
-            }
-            if (PlayerHook.cowboyModules.TryGetValue(self.player, out var cowBoyModule) && cowBoyModule.playerHandWantTochPos != null && cowBoyModule.handTochRopeCont > 0)
-            {
-                if (self.player.FreeHand() != -1)
-                {
-
-                    self.hands[self.player.FreeHand()].absoluteHuntPos = cowBoyModule.playerHandWantTochPos;
-                    if (cowBoyModule.playerGraphicsHandChanged == false)
-                    {
-                        cowBoyModule.playerGraphicsHandChanged = true;
-                        self.hands[self.player.FreeHand()].pos -= self.player.mainBodyChunk.lastPos - self.player.mainBodyChunk.pos;
-                    }
-
-
-
-                    self.hands[self.player.FreeHand()].mode = Limb.Mode.HuntAbsolutePosition;
-                    self.hands[self.player.FreeHand()].reachingForObject = true;
-
-
-                    cowBoyModule.playerFreeHandPos = self.hands[self.player.FreeHand()].pos;
-                    cowBoyModule.dragPointSeted = true;
-
-
-                }
-                else
-                {
-                    cowBoyModule.dragPointSeted = false;
-                    cowBoyModule.startAndEndSeted = false;
-                }
-            }
-            else
-            {
-                cowBoyModule.dragPointSeted = false;
-                cowBoyModule.startAndEndSeted = false;
             }
         }
         #endregion

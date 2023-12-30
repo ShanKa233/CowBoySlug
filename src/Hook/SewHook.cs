@@ -1,4 +1,5 @@
 ﻿
+using CowBoySlug.CowBoy.Ability.RopeUse;
 using CowBoySLug;
 using Mono.Cecil;
 using System;
@@ -44,9 +45,9 @@ namespace CowBoySlug
             if (!modules.TryGetValue(self, out var sewModule))
             {
                 Spear spear = source.owner as Spear;
-                if (spear != null && spear.thrownBy as Player != null && PlayerHook.cowboyModules.TryGetValue(spear.thrownBy as Player, out var cowBoyModule))
+                if (spear != null && spear.thrownBy as Player != null && RopeMaster.modules.TryGetValue(spear.thrownBy as Player, out var module))
                 {
-                    modules.Add(self, new SewModule(self, cowBoyModule.ropeColor));
+                    modules.Add(self, new SewModule(self, module.ropeColor));
                 }
             }
             //如果被缝纫过了就减少剩余缝纫次数
@@ -68,9 +69,9 @@ namespace CowBoySlug
             if (!modules.TryGetValue(self,out var sewModule)) 
             {
                 Spear spear = source.owner as Spear;
-                if (spear != null && spear.thrownBy as Player != null && PlayerHook.cowboyModules.TryGetValue(spear.thrownBy as Player, out var cowBoyModule))
+                if (spear != null && spear.thrownBy as Player != null && RopeMaster.modules.TryGetValue(spear.thrownBy as Player, out var module))
                 {
-                    modules.Add(self, new SewModule(self, cowBoyModule.ropeColor));
+                    modules.Add(self, new SewModule(self, module.ropeColor));
                 }
             }
             //如果被缝纫过了就减少剩余缝纫次数

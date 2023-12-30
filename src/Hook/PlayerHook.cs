@@ -117,8 +117,7 @@ namespace CowBoySLug
                 cowBoyModule.BackToNormal();
                 cowBoyModule.NotMove();
 
-                //cowBoyModule.CallBackSpear();
-                cowBoyModule.RopeAndHandKeepMove();
+                
 
                 if (Plugin.menu.foodMod.Value&& self.room.world.game.session.characterStats.name.value == "CowBoySLug")
                 {

@@ -36,11 +36,9 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
         {
             orig.Invoke(self, eu);
             if (!module.TryGetValue(self, out var handModules)) return;//测有没有在手的字典里
-            GPHandMove(self);
-
 
             if (!(handModules.moveCount > 0)) { handModules.time = 0; return; }//测手能不能动,不能就把动画帧归0
-            if (handModules.rope == null || handModules.hand() == null || handModules.rope.room != self.room || handModules.rope.brocked) return;//测动的条件满足不满足
+            if (handModules.rope == null || handModules.hand() == null || handModules.rope.room != self.room) return;//测动的条件满足不满足
 
             if (handModules.moveCount > 0) handModules.moveCount--;//减少动的时间
             var umbilical = handModules.rope;
@@ -53,19 +51,19 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
 
             handModules.hand().absoluteHuntPos = Vector2.Lerp(posStart, posEnd, handModules.getT());
 
-            //让绳子往手上贴
-            for (int i = 2; i < umbilical.points.GetLength(0) - 1; i++)
-            {
-                if (Vector2.Distance(umbilical.points[i, 0], self.mainBodyChunk.pos) < 40)
-                {
-                    umbilical.points[i, 0] = handModules.handPos();
-                }
-                else
-                {
-                    Vector2 trueoPos = Vector2.Lerp(handModules.handPos(), umbilical.spear.firstChunk.pos, i / umbilical.points.GetLength(0));
-                    umbilical.points[i, 0] = Vector2.Lerp(umbilical.points[i, 0], trueoPos, 0.3f);
-                }
-            }
+            ////让绳子往手上贴
+            //for (int i = 2; i < umbilical.points.GetLength(0) - 1; i++)
+            //{
+            //    if (Vector2.Distance(umbilical.points[i, 0], self.mainBodyChunk.pos) < 40)
+            //    {
+            //        umbilical.points[i, 0] = handModules.handPos();
+            //    }
+            //    else
+            //    {
+            //        Vector2 trueoPos = Vector2.Lerp(handModules.handPos(), umbilical.spear.firstChunk.pos, i / umbilical.points.GetLength(0));
+            //        umbilical.points[i, 0] = Vector2.Lerp(umbilical.points[i, 0], trueoPos, 0.3f);
+            //    }
+            //}
 
             handModules.time = handModules.time > handModules.cycleTime? 0 : handModules.time + 1;//超过了一轮动作的时间就从动作最开始重新开始
         }
@@ -77,32 +75,11 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
             orig.Invoke(self, abstractCreature, world);
             module.Add(self, new HandModules(self));
         }
-
-        public static void GPHandMove(Player player)
-        {
-            if (Hands.module.TryGetValue(player, out var handModules))
-            {
-                if (Plugin.enableGhostPlayer && GhostPlayerImports.IsNetworkPlayer(player))
-                {//如果有接收到信息
-                    if (GhostPlayerImports.TryGetImportantValue(typeof(CowBoyData), out var obj) &&
-                        ((CowBoyData)obj).id == GhostPlayerImports.GetPlayerNetID(player) && ((CowBoyData)obj).type == 1)
-                    {
-                        var umbilical = RopeUseHook.NiceRope(player);
-                        if (umbilical == null) return;
-                        var spear = umbilical.spear;
-                        float[] t = { .9f, -0.04f, .72f, .72f };
-                        handModules.move(umbilical.points[0, 0], spear.firstChunk.pos, 5, 10f, umbilical, t, true);
-                    }
-                    return;
-                }
-            }
-        }
-
     }
     public class HandModules
     {
         public Player player;
-        public NewRope rope;
+        public CowRope rope;
 
 
         #region 用于控制动画方式的参数
@@ -145,7 +122,7 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
             return Hands.Cubicbezier(abxy[0], abxy[1], abxy[2], abxy[3],t);
         }
 
-        public void move (Vector2 start,Vector2 end,int moveCount,float cycleTime, NewRope rope,float[] abxy,bool look)
+        public void move (Vector2 start,Vector2 end,int moveCount,float cycleTime, CowRope rope,float[] abxy,bool look)
         {
             this.rope = rope;
             this.posStart = start;

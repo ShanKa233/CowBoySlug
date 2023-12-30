@@ -6,64 +6,128 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Rendering;
 using Random = UnityEngine.Random;
 
 namespace CowBoySlug.CowBoy.Ability.RopeUse
 {
-    public static class UseCowBoyRope
+    public class CowRope : CosmeticSprite
     {
-        public static List<NewRope> RopeList=new List<NewRope>();//用于调用丝线的循环
-
-
-
-        public static void SpawnRope(Spear spear, Player self, Color start, Color end)
+        #region 用来使用绳子的方法
+        public static void SpawnRope(Player player,Spear spear, Color start, Color end)
         {
-            var rope = new NewRope(spear.room, spear, self, spear.firstChunk.vel, start, end);//新建一个在矛上的丝线
-            self.room.AddObject(rope);//召唤这个线
+            if (!RopeMaster.modules.TryGetValue(player, out var module)) return;
+            var rope = new CowRope(player,spear, start, end);//新建一个在矛上的丝线
+            module.ropes.Add(rope);
+            player.room.AddObject(rope);//召唤这个线
         }
 
-    }
-
-    public class NewRope : CosmeticSprite
-    {
+        #endregion
         public Spear spear;//所属矛
         public Player player;//所属玩家
 
         public Color colorStart;//线开始的颜色
         public Color colorEnd;//线结束的颜色
 
-        public Vector2[,] points;
+        public Vector2[,] points;//绳子的段落的坐标,速度,和粗细
+        public int ropeLength;//线段数量
+
+        public Rope rope;//方便计算长度转角之类数据的线
+        public List<int> usedPoints;//用来记录哪些点位已经使用
+        public float MaxLength = 900;//最大长度
+
+        public Rope.RopeDebugVisualizer debugRope;
+
+        public float loose=0;//松紧度1是很紧0是很松
 
 
-        public Color fogColor;
-        public Color threadCol;
-        public Color blackColor;
+        private Color blackColor;
+        private Color fogColor;
+        private Color threadCol;
 
-        public bool brocked = false;
-        public NewRope(Room room, Spear spear, Player player, Vector2 shootVel, Color colorStart, Color colorEnd)
+        public Vector2 playerPos
         {
-            UseCowBoyRope.RopeList.Add(this);
+            get
+            {
+                return player.bodyChunks[1].pos;
+                //return (player.graphicsModule as PlayerGraphics).tail[0].pos;
+            }
+        }
+        public Vector2 spearEndPos
+        {
+            get
+            {
+                var rotation = spear.rotation;
+                rotation.Scale(new Vector2(25, 25));
+                return spear.firstChunk.pos - rotation;
+            }
+        }
 
-            this.room = room;//所在房间
+
+        public CowRope(Player player,Spear spear,Color colorStart, Color colorEnd)
+        {
+            this.room = player.room;//所在房间
+
             this.spear = spear;//连接的矛
             this.player = player;//所属玩家
-            points = new Vector2[Random.Range(18, 20), 4];//用来记录绳子长度弹性之类的数组
 
+            ropeLength = Random.Range(30,40);//随机一个绳子总长
+            points = new Vector2[ropeLength, 4];//记录段落信息
 
+            
 
+            rope = new Rope(room, playerPos, spearEndPos, 3);
+            debugRope = new Rope.RopeDebugVisualizer(rope);
             for (int i = 0; i < points.GetLength(0); i++)
             {
-                points[i, 0] = (player.graphicsModule as PlayerGraphics).tail[0].pos + Custom.RNV();
-                points[i, 1] = (player.graphicsModule as PlayerGraphics).tail[0].pos;
-                points[i, 2] = shootVel * 0.3f * Random.value + Custom.RNV() * Random.value * 1.5f;
-                points[i, 3] = new Vector2(30f, Mathf.Lerp(150f, 200f, Mathf.Pow(Random.value, 0.3f)));
+                points[i, 0] = playerPos + Custom.RNV();//pos
+                points[i, 1] = playerPos;//lastPos
+                points[i, 2] = Custom.DirVec(playerPos,spearEndPos) * 0.3f * Random.value + Custom.RNV() * Random.value * 1.5f;//vel
+                points[i, 3] = new Vector2(30f, 1f);//粗细啥的
             }
 
-            this.colorStart = colorStart;
-            this.colorEnd = colorEnd;
+
+            this.colorStart = colorStart;//绳子的开始颜色
+            this.colorEnd = colorEnd;//绳子的末端颜色
         }
 
         #region 一些小方法
+        public Vector2 RopePos(int i)
+        {
+            if (i == this.rope.TotalPositions - 1||i<0)
+            {
+                return spear.firstChunk.pos;
+            }
+            return this.rope.GetPosition(i);
+        }
+        public void AlignPoints()
+        {
+            usedPoints = new List<int>();
+
+            if (this.rope.TotalPositions < 1)
+            {
+                return;
+            }
+            float totalLength = this.rope.totalLength;
+            float num = 0f;
+            for (int i = 0; i < this.rope.TotalPositions; i++)
+            {
+                if (i > 0)
+                {
+                    num += Vector2.Distance(this.RopePos(i - 1), this.RopePos(i));//上个点和这个点的距离
+                }
+                int num2 = Custom.IntClamp((int)(num / totalLength * (float)this.points.GetLength(0)), 0, this.points.GetLength(0) - 1);
+
+
+                this.points[num2, 1] = this.points[num2, 0];
+                this.points[num2, 0] = this.RopePos(i);
+
+                this.points[num2, 2] *= 0f;
+
+                usedPoints.Add(num2);
+            }
+
+        }
         public float LifeOfSegment(int i)
         {
             if (i > 0)
@@ -72,114 +136,100 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
             }
             return points[i, 3].x;
         }
-        //清楚没有使用的线和这条线
-        public static void ClearNullRope(NewRope self)
-        {
-            for (int i = UseCowBoyRope.RopeList.Count - 1; i >= 0; i--)
-            {
-                if (UseCowBoyRope.RopeList[i] == null || UseCowBoyRope.RopeList[i]==self)
-                {
-                    UseCowBoyRope.RopeList.RemoveAt(i);
-                }
-            }
-        }
-
         #endregion
 
         public override void Destroy()
         {
-           ClearNullRope(this);
+            if (RopeMaster.modules.TryGetValue(player, out var ropeMaster))
+            {
+                ropeMaster.ropes.Remove(this);
+            }
             base.Destroy();
         }
         public override void Update(bool eu)
         {
-            base.Update(eu);
-            if (this.room!=this.player.room|| this.room != this.spear.room) { ClearNullRope(this); }
-            bool flag = true;
+            var brocked = true;//需不需要让绳子完全消失
+            bool limited = false;//绳子弯曲数量是否达到上限
+            if (this.room!=this.player.room|| this.room != this.spear.room) { limited = true; }//如果东西不在就让线进入崩坏状态
+            if (rope.TotalPositions > points.GetLength(0)/2){limited = true;}//如果转折数量大于可承受范围就让其进入崩坏状态
+            
+            if(!limited)
+            {
+                //如果没有溃散就更新用于计算弯折的线条和同步point和绳子的位置
+                rope.Update(playerPos, spear.firstChunk.pos);
+                AlignPoints();
+                //debugRope.Update();//用来debug的时候显示的东西
+            }
+
+
+            //让开头和结尾的绳子对其玩家和矛
+            points[0, 0] = rope.A;
+            points[points.GetLength(0) - 1, 0] = spearEndPos;
+
             for (int i = 0; i < points.GetLength(0); i++)
             {
-                //如果这个线断了就快速让他消散
-                if (brocked)
+                //如果玩家不在这个房间就急速消散
+                if (player==null||spear==null||player.room!=spear.room||player.room!=room)
                 {
-                    points[i, 3].x *= 0.95f;
-                    ClearNullRope(this);
+                    points[i, 3].x *= 0.9f;
                 }
 
-                points[i, 1] = points[i, 0];
-                points[i, 0] += points[i, 2];
-                points[i, 2] *= Custom.LerpMap(points[i, 2].magnitude, 1f, 30f, 0.99f, 0.8f);
-                points[i, 2].y -= Mathf.Lerp(0.1f, 0.6f, LifeOfSegment(i));
+                points[i, 1] = points[i, 0];//lastPos=pos
+                points[i, 0] += points[i, 2];//pos+=vel
+
+                points[i, 2] *= Custom.LerpMap(points[i, 2].magnitude, 1f, 30f, 0.99f, 0.8f);//vel
+
+                if(!limited)points[i, 2].y -= Mathf.Lerp(0.1f, 0.6f, LifeOfSegment(i));//模拟重力
+
                 if (LifeOfSegment(i) > 0f)
                 {
-                    if (room.GetTile(points[i, 0]).Solid)
+                    if (Custom.DistLess(this.points[i, 0], this.points[i , 1], 200))
                     {
-                        SharedPhysics.TerrainCollisionData terrainCollisionData = new SharedPhysics.TerrainCollisionData(points[i, 0], points[i, 1], points[i, 2], 1f, default, true);
+                        SharedPhysics.TerrainCollisionData terrainCollisionData = new SharedPhysics.TerrainCollisionData(points[i, 0], points[i, 1], points[i, 2], 3f, default, true);
                         terrainCollisionData = SharedPhysics.HorizontalCollision(room, terrainCollisionData);
                         terrainCollisionData = SharedPhysics.VerticalCollision(room, terrainCollisionData);
                         points[i, 0] = terrainCollisionData.pos;
                         points[i, 2] = terrainCollisionData.vel;//修改过
                     }
+
                     if (i > 0)
                     {
-                        if (!Custom.DistLess(points[i, 0], points[i - 1, 0], 6f))
+                        if (!Custom.DistLess(points[i, 0], points[i - 1, 0], loose))
                         {
-                            Vector2 a = Custom.DirVec(points[i, 0], points[i - 1, 0]) * (Vector2.Distance(points[i, 0], points[i - 1, 0]) - 6f);
-                            points[i, 0] += a * 0.15f;
-                            points[i, 2] += a * 0.25f;
-                            points[i - 1, 0] -= a * 0.15f;
-                            points[i - 1, 2] -= a * 0.25f;
+                            Vector2 shrink = Custom.DirVec(points[i, 0], points[i - 1, 0]) * (Vector2.Distance(points[i, 0], points[i - 1, 0]) - loose);
+                            var firm = 0.2f;
+                            if (!usedPoints.Contains(i))
+                            {
+                                points[i, 0] += shrink * firm;
+                                points[i, 2] += shrink * 0.5f;
+                            }
+                            if (!usedPoints.Contains(i - 1))
+                            {
+                                points[i - 1, 0] -= shrink * firm;
+                                points[i - 1, 2] -= shrink * 0.5f;
+                            }
                         }
+                        //让无法连上的线变薄
                         if (!room.VisualContact(points[i, 0], points[i - 1, 0]))
                         {
                             points[i, 3].x -= 0.2f;
                         }
                     }
+
                     if (i > 1 && LifeOfSegment(i - 1) > 0f)
                     {
-                        points[i, 2] += Custom.DirVec(points[i - 2, 0], points[i, 0]) * 0.6f;
-                        points[i - 2, 2] -= Custom.DirVec(points[i - 2, 0], points[i, 0]) * 0.6f;
+                        //points[i, 2] += Custom.DirVec(points[i - 2, 0], points[i, 0]) * 0.6f;
+                        //points[i - 2, 2] -= Custom.DirVec(points[i - 2, 0], points[i, 0]) * 0.6f;
                     }
-                    points[i, 3].x -= 1f / points[i, 3].y;
-                    if (points[i, 3].x > 0f)
-                    {
-                        flag = false;
-                    }
-                }
-                else
-                {
-                    ClearNullRope(this);
-                    brocked = true;
-                    
+
+
+                    if (limited)points[i, 3].x -= 1f / points[i, 3].y;//如果超过限制就让所有线集体消散
+                    brocked = false;//防止在消散前坏掉
+
                 }
             }
-            if (LifeOfSegment(0) > 0f)
-            {
-                points[0, 0] = (player.graphicsModule as PlayerGraphics).tail[0].pos;
-                points[0, 2] *= 0f;
-                points[1, 2] += Custom.DirVec((player.graphicsModule as PlayerGraphics).tail[0].pos, (player.graphicsModule as PlayerGraphics).tail[0].pos) * 3f;
-                points[3, 2] += Custom.DirVec((player.graphicsModule as PlayerGraphics).tail[0].pos, (player.graphicsModule as PlayerGraphics).tail[0].pos) * 1.5f;
-                if (LifeOfSegment(1) <= 0f || player.enteringShortCut != null || player.room != room)
-                {
-                    points[0, 3].x -= 1f;
-                }
-            }
-            if (LifeOfSegment(points.GetLength(0) - 1) > 0f)
-            {
-                Vector2 rotation = spear.rotation;
-                rotation.Scale(new Vector2(25f, 25f));
-                points[points.GetLength(0) - 1, 0] = spear.bodyChunks[0].pos - rotation;
-                points[points.GetLength(0) - 1, 2] *= 0f;
-                points[points.GetLength(0) - 2, 2] += Custom.DirVec(spear.bodyChunks[0].pos, spear.bodyChunks[0].pos - rotation) * 6f;
-                points[points.GetLength(0) - 3, 2] += Custom.DirVec(spear.bodyChunks[0].pos, spear.bodyChunks[0].pos - rotation) * 1.5f;
-                if (spear.slatedForDeletetion || spear.room != room)
-                {
-                    points[points.GetLength(0) - 1, 3].x -= 1f;
-                }
-            }
-            if (flag)
-            {
-                Destroy();
-            }
+
+            if (brocked) Destroy();
         }
 
 
@@ -193,17 +243,19 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
         public override void DrawSprites(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
         {
             Vector2 vector;
-            if (LifeOfSegment(0) > 0f && player != null)
-            {
-                vector = Vector2.Lerp((player.graphicsModule as PlayerGraphics).tail[0].lastPos, (player.graphicsModule as PlayerGraphics).tail[0].pos, timeStacker);
-            }
-            else
-            {
-                vector = Vector2.Lerp(points[0, 1], points[0, 0], timeStacker);
-            }
+            vector = Vector2.Lerp(points[0, 1], points[0, 0], timeStacker);
+            //if (LifeOfSegment(0) > 0f && player != null)
+            //{
+            //    vector = Vector2.Lerp((player.graphicsModule as PlayerGraphics).tail[0].lastPos, (player.graphicsModule as PlayerGraphics).tail[0].pos, timeStacker);
+            //}
+            //else
+            //{
+                
+            //}
             float num = 0f;
             float b = 1f;
             bool flag = rCam.room.Darkness(pos) > 0.2f;
+
             for (int i = 0; i < points.GetLength(0); i++)
             {
                 float f = Mathf.InverseLerp(0f, points.GetLength(0) - 1, i);
@@ -214,25 +266,28 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
                 }
                 float num3 = 0.5f * Mathf.InverseLerp(0f, 0.3f, num2);
                 Vector2 vector2 = Vector2.Lerp(points[i, 1], points[i, 0], timeStacker);
-                if (i == 0 && LifeOfSegment(0) > 0f)
-                {
-                    vector2 = vector;
-                }
-                else if (i == points.GetLength(0) - 1 && LifeOfSegment(i) > 0f)
-                {
-                    Vector2 rotation = spear.rotation;
-                    rotation.Scale(new Vector2(25f, 25f));
-                    vector2 = Vector2.Lerp(spear.bodyChunks[0].pos - rotation, spear.bodyChunks[0].pos - rotation, timeStacker);
-                }
+                //if (i == 0 && LifeOfSegment(0) > 0f)
+                //{
+                //    vector2 = vector;
+                //}
+                //else if (i == points.GetLength(0) - 1 && LifeOfSegment(i) > 0f)
+                //{
+                //    Vector2 rotation = spear.rotation;
+                //    rotation.Scale(new Vector2(25f, 25f));
+                //    vector2 = Vector2.Lerp(spear.bodyChunks[0].lastPos - rotation, spear.bodyChunks[0].pos - rotation, timeStacker);
+                //}
                 Vector2 a = Custom.PerpendicularVector(vector2, vector);
                 (sLeaser.sprites[0] as TriangleMesh).MoveVertice(i * 4, (vector + vector2) / 2f - a * (num3 + num) * 0.5f - camPos);
                 (sLeaser.sprites[0] as TriangleMesh).MoveVertice(i * 4 + 1, (vector + vector2) / 2f + a * (num3 + num) * 0.5f - camPos);
                 (sLeaser.sprites[0] as TriangleMesh).MoveVertice(i * 4 + 2, vector2 - a * num3 - camPos);
                 (sLeaser.sprites[0] as TriangleMesh).MoveVertice(i * 4 + 3, vector2 + a * num3 - camPos);
-                Color color = Color.Lerp(fogColor, Color.Lerp(colorStart, Color.Lerp(threadCol, colorEnd, rCam.room.WaterShinyness(vector2, timeStacker)), 0.1f + 0.9f * Mathf.Pow(f, 0.25f + num2)), Mathf.Min(num2, b));
+
+                
+                Color color = Color.Lerp(colorStart, colorEnd, rCam.room.WaterShinyness(vector2, timeStacker)*0.1f + 0.9f * Mathf.Pow(f, 0.25f + num2));
+
                 if (flag && num2 > 0f)
                 {
-                    color = Color.Lerp(color, blackColor, rCam.room.DarknessOfPoint(rCam, vector2));
+                    color = Color.Lerp(colorStart, blackColor, rCam.room.DarknessOfPoint(rCam, vector2));
                 }
                 for (int j = 0; j < 4; j++)
                 {
@@ -242,10 +297,10 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
                 num = num3;
                 b = num2;
             }
-            for (int k = 0; k < 4; k++)
-            {
-                (sLeaser.sprites[0] as TriangleMesh).verticeColors[k] = Color.Lerp(fogColor, blackColor, LifeOfSegment(0));
-            }
+            //for (int k = 0; k < 4; k++)
+            //{
+            //    (sLeaser.sprites[0] as TriangleMesh).verticeColors[k] = Color.Lerp(fogColor, blackColor, LifeOfSegment(0));
+            //}
             if (slatedForDeletetion || room != rCam.room)
             {
                 sLeaser.CleanSpritesAndRemove();
@@ -255,6 +310,7 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
         {
             blackColor = palette.blackColor;
             fogColor = palette.fogColor;
+
             threadCol = Color.Lerp(colorStart, palette.fogColor, 0.3f);
         }
 
