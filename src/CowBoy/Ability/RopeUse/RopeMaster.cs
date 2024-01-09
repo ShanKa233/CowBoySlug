@@ -52,10 +52,10 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
                     var umbilical = item;
                     if (umbilical.points.GetLength(0) > 10)
                     {
-                        for (int i = 0; i < umbilical.points.GetLength(0); i++)
-                        {
-                            umbilical.points[i, 3].x = 200f;
-                        }
+                        //for (int i = 0; i < umbilical.points.GetLength(0); i++)
+                        //{
+                        //    umbilical.points[i, 3].x = 200f;
+                        //}
                     }
                     return;
                 }
@@ -119,6 +119,7 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
                 var testUmbilical = obj;
                 if (!(testUmbilical != null && testUmbilical.spear != null && testUmbilical.player == player)) continue;//测丝线上的矛是不是玩家的,不是就跳过这个循环
                 if (testUmbilical.spear.grabbedBy.Count > 0 && testUmbilical.spear.grabbedBy[0].grabber == player) continue;//防止玩家对自己手上的矛继续操作
+                if (testUmbilical.Limited()) continue;//如果线脱离了就不能操作
 
                 #region 因为在线的update里面如果先断了就会从列表排除
                 //循环看看有没有哪一节的宽度小于0
@@ -251,17 +252,22 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
             bool flagSee = player.room.VisualContact(spear.firstChunk.pos, player.firstChunk.pos);
             //检查距离
             var range = Vector2.Distance(spear.firstChunk.pos, player.bodyChunks[1].pos);
-            //求出玩家相对于矛的方位
+            
+
             Vector2 fristPointForSpear = Custom.DirVec(spear.firstChunk.pos, umbilical.RopePos(umbilical.rope.TotalPositions - 2));
+            
             //离矛最近的丝的方向
             Vector2 fristPointForPlayer = Custom.DirVec(umbilical.playerPos, umbilical.RopePos(1));
 
+            umbilical.used = true;
             if (WhenSpearOnSomeThing(spear, player, range, fristPointForSpear, fristPointForPlayer, umbilical)) return;
-            //稍微加固丝线
-            for (int i = 0; i < umbilical.points.GetLength(0); i++)
-            {
-                umbilical.points[i, 3].x = 30f;
-            }
+
+
+            ////稍微加固丝线
+            //for (int i = 0; i < umbilical.points.GetLength(0); i++)
+            //{
+            //    umbilical.points[i, 3].x = 30f;
+            //}
 
             //防止吃东西 吐东西
             if (spear.mode != Weapon.Mode.Carried)
@@ -299,12 +305,13 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
                     float[] t = { 0.35f, 0.89f, 0.72f, 0.72f };
                     handModules.move(spear.firstChunk.pos, umbilical.points[4, 0], 5, 15f, umbilical, t, false);
                 }
-
+                umbilical.loose = 1;
 
                 spear.ChangeMode(Weapon.Mode.Free);
 
                 spear.firstChunk.vel = fristPointForSpear * 27+ Custom.RNV();
-                spear.setRotation = -fristPointForSpear.normalized;
+                spear.setRotation = -fristPointForSpear.normalized;;
+
                 //if (flagSee)
                 //{
                 //    spear.SetRandomSpin();
@@ -371,6 +378,7 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
                 //}
 
                 spear.firstChunk.vel += fristPointForSpear * 2f+Custom.RNV()*0.2f;
+
                 spear.setRotation= -fristPointForSpear.normalized;
 
                 if (spear.gravity > 0)
