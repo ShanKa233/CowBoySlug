@@ -100,9 +100,19 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
             if (i == this.rope.TotalPositions - 1 || i < 0)
             {
                 return spear.firstChunk.pos;
+                //return spearEndPos; ;
             }
             return this.rope.GetPosition(i);
         }
+        public Vector2 RopeShowPos(int i)
+        {
+            if (i == this.rope.TotalPositions - 1 || i < 0)
+            {
+                return spearEndPos; ;
+            }
+            return this.rope.GetPosition(i);
+        }
+
         public void GatherTogether()
         {
             if (rope.TotalPositions < 1)
@@ -129,28 +139,6 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
 
                     points[j, 2] += Custom.DirVec(points[j, 0], destinationPos) * Custom.LerpMap(Vector2.Distance(points[j, 0], destinationPos), 0f, 150f, 0f, 120f * loose);//改变速度让线往最理想的位置变动
                 }
-
-                //if (loose>0.9f)
-                //{
-                //    for (int j = startLockedIndex + 1; j < endLockedIndex; j++)// 循环让所有在这个固定点位内的线都朝可以平均的分散在这个线段之间的位置移动
-                //    {
-                //        var t = Mathf.InverseLerp(startLockedIndex, endLockedIndex, j);//计算t
-                //        var destinationPos = Vector2.Lerp(points[startLockedIndex, 0], points[endLockedIndex, 0], t);//计算完美情况下的位置
-
-                //        points[j, 0] = destinationPos;
-                //    }
-                //}
-                //else
-                //{
-                //    for (int j = startLockedIndex + 1; j < endLockedIndex; j++)// 循环让所有在这个固定点位内的线都朝可以平均的分散在这个线段之间的位置移动
-                //    {
-                //        var t = Mathf.InverseLerp(startLockedIndex, endLockedIndex, j);//计算t
-                //        var destinationPos = Vector2.Lerp(points[startLockedIndex, 0], points[endLockedIndex, 0], t);//计算完美情况下的位置
-
-                //        points[j, 2] += Custom.DirVec(points[j, 0], destinationPos) * Custom.LerpMap(Vector2.Distance(points[j, 0], destinationPos), 0f, 150f, 0f, 80f * loose);//改变速度让线往最理想的位置变动
-                //    }
-                //}
-
             }
         }
         public void AlignPoints()
@@ -306,11 +294,10 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
         }
         public override void DrawSprites(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
         {
-            Vector2 vector;
-            vector = Vector2.Lerp(points[0, 1], points[0, 0], timeStacker);
+            Vector2 startPos =Vector2.Lerp(points[0, 1], points[0, 0], timeStacker);
             //if (LifeOfSegment(0) > 0f && player != null)
             //{
-            //    vector = Vector2.Lerp((player.graphicsModule as PlayerGraphics).tail[0].lastPos, (player.graphicsModule as PlayerGraphics).tail[0].pos, timeStacker);
+            //    startPos = Vector2.Lerp((player.graphicsModule as PlayerGraphics).tail[0].lastPos, (player.graphicsModule as PlayerGraphics).tail[0].pos, timeStacker);
             //}
             //else
             //{
@@ -332,7 +319,7 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
                 Vector2 vector2 = Vector2.Lerp(points[i, 1], points[i, 0], timeStacker);
                 if (i == 0 && LifeOfSegment(0) > 0f)
                 {
-                    vector2 = vector;
+                    vector2 = startPos;
                 }
                 else if (i == points.GetLength(0) - 1 && LifeOfSegment(i) > 0f)
                 {
@@ -340,9 +327,9 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
                     rotation.Scale(new Vector2(25f, 25f));
                     vector2 = Vector2.Lerp(spear.bodyChunks[0].lastPos - rotation, spear.bodyChunks[0].pos - rotation, timeStacker);
                 }
-                Vector2 a = Custom.PerpendicularVector(vector2, vector);
-                (sLeaser.sprites[0] as TriangleMesh).MoveVertice(i * 4, (vector + vector2) / 2f - a * (num3 + num) * 0.5f - camPos);
-                (sLeaser.sprites[0] as TriangleMesh).MoveVertice(i * 4 + 1, (vector + vector2) / 2f + a * (num3 + num) * 0.5f - camPos);
+                Vector2 a = Custom.PerpendicularVector(vector2, startPos);
+                (sLeaser.sprites[0] as TriangleMesh).MoveVertice(i * 4, (startPos + vector2) / 2f - a * (num3 + num) * 0.5f - camPos);
+                (sLeaser.sprites[0] as TriangleMesh).MoveVertice(i * 4 + 1, (startPos + vector2) / 2f + a * (num3 + num) * 0.5f - camPos);
                 (sLeaser.sprites[0] as TriangleMesh).MoveVertice(i * 4 + 2, vector2 - a * num3 - camPos);
                 (sLeaser.sprites[0] as TriangleMesh).MoveVertice(i * 4 + 3, vector2 + a * num3 - camPos);
 
@@ -357,10 +344,11 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
                 {
                     (sLeaser.sprites[0] as TriangleMesh).verticeColors[i * 4 + j] = Color.Lerp(color, Color.white, Mathf.Sin(Time.time * 4) * 0.4f + 0.4f); ;
                 }
-                vector = vector2;
+                startPos = vector2;
                 num = num3;
                 b = num2;
             }
+
             //for (int k = 0; k < 4; k++)
             //{
             //    (sLeaser.sprites[0] as TriangleMesh).verticeColors[k] = Color.Lerp(fogColor, blackColor, LifeOfSegment(0));

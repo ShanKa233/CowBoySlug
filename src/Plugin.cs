@@ -14,6 +14,7 @@ using MonoMod.ModInterop;
 using static CowBoySLug.GhostPlayerImports;
 using CatPunchPunchDP;
 using CowBoySlug.CatPunch;
+using CowBoySlug.ExAbility;
 
 namespace CowBoySLug
 {
@@ -61,6 +62,7 @@ namespace CowBoySLug
 
             SewHook.Hook();
 
+            SuperShootModule.OnHook();
             DroneJumpHook.Hook();
 
 

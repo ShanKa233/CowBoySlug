@@ -22,9 +22,6 @@ namespace CowBoySlug
         {
             Scarf.Hook();
 
-            On.Rock.DrawSprites += Rock_DrawSprites; //画出红红的石头来表示石头飞的很快
-
-
             On.RainWorld.OnModsInit += CowBoySlug_LoadTexture;
             On.PlayerGraphics.InitiateSprites += CowBoy_InitiateSprites;
             On.PlayerGraphics.DrawSprites += CowBoy_DrawSprites;
@@ -100,15 +97,6 @@ namespace CowBoySlug
         #endregion
 
 
-        //画石头
-        private static void Rock_DrawSprites(On.Rock.orig_DrawSprites orig, Rock self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, UnityEngine.Vector2 camPos)
-        {
-            orig.Invoke(self, sLeaser, rCam, timeStacker, camPos);
-            if (PlayerHook.rockModule.TryGetValue(self, out var superRock))
-            {
-                sLeaser.sprites[0].color = superRock.rockColor;
-            }
-        }
 
 
 

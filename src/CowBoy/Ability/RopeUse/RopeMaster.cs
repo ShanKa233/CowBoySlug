@@ -149,9 +149,11 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
             return umbilical;
         }
 
-        public static bool WhenSpearOnSomeThing(Spear spear, Player player, float range, Vector2 whereIsPlayer, Vector2 whenRopeClose, CowRope umbilical)
+        public static bool WhenSpearOnSomeThing(Spear spear, Player player, float range, CowRope umbilical)
         {
-            var playerToRopeDir= Custom.DirVec(player.mainBodyChunk.pos, umbilical.RopePos(1));
+            var playerToRopeDir= Custom.DirVec(player.mainBodyChunk.pos, umbilical.RopeShowPos(1));
+            Vector2 spearToEndPointDir = Custom.DirVec(spear.firstChunk.pos, umbilical.RopePos(umbilical.rope.TotalPositions - 2));
+
             //如果插到墙上就拔下来然后变成自由状态,或爬墙
             if ((spear.hasHorizontalBeamState && spear.mode == Weapon.Mode.StuckInWall))//如果线在墙上就清理一下,防止残留
             {
@@ -166,18 +168,7 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
                 }
                 if (range > 10&& player.gravity > 0 && canGrab > 2)
                 {
-                    //player.standing = false;
-                    if (player.wantToPickUp > 0)
-                    {
-                        player.mainBodyChunk.vel += playerToRopeDir* 1.5f;
-                        //spear.vibrate += 5;
-                    }
-                    else
-                    {
-                        player.mainBodyChunk.vel += playerToRopeDir * 2f;
-                        player.jumpBoost = 1.5f;
-                    }
-
+                    player.bodyChunks[1].vel += playerToRopeDir * 3f;
 
                     //手部动画
                     if (Hands.module.TryGetValue(player, out var handModules))
@@ -215,16 +206,17 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
 
                     //玩家受到拉力
                     float massPower = spear.stuckInObject.TotalMass > 20 ? 20 : spear.stuckInObject.TotalMass;
-                    player.mainBodyChunk.vel -= whereIsPlayer * (massPower / player.TotalMass) / 1.5f;
-                    spear.stuckInObject.bodyChunks[spear.stuckInChunkIndex].vel += whereIsPlayer * (player.TotalMass / spear.stuckInObject.TotalMass) / 1.5f * 2;
+
+                    player.bodyChunks[1].vel += playerToRopeDir * (massPower / player.TotalMass) / 1.5f;
+                    spear.stuckInObject.bodyChunks[spear.stuckInChunkIndex].vel +=  spearToEndPointDir* (player.TotalMass / spear.stuckInObject.TotalMass) / 1.5f * 2;
                 }
                 else if (!Custom.DistLess(player.mainBodyChunk.pos, spear.stuckInChunk.pos, 60))
                 {
                     if (player.input[0].jmp)
                     {
-                        player.mainBodyChunk.vel -= whereIsPlayer * 3;
+                        player.bodyChunks[1].vel += playerToRopeDir *3f;
                     }
-                    spear.stuckInObject.bodyChunks[spear.stuckInChunkIndex].vel += whereIsPlayer * 3;
+                    spear.stuckInObject.bodyChunks[spear.stuckInChunkIndex].vel += spearToEndPointDir * 3f;
                 }
 
             }
@@ -251,23 +243,17 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
             //检查能不能直视到
             bool flagSee = player.room.VisualContact(spear.firstChunk.pos, player.firstChunk.pos);
             //检查距离
-            var range = Vector2.Distance(spear.firstChunk.pos, player.bodyChunks[1].pos);
+            var range = Vector2.Distance(umbilical.spearEndPos, player.bodyChunks[1].pos);
             
 
-            Vector2 fristPointForSpear = Custom.DirVec(spear.firstChunk.pos, umbilical.RopePos(umbilical.rope.TotalPositions - 2));
+            Vector2 spearToEndPointDir = Custom.DirVec(spear.firstChunk.pos, umbilical.RopePos(umbilical.rope.TotalPositions - 2));
             
             //离矛最近的丝的方向
-            Vector2 fristPointForPlayer = Custom.DirVec(umbilical.playerPos, umbilical.RopePos(1));
+            Vector2 playerToFristPoint = Custom.DirVec(umbilical.playerPos, umbilical.RopePos(1));
 
             umbilical.used = true;
-            if (WhenSpearOnSomeThing(spear, player, range, fristPointForSpear, fristPointForPlayer, umbilical)) return;
+            if (WhenSpearOnSomeThing(spear, player, range, umbilical)) return;
 
-
-            ////稍微加固丝线
-            //for (int i = 0; i < umbilical.points.GetLength(0); i++)
-            //{
-            //    umbilical.points[i, 3].x = 30f;
-            //}
 
             //防止吃东西 吐东西
             if (spear.mode != Weapon.Mode.Carried)
@@ -279,7 +265,7 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
             //在无重力情况下给玩家施加移动力
             if (spear.mode != Weapon.Mode.Carried && player.gravity <= 0)
             {
-                player.mainBodyChunk.vel -= fristPointForSpear / 2;
+                player.mainBodyChunk.vel -= spearToEndPointDir / 2;
             }
 
 
@@ -305,12 +291,13 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
                     float[] t = { 0.35f, 0.89f, 0.72f, 0.72f };
                     handModules.move(spear.firstChunk.pos, umbilical.points[4, 0], 5, 15f, umbilical, t, false);
                 }
+
                 umbilical.loose = 1;
 
                 spear.ChangeMode(Weapon.Mode.Free);
 
-                spear.firstChunk.vel = fristPointForSpear * 27+ Custom.RNV();
-                spear.setRotation = -fristPointForSpear.normalized;;
+                spear.firstChunk.vel = spearToEndPointDir * 27+ Custom.RNV();
+                spear.setRotation = -spearToEndPointDir.normalized;;
 
                 //if (flagSee)
                 //{
@@ -342,11 +329,11 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
                 if (Hands.module.TryGetValue(player, out var handModules))
                 {
                     float[] t = { .9f, -0.04f, .78f, 1.31f };
-                    handModules.move(umbilical.points[0, 0], player.mainBodyChunk.pos + fristPointForSpear * 25, 20, 15f, umbilical, t, true);
+                    handModules.move(umbilical.points[0, 0], player.mainBodyChunk.pos + spearToEndPointDir * 25, 20, 15f, umbilical, t, true);
                 }
                 for (int i = 0; i < umbilical.points.GetLength(0) / 3; i++)
                 {
-                    umbilical.points[i, 2] += fristPointForSpear * 30;
+                    umbilical.points[i, 2] += spearToEndPointDir * 30;
                 }
 
 
@@ -354,18 +341,13 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
                 spear.ChangeMode(Weapon.Mode.Thrown);
                 spear.spearDamageBonus *= 0.9f;
                 spear.thrownBy = player;
-                spear.throwDir = new IntVector2(Convert.ToInt32(fristPointForSpear.x), Convert.ToInt32(fristPointForSpear.y)); ;
+                spear.throwDir = new IntVector2(Convert.ToInt32(spearToEndPointDir.x), Convert.ToInt32(spearToEndPointDir.y)); ;
 
                 spear.rotation = spear.throwDir.ToVector2();
-                spear.firstChunk.pos -= fristPointForSpear;
+                spear.firstChunk.pos -= spearToEndPointDir;
                 //spear.firstChunk.vel.x = spear.throwDir.x * 60 * spear.spearDamageBonus;
-                spear.firstChunk.vel = spear.throwDir.ToVector2() * 60 * spear.spearDamageBonus;
-
-                if (spear.gravity > 0)
-                {
-                    //spear.firstChunk.vel.y = 2.9f;
-                }
-
+                spear.firstChunk.vel += spear.throwDir.ToVector2() * 50 * spear.spearDamageBonus;
+                
             }
             //慢速模式
             else if (player.input[0].pckp)
@@ -377,14 +359,10 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
                 //    handModules.move(umbilical.points[0, 0], spear.firstChunk.pos, 5, 10f, umbilical, t, true);
                 //}
 
-                spear.firstChunk.vel += fristPointForSpear * 2f+Custom.RNV()*0.2f;
+                spear.firstChunk.vel += spearToEndPointDir * 2f+Custom.RNV()*0.2f;
 
-                spear.setRotation= -fristPointForSpear.normalized;
+                spear.setRotation= -spearToEndPointDir.normalized;
 
-                if (spear.gravity > 0)
-                {
-                    //spear.firstChunk.vel.y += 0.4f;
-                }
             }
             else if (spear.mode == Weapon.Mode.StuckInCreature)
             {

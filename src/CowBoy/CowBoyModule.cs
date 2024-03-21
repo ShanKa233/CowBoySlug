@@ -95,31 +95,6 @@ namespace CowBoySlug
                 changeHand += 5;
             }
         }
-
-
-        public void RockMake(Rock rock)
-        {
-            //检查玩家有没有做出正确的操作
-            bool triga1 = self.input[0].x != 0 || self.input[0].y != 0;
-            bool triga2 = stopTime > 15 && self.switchHandsCounter > 0;
-            if (triga1 && triga2 && rock != null)
-            {
-                if (PlayerHook.rockModule.TryGetValue(rock, out var value))
-                {
-                    PlayerHook.rockModule.Remove(rock);
-                }
-                PlayerHook.rockModule.Add(rock, new SuperRockModule(rock));
-            }
-
-
-
-        }//确认是否属于超级投掷出去的石头并打上标记
-
-
-
-        
     }
-
-
 
 }
