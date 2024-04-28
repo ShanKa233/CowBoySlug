@@ -42,21 +42,29 @@ namespace CowBoySLug
         // Add hooks
         public void OnEnable()
         {
-
             On.RainWorld.OnModsInit += Extras.WrapInit(LoadResources);
             On.RainWorld.OnModsInit += RainWorld_OnModsInit;
 
+            //Content.Register(new CowBoyHatFisob());
 
-            Content.Register(new CowBoyHatFisob());
-            // Put your custom hooks here!
-            Hat.Hook();
+            //加载GhostPlayer扩展
+            typeof(GhostPlayerImports).ModInterop();
+        }
+        public  static  RemixMenu menu = new RemixMenu();
+        private void RainWorld_OnModsInit(On.RainWorld.orig_OnModsInit orig, RainWorld self)
+        {
+            orig(self);
+
+            RopeSpear.Hook();
+            
+            //Hat.Hook();
 
             RopeMaster.Hook();
 
             PlayerHook.Hook();
             PlayerGraphicsHook.Hook();
 
-            RopeUseHook.Hook();
+
             Hands.Hook();
 
 
@@ -68,17 +76,6 @@ namespace CowBoySLug
 
             //Camouflage.Hook();
             WhiteDropWorm.Hook();
-
-
-
-            //加载GhostPlayer扩展
-            typeof(GhostPlayerImports).ModInterop();
-        
-        }
-        public  static  RemixMenu menu = new RemixMenu();
-        private void RainWorld_OnModsInit(On.RainWorld.orig_OnModsInit orig, RainWorld self)
-        {
-            orig(self);
 
             //鬼玩联动
             if (!enableGhostPlayer)
@@ -118,6 +115,8 @@ namespace CowBoySLug
         }
         private void LoadResources(RainWorld rainWorld)
         {
+            Futile.atlasManager.LoadAtlas("atlases/CowBoyHead");
+            Futile.atlasManager.LoadAtlas("fisobs/icon_CowBoyHat");
         }
 
 

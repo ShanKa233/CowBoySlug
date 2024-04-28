@@ -20,8 +20,37 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
         {
             if (!RopeMaster.modules.TryGetValue(player, out var module)) return;
             var rope = new CowRope(player, spear, start, end);//新建一个在矛上的丝线
-            module.ropes.Add(rope);
+            //module.ropes.Add(rope);
+
             player.room.AddObject(rope);//召唤这个线
+        }
+        public CowRope(Player player, Spear spear, Color colorStart, Color colorEnd)
+        {
+            this.room = player.room;//所在房间
+
+            this.spear = spear;//连接的矛
+            this.player = player;//所属玩家
+
+            ropeLength = Random.Range(40, 60);//随机一个绳子总长
+            points = new Vector2[ropeLength, 4];//记录段落信息
+
+
+
+            rope = new Rope(room, playerPos, spearEndPos, 3);
+            debugRope = new Rope.RopeDebugVisualizer(rope);
+            for (int i = 0; i < points.GetLength(0); i++)
+            {
+                points[i, 0] = playerPos + Custom.RNV();//pos
+                points[i, 1] = playerPos;//lastPos
+                points[i, 2] = Custom.DirVec(playerPos, spearEndPos) * 0.3f * Random.value + Custom.RNV() * Random.value * 1.5f;//vel
+                points[i, 3] = new Vector2(3f, Mathf.Lerp(50f, 80f, Mathf.Pow(Random.value, 0.3f)));//粗细啥的
+            }
+
+
+            this.colorStart = colorStart;//绳子的开始颜色
+            this.colorEnd = colorEnd;//绳子的末端颜色
+
+            spear.rope().GetRope(player, this);
         }
 
         #endregion
@@ -67,32 +96,6 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
         }
 
 
-        public CowRope(Player player, Spear spear, Color colorStart, Color colorEnd)
-        {
-            this.room = player.room;//所在房间
-
-            this.spear = spear;//连接的矛
-            this.player = player;//所属玩家
-
-            ropeLength = Random.Range(40, 60);//随机一个绳子总长
-            points = new Vector2[ropeLength, 4];//记录段落信息
-
-
-
-            rope = new Rope(room, playerPos, spearEndPos, 3);
-            debugRope = new Rope.RopeDebugVisualizer(rope);
-            for (int i = 0; i < points.GetLength(0); i++)
-            {
-                points[i, 0] = playerPos + Custom.RNV();//pos
-                points[i, 1] = playerPos;//lastPos
-                points[i, 2] = Custom.DirVec(playerPos, spearEndPos) * 0.3f * Random.value + Custom.RNV() * Random.value * 1.5f;//vel
-                points[i, 3] = new Vector2(3f, Mathf.Lerp(50f, 80f, Mathf.Pow(Random.value, 0.3f)));//粗细啥的
-            }
-
-
-            this.colorStart = colorStart;//绳子的开始颜色
-            this.colorEnd = colorEnd;//绳子的末端颜色
-        }
 
         #region 一些小方法
         public Vector2 RopePos(int i)
@@ -180,10 +183,11 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
 
         public override void Destroy()
         {
-            if (RopeMaster.modules.TryGetValue(player, out var ropeMaster))
-            {
-                ropeMaster.ropes.Remove(this);
-            }
+            spear.rope().RemoveRope();
+            //if (RopeMaster.modules.TryGetValue(player, out var ropeMaster))
+            //{
+            //    ropeMaster.ropes.Remove(this);
+            //}
             base.Destroy();
         }
         public bool Limited()

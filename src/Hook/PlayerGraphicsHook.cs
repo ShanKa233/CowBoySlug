@@ -1,6 +1,7 @@
 ﻿
 using CowBoySlug.CowBoy;
 using CowBoySlug.CowBoy.Ability.RopeUse;
+using CowBoySlug.CowBoySlugMod;
 using CowBoySLug;
 using RWCustom;
 using SlugBase.DataTypes;
@@ -20,30 +21,15 @@ namespace CowBoySlug
     {
         public static void Hook()
         {
-            Scarf.Hook();
 
-            On.RainWorld.OnModsInit += CowBoySlug_LoadTexture;
+            Scarf.Hook();
             On.PlayerGraphics.InitiateSprites += CowBoy_InitiateSprites;
             On.PlayerGraphics.DrawSprites += CowBoy_DrawSprites;
-            
-
             
         }
 
         #region 和猫猫样子有关的部分
         
-        
-        
-
-        //加载材质进入游戏
-
-        private static void CowBoySlug_LoadTexture(On.RainWorld.orig_OnModsInit orig, RainWorld self)
-        {
-            orig.Invoke(self);
-            //在读取mod的时候加载材质
-            atlas = Futile.atlasManager.LoadAtlas("atlases/CowBoyHead");
-            Futile.atlasManager.LoadAtlas("fisobs/icon_CowBoyHat");
-        }
         //扩容
         private static void CowBoy_InitiateSprites(On.PlayerGraphics.orig_InitiateSprites orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
         {
@@ -56,14 +42,14 @@ namespace CowBoySlug
         private static void CowBoy_DrawSprites(On.PlayerGraphics.orig_DrawSprites orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
         {
             orig.Invoke(self, sLeaser, rCam, timeStacker, camPos);
-            if (!PlayerHook.cowboyModules.TryGetValue(self.player, out var cowBoy)) { return; }
+            if (!self.player.IsCowBoys(out var cowBoy)) { return; }
             DrawUseRopeAnimetion(self, sLeaser, rCam, timeStacker, camPos);
         }
 
 
         //精灵图位置
-        public static FAtlas atlas;
-        public static FAtlas hatAtlas;
+        //public static FAtlas atlas;
+        //public static FAtlas hatAtlas;
         #endregion
 
 

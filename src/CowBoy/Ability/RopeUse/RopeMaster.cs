@@ -20,19 +20,12 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
         public static readonly PlayerFeature<bool> RopeMasterFeature = PlayerBool("cowboyslug/rope_master");//能使用这个能力的词条
         public static readonly PlayerColor RopeColor = new PlayerColor("Rope");//绳子颜色
 
+
         public static void Hook()
         {
             On.Player.ctor += Player_ctor;
             On.Player.ThrownSpear += Player_ThrownSpear;
             On.Player.UpdateMSC += Player_UpdateMSC;
-            On.Player.MovementUpdate += Player_MovementUpdate;
-        }
-
-        private static void Player_MovementUpdate(On.Player.orig_MovementUpdate orig, Player self, bool eu)
-        {
-            orig.Invoke(self, eu);
-            //if (!modules.TryGetValue(self, out var module)) return;
-            //CallBackSpear(self);//召回矛
         }
 
         private static void Player_ThrownSpear(On.Player.orig_ThrownSpear orig, Player self, Spear spear)
@@ -78,10 +71,11 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
             {
                 modules.Add(self, new RopeMaster(self));
             }
+
         }
 
 
-        public List<CowRope> ropes= new List<CowRope>();//用来记录所有绳子的list
+        //public List<CowRope> ropes= new List<CowRope>();//用来记录所有绳子的list
 
         public Player player;//玩家
 

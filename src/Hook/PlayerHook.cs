@@ -10,13 +10,14 @@ using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
 using RWCustom;
 using CowBoySlug.CowBoy.Ability.RopeUse;
+using CowBoySlug.CowBoySlugMod;
 
 namespace CowBoySLug
 {
     internal class PlayerHook
     {
 
-        public static ConditionalWeakTable<Player, CowBoyModule> cowboyModules = new ConditionalWeakTable<Player, CowBoyModule>();
+        //public static ConditionalWeakTable<Player, CowBoyModule> cowboyModules = new ConditionalWeakTable<Player, CowBoyModule>();
         public static void Hook()
         {
             On.Player.ctor += CowBoy_ctor;
@@ -26,13 +27,6 @@ namespace CowBoySLug
             
             On.Player.GrabUpdate += Player_GrabUpdate;
             On.Player.SleepUpdate += Player_SleepUpdate;
-
-
-            //On.Player.ThrowObject += CowBoy_Throw;//超级石头射击和加速
-            //On.Creature.SwitchGrasps += Player_SwitchGrasps;//换手时增加一个计数来确认是否换手
-
-            //On.Rock.Update += SuperRock_Stop;//超级石头撞到东西停下
-            //On.Creature.Violence += SuperRock_CreatureViolence;//超级石头对生物造成伤害
 
         }
 
@@ -77,52 +71,37 @@ namespace CowBoySLug
         {
            
             orig.Invoke(self, abstractCreature, world);
-            if ((Plugin.RockShot.TryGet(self, out var value) && value))
-            {
-                cowboyModules.Add(self, new CowBoyModule(self));
 
-                //特殊饱腹度系统相关
-                if (Plugin.menu.foodMod.Value&& self.room.world.game.session.characterStats.name.value == "CowBoySLug")
+            //特殊饱腹度系统相关
+            if (Plugin.menu.foodMod.Value && self.room.world.game.session.characterStats.name == CowBoy.Name)
+            {
+                if (self.PlaceKarmaFlower)
                 {
-                    if (self.PlaceKarmaFlower)
-                    {
-                        self.slugcatStats.maxFood += 4;
-                    }
-                    if (self.playerState.foodInStomach < self.slugcatStats.maxFood)
-                    {
-                        self.playerState.foodInStomach = self.slugcatStats.maxFood;
-                    }
+                    self.slugcatStats.maxFood += 4;
                 }
-                else if(self.room.world.game.session.characterStats.name.value == "CowBoySLug")
+                if (self.playerState.foodInStomach < self.slugcatStats.maxFood)
                 {
-                    self.slugcatStats.foodToHibernate = self.slugcatStats.maxFood;
+                    self.playerState.foodInStomach = self.slugcatStats.maxFood;
                 }
-                  
             }
+            else if (self.room.world.game.session.characterStats.name == CowBoy.Name)
+            {
+                self.slugcatStats.foodToHibernate = self.slugcatStats.maxFood;
+            }
+
         }
         static private void Player_Update(On.Player.orig_Update orig, Player self, bool eu)
         {
             orig.Invoke(self, eu);
-            //j检查玩家是否有这个rock设计的标签而且标签是true
 
-
-            bool flag = Plugin.RockShot.TryGet(self, out var flag2) && flag2;
-
-
-            if (flag && cowboyModules.TryGetValue(self, out var cowBoyModule))
+            if (self.IsCowBoys(out var cowBoyModule))
             {
-                
+                cowBoyModule.Update();
 
-                cowBoyModule.BackToNormal();
-                cowBoyModule.NotMove();
+                if (Plugin.menu.foodMod.Value&& self.room.world.game.session.characterStats.name==CowBoy.Name)cowBoyModule.UseFood();
 
-                
-
-                if (Plugin.menu.foodMod.Value&& self.room.world.game.session.characterStats.name.value == "CowBoySLug")
-                {
-                    cowBoyModule.UseFood();
-                }
             }
+
         }
 
 

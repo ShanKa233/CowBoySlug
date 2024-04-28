@@ -53,7 +53,7 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
             ////让绳子往手上贴
             //for (int i = 2; i < umbilical.points.GetLength(0) - 1; i++)
             //{
-            //    if (Vector2.Distance(umbilical.points[i, 0], self.mainBodyChunk.pos) < 40)
+            //    if (Vector2.Distance(umbilical.points[i, 0], player.mainBodyChunk.pos) < 40)
             //    {
             //        umbilical.points[i, 0] = handModules.handPos();
             //    }

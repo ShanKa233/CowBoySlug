@@ -28,8 +28,6 @@ namespace CowBoySlug.ExAbility
             superRock = rock.SuperRock();
             return superRock.powerCount > 0;
         }
-        //public static SuperShootModule SuperRock(this Rock rock, out SuperShootModule superRock) => superRock = rock.SuperRock();
-
 
     }
     public class SuperShootModule
@@ -181,8 +179,8 @@ namespace CowBoySlug.ExAbility
         {
             if (self.IsSuperRock(out var superRock))
             {
-                //self.firstChunk.pos = Vector2.Lerp(self.firstChunk.pos, inbetweenPos, 0.5f);
-                //self.firstChunk.vel = deflectDir * bounceSpeed * 0.5f;
+                //player.firstChunk.pos = Vector2.Lerp(player.firstChunk.pos, inbetweenPos, 0.5f);
+                //player.firstChunk.vel = deflectDir * bounceSpeed * 0.5f;
                 self.vibrate = 20;
                 superRock.Rebound(deflectDir);
                 return;
@@ -234,8 +232,8 @@ namespace CowBoySlug.ExAbility
         //public void RockMake(Rock rock)
         //{
         //    //检查玩家有没有做出正确的操作
-        //    bool triga1 = self.input[0].x != 0 || self.input[0].y != 0;
-        //    bool triga2 = stopTime > 15 && self.switchHandsCounter > 0;
+        //    bool triga1 = player.input[0].x != 0 || player.input[0].y != 0;
+        //    bool triga2 = stopTime > 15 && player.switchHandsCounter > 0;
         //    if (triga1 && triga2 && rock != null)
         //    {
         //        if (PlayerHook.rockModule.TryGetValue(rock, out var value))
@@ -250,14 +248,14 @@ namespace CowBoySlug.ExAbility
     //public class SuperRockModule
     //{
     //    //public bool isSuperRock = true;
-    //    //public Rock self;
+    //    //public Rock player;
     //    //public Color rockColor = new Color(103 / 255f, 5 / 255f, 4 / 255f);
     //    //public bool canMoreFast = true;
 
 
     //    public void RockPowerUp()
     //    {
-    //        var rock = self;
+    //        var rock = player;
     //        if (rock != null && PlayerHook.rockModule.TryGetValue(rock, out var superRock) && superRock.isSuperRock)
     //        {
 
@@ -271,7 +269,7 @@ namespace CowBoySlug.ExAbility
     //            canMoreFast = false;
     //        }
 
-    //    private static void SuperRock_CreatureViolence(On.Creature.orig_Violence orig, Creature self, BodyChunk source, UnityEngine.Vector2? directionAndMomentum, BodyChunk hitChunk, PhysicalObject.Appendage.Pos hitAppendage, Creature.DamageType type, float damage, float stunBonus)
+    //    private static void SuperRock_CreatureViolence(On.Creature.orig_Violence orig, Creature player, BodyChunk source, UnityEngine.Vector2? directionAndMomentum, BodyChunk hitChunk, PhysicalObject.Appendage.Pos hitAppendage, Creature.DamageType type, float damage, float stunBonus)
     //    {
     //        if (source != null)
     //        {
@@ -283,7 +281,7 @@ namespace CowBoySlug.ExAbility
     //            }
     //        }
 
-    //        orig.Invoke(self, source, directionAndMomentum, hitChunk, hitAppendage, type, damage, stunBonus);
+    //        orig.Invoke(player, source, directionAndMomentum, hitChunk, hitAppendage, type, damage, stunBonus);
     //    }
 
 

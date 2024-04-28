@@ -174,7 +174,8 @@ namespace CowBoySlug.CowBoy
 
         public static bool elementLoaded()
         {
-            return PlayerGraphicsHook.atlas._elementsByName.TryGetValue("CowBoy-HeadA0", out var element);
+            return true;
+            //return PlayerGraphicsHook._elementsByName.TryGetValue("CowBoy-HeadA0", out var element);
         }
 
         /// <summary>
