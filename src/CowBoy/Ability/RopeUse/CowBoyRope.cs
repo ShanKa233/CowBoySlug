@@ -19,11 +19,13 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
         public static void SpawnRope(Player player, Spear spear, Color start, Color end)
         {
             if (!RopeMaster.modules.TryGetValue(player, out var module)) return;
+
             var rope = new CowRope(player, spear, start, end);//新建一个在矛上的丝线
-            //module.ropes.Add(rope);
 
             player.room.AddObject(rope);//召唤这个线
         }
+
+        #endregion
         public CowRope(Player player, Spear spear, Color colorStart, Color colorEnd)
         {
             this.room = player.room;//所在房间
@@ -53,7 +55,6 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
             spear.rope().GetRope(player, this);
         }
 
-        #endregion
         public Spear spear;//所属矛
         public Player player;//所属玩家
 
@@ -63,15 +64,19 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
         public Vector2[,] points;//绳子的段落的坐标,速度,和粗细
         public int ropeLength;//线段数量
 
+
         public Rope rope;//方便计算长度转角之类数据的线
         public List<int> usedPoints;//用来记录哪些点位已经使用
         public float MaxLength = 900;//最大长度
 
         public Rope.RopeDebugVisualizer debugRope;
 
-        public float loose = 0;//松紧度0是完全没有弹力1是百分之五十左右的弹力
-        public bool used = false;
 
+        public float loose = 0;//松紧度0是完全没有弹力1是百分之五十左右的弹力
+        public bool used = false;//是否处在收紧中
+
+
+        public bool limited = false;//线开始消散
 
         private Color blackColor;
         private Color fogColor;
@@ -90,7 +95,7 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
             get
             {
                 var rotation = spear.rotation;
-                rotation.Scale(new Vector2(25, 25));
+                rotation.Scale(new Vector2(1, 1)*(spear.mode==Spear.Mode.StuckInCreature?50:25));
                 return spear.firstChunk.pos - rotation;
             }
         }
@@ -103,7 +108,6 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
             if (i == this.rope.TotalPositions - 1 || i < 0)
             {
                 return spear.firstChunk.pos;
-                //return spearEndPos; ;
             }
             return this.rope.GetPosition(i);
         }
@@ -144,33 +148,6 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
                 }
             }
         }
-        public void AlignPoints()
-        {
-            usedPoints = new List<int>();
-
-            if (this.rope.TotalPositions < 1)
-            {
-                return;
-            }
-            float totalLength = this.rope.totalLength;
-            float distance = 0f;
-            for (int i = 0; i < this.rope.TotalPositions; i++)
-            {
-                if (i > 0)
-                {
-                    distance += Vector2.Distance(this.RopePos(i - 1), this.RopePos(i));//上个点和这个点的距离
-                }
-                int num2 = Custom.IntClamp((int)(distance / totalLength * (float)this.points.GetLength(0)), 0, this.points.GetLength(0) - 1);
-
-
-                this.points[num2, 1] = this.points[num2, 0];
-                this.points[num2, 0] = this.RopePos(i);
-
-                this.points[num2, 2] *= 0f;
-
-                usedPoints.Add(num2);
-            }
-        }
         public float LifeOfSegment(int i)
         {
             if (i > 0)
@@ -190,42 +167,112 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
             //}
             base.Destroy();
         }
-        public bool Limited()
+        public void LimitUpdate()
         {
-            bool limited = false;//绳子弯曲数量是否达到上限
-            if (this.room != this.player.room || this.room != this.spear.room) { limited = true; }//如果东西不在就让线进入崩坏状态
-            if (rope.TotalPositions > points.GetLength(0) / 3) { limited = true; }//如果转折数量大于可承受范围就让其进入崩坏状态
+            if (limited) return;
 
-            return limited;
+            //如果玩家不在就让线变成极限状态
+            if (player == null || player.room != room)
+            {
+                limited = true;
+                return;
+            }
+
+            //如果矛不在就进入线的极限状态
+            if (spear == null || spear.room != room)
+            {
+                limited = true;
+                return;
+            }
+
+            //如果线太多圈就开始断
+            if (rope.TotalPositions > points.GetLength(0) / 3)
+            {
+                limited = true;
+                return;//如果转折数量大于可承受范围就让其进入崩坏状态
+            }
+
+            //如果上面的矛没有连接线
+            if (!spear.rope().IsRopeSpear)
+            {
+                limited = true;
+                return ;
+            }
+
+            //如果矛上有其他线
+            if (spear.rope().rope != this)
+            {
+                limited = true;
+                return;
+            }
+
+        }
+
+        /// <summary>
+        /// 对其显示的线和计算出的弯折顶点
+        /// </summary>
+        public void AlignPoints()
+        {
+            usedPoints = new List<int>();
+
+            if (this.rope.TotalPositions < 1)
+            {
+                return;
+            }
+            float totalLength = this.rope.totalLength;//线段总长
+            float distance = 0f;//用于计算总距离
+            for (int i = 0; i < this.rope.TotalPositions; i++)
+            {
+                if (i > 0)
+                {
+                    distance += Vector2.Distance(this.RopePos(i - 1), this.RopePos(i));//上个点和这个点的距离
+                }
+                int num2 = Custom.IntClamp((int)(distance / totalLength * (float)this.points.GetLength(0)), 0, this.points.GetLength(0) - 1);
+
+
+                this.points[num2, 1] = this.points[num2, 0];
+                this.points[num2, 0] = this.RopePos(i);
+
+                this.points[num2, 2] *= 0f;
+
+                usedPoints.Add(num2);
+            }
         }
 
         public override void Update(bool eu)
         {
             bool brocked = true;//需不需要让绳子完全消失
-            bool limited = Limited();//线是否到达极限
 
-            if (!limited) { rope.Update(playerPos, spear.firstChunk.pos); }//如果没有溃散就更新用于计算弯折的线条和同步point和绳子的位置
-            AlignPoints();
+
+            LimitUpdate();//是否断裂更新
+
+            if (!limited) rope.Update(playerPos, spear.firstChunk.pos);//如果没有溃散就更新用于计算弯折的线条和同步point和绳子的位置
+
+            if (!limited) AlignPoints();//没断裂就对其线段
+
             //debugRope.Update();//用来debug的时候显示的东西
-
 
 
             if (limited) points[0, 3].x = 0;//让超过极限的绳子脱离玩家的身体
 
+
             //让开头和结尾的绳子对其玩家和矛
             points[0, 0] = rope.A;
             points[points.GetLength(0) - 1, 0] = spearEndPos;
+
             for (int i = 0; i < points.GetLength(0); i++)
             {
                 //如果玩家不在这个房间就急速消散
-                if (player == null || spear == null || player.room != spear.room || player.room != room)
+                if (player == null || spear == null || player.room != room || spear.room != room)
                 {
                     points[i, 3].x *= 0.9f;
                     limited = true;
                 }
             }
 
+            //让线聚拢
             if (!limited) GatherTogether();
+
 
             for (int i = 0; i < points.GetLength(0); i++)
             {
@@ -299,26 +346,20 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
         public override void DrawSprites(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
         {
             Vector2 startPos =Vector2.Lerp(points[0, 1], points[0, 0], timeStacker);
-            //if (LifeOfSegment(0) > 0f && player != null)
-            //{
-            //    startPos = Vector2.Lerp((player.graphicsModule as PlayerGraphics).tail[0].lastPos, (player.graphicsModule as PlayerGraphics).tail[0].pos, timeStacker);
-            //}
-            //else
-            //{
 
-            //}
             float num = 0f;
-            float b = 1f;
             bool flag = rCam.room.Darkness(pos) > 0.2f;
 
             for (int i = 0; i < points.GetLength(0); i++)
             {
                 float f = Mathf.InverseLerp(0f, points.GetLength(0) - 1, i);
+
                 float num2 = LifeOfSegment(i);
                 if (i < points.GetLength(0) - 1)
                 {
                     num2 = Mathf.Min(num2, LifeOfSegment(i + 1));
                 }
+
                 float num3 = 0.5f * Mathf.InverseLerp(0f, 0.3f, num2);
                 Vector2 vector2 = Vector2.Lerp(points[i, 1], points[i, 0], timeStacker);
                 if (i == 0 && LifeOfSegment(0) > 0f)
@@ -328,7 +369,7 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
                 else if (i == points.GetLength(0) - 1 && LifeOfSegment(i) > 0f)
                 {
                     Vector2 rotation = spear.rotation;
-                    rotation.Scale(new Vector2(25f, 25f));
+                    rotation.Scale(new Vector2(25f, 25f)*(spear.mode == Spear.Mode.StuckInCreature ?2:1));
                     vector2 = Vector2.Lerp(spear.bodyChunks[0].lastPos - rotation, spear.bodyChunks[0].pos - rotation, timeStacker);
                 }
                 Vector2 a = Custom.PerpendicularVector(vector2, startPos);
@@ -350,17 +391,13 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
                 }
                 startPos = vector2;
                 num = num3;
-                b = num2;
             }
 
-            //for (int k = 0; k < 4; k++)
-            //{
-            //    (sLeaser.sprites[0] as TriangleMesh).verticeColors[k] = Color.Lerp(fogColor, blackColor, LifeOfSegment(0));
-            //}
             if (slatedForDeletetion || room != rCam.room)
             {
                 sLeaser.CleanSpritesAndRemove();
             }
+
         }
         public override void ApplyPalette(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, RoomPalette palette)
         {

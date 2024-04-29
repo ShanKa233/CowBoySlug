@@ -365,7 +365,7 @@ namespace CowBoySlug
             Vector2 dir = rotationNow;
             Vector2 per = Custom.PerpendicularVector(dir);
 
-            Hat.DrawHatDecoratePice(this.shape, sLeaser.sprites[2] as TriangleMesh,vector,per,dir,null);
+            //Hat.DrawHatDecoratePice(this.shape, sLeaser.sprites[2] as TriangleMesh,vector,per,dir,null);
 
 
             if (slatedForDeletetion || room != rCam.room)

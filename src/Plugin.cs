@@ -45,7 +45,7 @@ namespace CowBoySLug
             On.RainWorld.OnModsInit += Extras.WrapInit(LoadResources);
             On.RainWorld.OnModsInit += RainWorld_OnModsInit;
 
-            //Content.Register(new CowBoyHatFisob());
+            Content.Register(new CowBoyHatFisob());
 
             //加载GhostPlayer扩展
             typeof(GhostPlayerImports).ModInterop();
@@ -57,7 +57,7 @@ namespace CowBoySLug
 
             RopeSpear.Hook();
             
-            //Hat.Hook();
+            Hat.Hook();
 
             RopeMaster.Hook();
 
@@ -65,7 +65,7 @@ namespace CowBoySLug
             PlayerGraphicsHook.Hook();
 
 
-            Hands.Hook();
+            //Hands.Hook();
 
 
             SewHook.Hook();
