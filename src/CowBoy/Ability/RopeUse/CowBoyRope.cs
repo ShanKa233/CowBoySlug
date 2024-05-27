@@ -39,7 +39,7 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
 
 
             rope = new Rope(room, playerPos, spearEndPos, 3);
-            debugRope = new Rope.RopeDebugVisualizer(rope);
+            //debugRope = new Rope.RopeDebugVisualizer(rope);
             for (int i = 0; i < points.GetLength(0); i++)
             {
                 points[i, 0] = playerPos + Custom.RNV();//pos
@@ -69,7 +69,7 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
         public List<int> usedPoints;//用来记录哪些点位已经使用
         public float MaxLength = 900;//最大长度
 
-        public Rope.RopeDebugVisualizer debugRope;
+        //public Rope.RopeDebugVisualizer debugRope;
 
 
         public float loose = 0;//松紧度0是完全没有弹力1是百分之五十左右的弹力

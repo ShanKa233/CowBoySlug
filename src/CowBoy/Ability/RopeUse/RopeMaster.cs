@@ -185,7 +185,7 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
             {
                 //爬墙
                 int canGrab = 0;
-
+                player.HandData().Pulling(10, umbilical, player.FreeHand());
                 for (int i = 0; i < 10; i++)
                 {
                     if (player.input[i].jmp || player.input[0].jmp)
@@ -195,6 +195,8 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
                 }
                 if (range > 10 && player.gravity > 0 && canGrab > 2)
                 {
+
+                    player.circuitSwimResistance *= Mathf.InverseLerp(player.mainBodyChunk.vel.magnitude + player.bodyChunks[1].vel.magnitude, 15f, 9f);
                     player.bodyChunks[1].vel += playerToRopeDir * 3f;
                     return true;
                 }
@@ -215,6 +217,7 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
             //如果插到了生物就拖动他-待改
             else if (spear.mode == Spear.Mode.StuckInCreature)
             {
+                player.HandData().Pulling(10, umbilical, player.FreeHand());
                 if (player.wantToPickUp > 0)
                 {
                     //玩家受到拉力
@@ -235,6 +238,7 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
             //对拿着这个矛的生物操作
             else if (spear.grabbedBy.Count>0&& spear.grabbedBy[0]!=null&&spear.grabbedBy[0].grabber != player && spear.grabbedBy[0].grabber != null)
             {
+                player.HandData().Pulling(10, umbilical, player.FreeHand());
                 spear.grabbedBy[0].Release();
                 //UnityEngine.Debug.Log("被拿着");
             }
@@ -297,13 +301,14 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
             //回收矛模式
             else if (flagFastBackAction && range > 50)
             {
-
                 //拉绳子手部动作
-                if (Hands.module.TryGetValue(player, out var handModules))
-                {
-                    float[] t = { 0.35f, 0.89f, 0.72f, 0.72f };
-                    handModules.move(spear.firstChunk.pos, umbilical.points[4, 0], 5, 15f, umbilical, t, false);
-                }
+                player.HandData().Pulling(15, umbilical, player.FreeHand());
+                
+                //if (Hands.module.TryGetValue(player, out var handModules))
+                //{
+                //    float[] t = { 0.35f, 0.89f, 0.72f, 0.72f };
+                //    handModules.move(spear.firstChunk.pos, umbilical.points[4, 0], 5, 15f, umbilical, t, false);
+                //}
 
                 umbilical.loose = 1;
 
@@ -339,15 +344,16 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
 
 
                 //控制手和绳子
-                if (Hands.module.TryGetValue(player, out var handModules))
-                {
-                    float[] t = { .9f, -0.04f, .78f, 1.31f };
-                    handModules.move(umbilical.points[0, 0], player.mainBodyChunk.pos + spearToEndPointDir * 25, 20, 15f, umbilical, t, true);
-                }
-                for (int i = 0; i < umbilical.points.GetLength(0) / 3; i++)
-                {
-                    umbilical.points[i, 2] += spearToEndPointDir * 30;
-                }
+                player.HandData().Pulling(20, umbilical, player.FreeHand());
+                //if (Hands.module.TryGetValue(player, out var handModules))
+                //{
+                //    float[] t = { .9f, -0.04f, .78f, 1.31f };
+                //    handModules.move(umbilical.points[0, 0], player.mainBodyChunk.pos + spearToEndPointDir * 25, 20, 15f, umbilical, t, true);
+                //}
+                //for (int i = 0; i < umbilical.points.GetLength(0) / 3; i++)
+                //{
+                //    umbilical.points[i, 2] += spearToEndPointDir * 30;
+                //}
 
 
 
@@ -367,6 +373,7 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
             {
                 spear.rope().cantRotationCount += 3;
                 //控制手和绳子
+                player.HandData().Pulling(10, umbilical, player.FreeHand());
                 //if (Hands.module.TryGetValue(player, out var handModules))
                 //{
                 //    float[] t = { .9f, -0.04f, .72f, .72f };

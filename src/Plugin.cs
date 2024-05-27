@@ -65,7 +65,7 @@ namespace CowBoySLug
             PlayerGraphicsHook.Hook();
 
 
-            //Hands.Hook();
+            Hands.Hook();
 
 
             SewHook.Hook();

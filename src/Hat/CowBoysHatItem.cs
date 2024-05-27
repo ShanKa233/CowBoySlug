@@ -154,8 +154,25 @@ namespace CowBoySlug
         }
     }
 
+
+    sealed class CowBoyHatProperties : ItemProperties
+    {
+        public override void Throwable(Player player, ref bool throwable)
+        => throwable = true;
+        public override void Grabability(Player player, ref Player.ObjectGrabability grabability)
+        {
+            // The shotStart should only be able to grab one Crate at a time
+            grabability = Player.ObjectGrabability.OneHand;
+
+        }
+    }
+
     public class CowBoyHat : PhysicalObject, IDrawable
     {
+
+        //佩戴者
+        public PhysicalObject wearers;
+
         int decorateIndex;
         CowBoyHatAbstract Abst { get; }
 
@@ -168,10 +185,8 @@ namespace CowBoySlug
         public Vector2 rotation;
         public Vector2 lastRotation=Vector2.zero;
 
-        // Token: 0x04000C5F RID: 3167
-        public float rotationSpeed;
 
-        // Token: 0x04000C60 RID: 3168
+        public float rotationSpeed;
         public Vector2? setRotation;    
 
         public CowBoyHat(CowBoyHatAbstract abstr) : base(abstr)
@@ -240,7 +255,22 @@ namespace CowBoySlug
 
         }
 
+        //是否被戴着
+        public bool Weared => wearers != null;
+        public void WearersUpdate()
+        {
+            //如果帽子有佩戴者而且佩戴者不存在就不再记录佩戴者
+            if (wearers!=null&&wearers.slatedForDeletetion)
+            {
+                wearers=null;
+            }
+            //如果佩戴者还被记录着就执行下面的update
+            if (Weared)
+            {
+                firstChunk.pos = wearers.firstChunk.pos;
+            }
 
+        }
         public override void Update(bool eu)
         {
             //this.lastRotation = this.rotation;
@@ -255,6 +285,7 @@ namespace CowBoySlug
             //    num2 += this.rotationSpeed;
             //    this.rotation = Custom.DegToVec(num2);
             //}
+            if(wearers!=null)
             base.Update(eu);
         }
         public override void Collide(PhysicalObject otherObject, int myChunk, int otherChunk)
@@ -373,19 +404,6 @@ namespace CowBoySlug
         }
 
     }
-
-    sealed class CowBoyHatProperties : ItemProperties
-    {
-        public override void Throwable(Player player, ref bool throwable)
-        => throwable = true;
-        public override void Grabability(Player player, ref Player.ObjectGrabability grabability)
-        {
-            // The shotStart should only be able to grab one Crate at a time
-            grabability = Player.ObjectGrabability.OneHand;
-
-        }
-    }
-
 
    
 

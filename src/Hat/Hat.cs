@@ -17,15 +17,36 @@ namespace CowBoySlug
 
         public static void Hook()
         {
-            On.RainWorld.OnModsInit += LoadHatTextrue;
-            On.Player.ctor += PlayerHat_ctor;
-            On.Player.CanBeSwallowed += Hat_CanBeSwallowed;
+            On.RainWorld.OnModsInit += LoadHatTextrue;//读取帽子形状贴图
+            On.Player.CanBeSwallowed += Hat_CanBeSwallowed;//让帽子物品可以吞下
 
+            On.Player.Grabability += Player_Grabability;
+            //On.Player.ctor += PlayerHat_ctor;//用老的增加玩家贴图的方式来初始化绘制帽子
 
-            On.PlayerGraphics.InitiateSprites += Hat_InitiateSprites;
-            On.PlayerGraphics.AddToContainer += Hat_AddToContainer;
-            On.PlayerGraphics.DrawSprites += Hat_DrawSprites;
+            //On.PlayerGraphics.InitiateSprites += Hat_InitiateSprites;
+            //On.PlayerGraphics.AddToContainer += Hat_AddToContainer;
+            //On.PlayerGraphics.DrawSprites += Hat_DrawSprites;
 
+        }
+
+        private static Player.ObjectGrabability Player_Grabability(On.Player.orig_Grabability orig, Player self, PhysicalObject obj)
+        {
+            CowBoyHat hat = obj as CowBoyHat;
+            if (hat!=null)
+            {
+                //如果帽子被戴着而且被自己戴着,就不能拿自己的帽子
+                if (hat.wearers!=null&&hat.wearers==self) return Player.ObjectGrabability.CantGrab;
+
+                //在这个位置直接修改帽子的拿取来让他不会戴着的时候被抓
+            }
+            return orig.Invoke(self, obj);
+        }
+
+        //估计以后废案
+        private static void PlayerHat_ctor(On.Player.orig_ctor orig, Player self, AbstractCreature abstractCreature, World world)
+        {
+            orig.Invoke(self, abstractCreature, world);
+            Hat.modules.Add(self, new HatModule());
         }
 
         private static bool Hat_CanBeSwallowed(On.Player.orig_CanBeSwallowed orig, Player self, PhysicalObject testObj)
@@ -47,7 +68,10 @@ namespace CowBoySlug
             hatAtlas = Futile.atlasManager.LoadAtlas("illustrations/hatSharp");
         }
 
+
         public static FAtlas hatAtlas;
+
+
         private static void Hat_AddToContainer(On.PlayerGraphics.orig_AddToContainer orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, FContainer newContatiner)
         {
             orig.Invoke(self, sLeaser, rCam, newContatiner);
@@ -183,11 +207,8 @@ namespace CowBoySlug
                 return 0;
             }
         }
-        private static void PlayerHat_ctor(On.Player.orig_ctor orig, Player self, AbstractCreature abstractCreature, World world)
-        {
-            orig.Invoke(self, abstractCreature, world);
-            Hat.modules.Add(self, new HatModule());
-        }
+
+
 
         public static void PlacePlayerHat(Player player,HatModule hatModule)
         {
