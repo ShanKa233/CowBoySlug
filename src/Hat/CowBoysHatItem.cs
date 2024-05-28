@@ -8,12 +8,14 @@ using RWCustom;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
 using Random = UnityEngine.Random;
+using Vector2 = UnityEngine.Vector2;
 
 namespace CowBoySlug
 {
@@ -277,12 +279,21 @@ namespace CowBoySlug
                 }
 
             }
+            if (Weared && Vector2.Distance(wearers.firstChunk.pos, firstChunk.pos) > 300)
+            {
+                room.PlaySound(SoundID.Big_Spider_Spit, firstChunk);
+                wearers = null;
+            }
 
             //如果佩戴者还被记录着就执行下面的update
             if (Weared)
             {
 
-                firstChunk.pos = wearers.firstChunk.pos;
+                //firstChunk.pos = wearers.firstChunk.pos;
+                var distance = Vector2.Distance(wearers.firstChunk.pos, firstChunk.pos);
+
+                firstChunk.vel = Custom.LerpMap(distance, 1, 30, 1, 10) * Custom.DirVec(firstChunk.pos, wearers.firstChunk.pos);
+
                 this.CollideWithObjects = false;
             }
             else
@@ -317,15 +328,6 @@ namespace CowBoySlug
             {
 
                 WearHat(otherObject);
-                //if (Hat.modules.TryGetValue(otherObject as Player,out var hatModule))
-                //{
-                //    if (hatModule.haveHat)
-                //    {
-                //        Hat.PlacePlayerHat(otherObject as Player, hatModule);
-                //    }
-                //    //Hat.WearHat(this, hatModule);
-
-                //}
 
             }
         }
@@ -388,6 +390,7 @@ namespace CowBoySlug
             Abst.decorateColor = this.decorateColor;
             Abst.shape = this.shape;
         }
+
         public void AddToContainer(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, FContainer? newContainer)
         {
             newContainer ??= rCam.ReturnFContainer("Items");
@@ -397,6 +400,11 @@ namespace CowBoySlug
         }
         public void DrawSprites(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
         {
+            if (Weared)
+            {
+                WearDraw(sLeaser, rCam, timeStacker, camPos);
+                return;
+            }
 
             var rotationNow = Custom.DegToVec((Custom.VecToDeg(bodyChunks[0].Rotation)));
             for (int i = 0; i < 2; i++)
@@ -417,11 +425,8 @@ namespace CowBoySlug
                     spr.scaleY *= 0.6f;
                 }
 
-
-
             }
             lastRotation = rotationNow;
-
 
 
             sLeaser.sprites[2].color = decorateColor;
@@ -429,11 +434,111 @@ namespace CowBoySlug
             Vector2 dir = rotationNow;
             Vector2 per = Custom.PerpendicularVector(dir);
 
-            //Hat.DrawHatDecoratePice(this.shape, sLeaser.sprites[2] as TriangleMesh,vector,per,dir,null);
-
-
             if (slatedForDeletetion || room != rCam.room)
                 sLeaser.CleanSpritesAndRemove();
+        }
+
+        public float PlayerHeadInfo(Player player,float timeStacker,ref Vector2 headPosition)
+        {
+            var playerGra = player.graphicsModule as PlayerGraphics;
+
+            float num = 0.5f + 0.5f * Mathf.Sin(Mathf.Lerp(playerGra.lastBreath, playerGra.breath, timeStacker) * 3.1415927f * 2f);
+
+            Vector2 vector = Vector2.Lerp(playerGra.drawPositions[0, 1], playerGra.drawPositions[0, 0], timeStacker);
+            Vector2 vector2 = Vector2.Lerp(playerGra.drawPositions[1, 1], playerGra.drawPositions[1, 0], timeStacker);
+            headPosition = Vector2.Lerp(playerGra.head.lastPos, playerGra.head.pos, timeStacker);
+
+            if (player.aerobicLevel > 0.5f)
+            {
+                vector += Custom.DirVec(vector2, vector) * Mathf.Lerp(-1f, 1f, num) * Mathf.InverseLerp(0.5f, 1f, player.aerobicLevel) * 0.5f;
+                headPosition -= Custom.DirVec(vector2, vector) * Mathf.Lerp(-1f, 1f, num) * Mathf.Pow(Mathf.InverseLerp(0.5f, 1f, player.aerobicLevel), 1.5f) * 0.75f;
+            }
+
+            float num3 = Custom.AimFromOneVectorToAnother(Vector2.Lerp(vector2, vector, 0.5f), headPosition);
+            if (player.sleepCurlUp > 0f)
+            {
+                num3 = Mathf.Lerp(num3, 45f * Mathf.Sign(vector.x - vector2.x), player.sleepCurlUp);
+
+                headPosition.y += 1f * player.sleepCurlUp;
+                headPosition.x += Mathf.Sign(vector.x - vector2.x) * 2f * player.sleepCurlUp;
+            }
+            if (ModManager.CoopAvailable && player.bool1)
+            {
+                headPosition.y -= 1.9f;
+                num3 = Mathf.Lerp(num3, 45f * Mathf.Sign(vector.x - vector2.x), 0.7f);
+            }
+            return num3;
+        }
+        public void WearDraw(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
+        {
+            
+            var body = firstChunk;
+            Vector2 headPosition=Vector2.Lerp(firstChunk.lastPos,firstChunk.pos,timeStacker);
+            float rotation = PlayerHeadInfo(wearers as Player,timeStacker,ref headPosition);
+            headPosition -= camPos;
+            Vector2 vector = headPosition + Custom.DegToVec(rotation + FixHatRotation(wearers as Player)) * (7f);
+            //Vector2 vector = Vector2.Lerp(firstChunk.lastPos,firstChunk.pos,timeStacker)-camPos + Custom.DegToVec(rotation + FixHatRotation(wearers as Player)) * (7f);
+
+
+            for (int i = 0; i < 2; i++)
+            {
+
+                Vector2 showPos = vector;
+                Vector2 showPos2 = showPos - Custom.DegToVec(rotation + FixHatRotation(wearers as Player)) * (6 - 4);
+                if (i != 0)
+                {
+                    showPos = showPos2;
+                }
+                var spr = sLeaser.sprites[i];
+                spr.SetPosition(showPos);
+
+                spr.rotation = rotation + FixHatRotation(wearers as Player);
+                spr.scale = 6 / 10f;
+                if (i != 0)
+                {
+                    spr.scaleX *= 2.5f;
+                    spr.scaleY *= 0.6f;
+                }
+
+                spr.color = mainColor;
+
+            }
+            sLeaser.sprites[2].color = decorateColor;
+
+
+            //sLeaser.sprites[2].color = decorateColor;
+            //Vector2 dir = Custom.DegToVec(sLeaser.sprites[3].rotation + FixHatRotation(wearers as Player));
+            //Vector2 per = Custom.PerpendicularVector(dir);
+
+            //Hat.DrawHatDecoratePice(hatModule.shape, sLeaser.sprites[index + 2] as TriangleMesh, vector, per, dir,self);
+
+        }
+        public static float FixHatRotation(Player player)
+        {
+            if (player.bodyMode == Player.BodyModeIndex.Crawl)
+            {
+                if (player.mainBodyChunk.pos.x > player.bodyChunks[1].pos.x)
+                {
+                    return -70;
+                }
+                else
+                {
+                    return 70;
+                }
+
+            }
+            else if (player.bodyMode == Player.BodyModeIndex.Stand && player.input[0].x > 0)
+            {
+                return -20;
+            }
+            else if (player.bodyMode == Player.BodyModeIndex.Stand && player.input[0].x < 0)
+            {
+                return 20;
+            }
+            else
+            {
+                return 0;
+            }
         }
 
 

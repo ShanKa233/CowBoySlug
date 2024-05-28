@@ -121,6 +121,7 @@ namespace CowBoySlug
 
             self.AddToContainer(sLeaser, rCam, null);
         }
+
         private static void Hat_DrawSprites(On.PlayerGraphics.orig_DrawSprites orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
         {
             orig.Invoke(self, sLeaser, rCam, timeStacker, camPos);
