@@ -20,7 +20,8 @@ namespace CowBoySlug
             On.RainWorld.OnModsInit += LoadHatTextrue;//读取帽子形状贴图
             On.Player.CanBeSwallowed += Hat_CanBeSwallowed;//让帽子物品可以吞下
 
-            On.Player.Grabability += Player_Grabability;
+            On.Player.Grabability += Player_Grabability;//让帽子戴着的时候不会被抓到
+
             //On.Player.ctor += PlayerHat_ctor;//用老的增加玩家贴图的方式来初始化绘制帽子
 
             //On.PlayerGraphics.InitiateSprites += Hat_InitiateSprites;
@@ -207,35 +208,6 @@ namespace CowBoySlug
                 return 0;
             }
         }
-
-
-
-        public static void PlacePlayerHat(Player player,HatModule hatModule)
-        {
-            var newHat = new CowBoyHat(new CowBoyHatAbstract(player.room.world, player.abstractCreature.pos, player.room.game.GetNewID()));
-            newHat.mainColor = hatModule.mainColor;
-            newHat.decorateColor = hatModule.decorateColor;
-            newHat.shape = hatModule.shape;
-            newHat.setMainColor = true;
-
-            hatModule.haveHat = false;
-
-            newHat.PlaceInRoom(player.room);
-            newHat.room.abstractRoom.AddEntity(newHat.abstractPhysicalObject);
-        }
-        public static void WearHat(CowBoyHat cowBoyHat,HatModule hatModule)
-        {
-            hatModule.haveHat = true;
-            hatModule.shape = cowBoyHat.shape;
-            hatModule.mainColor = cowBoyHat.mainColor;
-            hatModule.decorateColor = cowBoyHat.decorateColor;
-            cowBoyHat.room.PlaySound(SoundID.Big_Spider_Spit, cowBoyHat.firstChunk);
-
-            cowBoyHat.room.abstractRoom.RemoveEntity(cowBoyHat.abstractPhysicalObject);
-            cowBoyHat.RemoveFromRoom();
-        }
-
-
 
         public static void DrawHatDecoratePice(HatType shape, TriangleMesh sprite,Vector2 vector,Vector2 per,Vector2 dir, PlayerGraphics player)
         {

@@ -1,4 +1,5 @@
-﻿using Fisobs.Core;
+﻿using CowBoySLug;
+using Fisobs.Core;
 using Fisobs.Items;
 using Fisobs.Properties;
 using Fisobs.Sandbox;
@@ -54,14 +55,14 @@ namespace CowBoySlug
 
                 setMainColor = bool.TryParse(p[4], out var seted) ? seted : false,
                 //shape = int.TryParse(p[5], out var sp) ? (HatType)sp : (HatType)UnityEngine.Random.Range(0,10),
-                shape = int.TryParse(p[5], out var sp) ? (HatType)sp :HatType.Bone,
+                shape = int.TryParse(p[5], out var sp) ? (HatType)sp : HatType.Bone,
                 mainColor = seted ? Custom.hexToColor(p[6]) : Color.gray,
                 decorateColor = seted ? Custom.hexToColor(p[7]) : Color.gray,
 
 
 
 
-        };
+            };
 
             // If this is coming from a sandbox unlock, the hue and size should depend on the data value (see CrateIcon below).
             if (unlock is SandboxUnlock u)
@@ -85,7 +86,7 @@ namespace CowBoySlug
             return properties;
         }
     }
-    
+
     sealed class CowBoyHatIcon : Icon
     {
         // In vanilla, you only have one int value to store custom data.
@@ -98,7 +99,7 @@ namespace CowBoySlug
 
         public override Color SpriteColor(int data)
         {
-            return new Color(229/255f, 136/255f, 70/255f);
+            return new Color(229 / 255f, 136 / 255f, 70 / 255f);
         }
 
         public override string SpriteName(int data)
@@ -177,17 +178,17 @@ namespace CowBoySlug
         CowBoyHatAbstract Abst { get; }
 
         public bool setMainColor = false;
-        public Color mainColor=Color.blue;
+        public Color mainColor = Color.blue;
         public Color decorateColor;
         public HatType shape;
 
 
         public Vector2 rotation;
-        public Vector2 lastRotation=Vector2.zero;
+        public Vector2 lastRotation = Vector2.zero;
 
 
         public float rotationSpeed;
-        public Vector2? setRotation;    
+        public Vector2? setRotation;
 
         public CowBoyHat(CowBoyHatAbstract abstr) : base(abstr)
         {
@@ -197,11 +198,11 @@ namespace CowBoySlug
             this.mainColor = abstr.mainColor;
             this.decorateColor = abstr.decorateColor;
 
-            if (this.shape==HatType.None)
+            if (this.shape == HatType.None)
             {
-                this.shape = abstr.shape=(HatType)Random.Range(1,40);
+                this.shape = abstr.shape = (HatType)Random.Range(1, 40);
             }
-            Debug.Log("[COWBOY]:HatSpawn:"+abstr.shape);
+            Debug.Log("[COWBOY]:HatSpawn:" + abstr.shape);
 
 
             float mass = 0.1f;
@@ -216,17 +217,17 @@ namespace CowBoySlug
             bodyChunks = new BodyChunk[positions.Count];
             for (int i = 0; i < bodyChunks.Length; i++)
             {
-                bodyChunks[i] = new BodyChunk(this, i, positions[i],6 , mass/bodyChunks.Length*1f);
+                bodyChunks[i] = new BodyChunk(this, i, positions[i], 6, mass / bodyChunks.Length * 1f);
             }
             decorateIndex = bodyChunks.Length - 1;
 
             //用于定位装饰
             bodyChunks[decorateIndex].rad = 0;
             bodyChunks[decorateIndex].mass = 0.02f;
-            bodyChunks[decorateIndex].collideWithTerrain = false;;
+            bodyChunks[decorateIndex].collideWithTerrain = false; ;
 
 
-            bodyChunkConnections = new BodyChunkConnection[bodyChunks.Length-1];
+            bodyChunkConnections = new BodyChunkConnection[bodyChunks.Length - 1];
 
             for (int i = 0; i < bodyChunkConnections.Length; i++)
             {
@@ -236,7 +237,7 @@ namespace CowBoySlug
 
 
 
-            
+
 
             //这个物体的基础属性
             airFriction = 0.85f;
@@ -248,7 +249,7 @@ namespace CowBoySlug
             bounce = 1f;
             collisionLayer = 1;
 
-            
+
             buoyancy = 0.999f;//浮力
             GoThroughFloors = true;
             canBeHitByWeapons = false;
@@ -260,14 +261,33 @@ namespace CowBoySlug
         public void WearersUpdate()
         {
             //如果帽子有佩戴者而且佩戴者不存在就不再记录佩戴者
-            if (wearers!=null&&wearers.slatedForDeletetion)
+            if (wearers != null && wearers.slatedForDeletetion)
             {
-                wearers=null;
+                wearers = null;
             }
+            if (Weared && wearers is Player)
+            {
+                var player = (Player)wearers;
+
+                bool flag2 = player.wantToPickUp > 0 && player.input[0].y < 0 && player.grasps[0] == null && player.grasps[1] == null;
+                if (flag2)
+                {
+                    room.PlaySound(SoundID.Big_Spider_Spit, firstChunk);
+                    wearers = null;
+                }
+
+            }
+
             //如果佩戴者还被记录着就执行下面的update
             if (Weared)
             {
+
                 firstChunk.pos = wearers.firstChunk.pos;
+                this.CollideWithObjects = false;
+            }
+            else
+            {
+                this.CollideWithObjects = true;
             }
 
         }
@@ -285,24 +305,37 @@ namespace CowBoySlug
             //    num2 += this.rotationSpeed;
             //    this.rotation = Custom.DegToVec(num2);
             //}
-            if(wearers!=null)
+            WearersUpdate();
+
             base.Update(eu);
         }
         public override void Collide(PhysicalObject otherObject, int myChunk, int otherChunk)
         {
             base.Collide(otherObject, myChunk, otherChunk);
 
-            if (this.firstChunk.vel.y<-1f&&otherObject is Player&&this.firstChunk.pos.y>otherObject.firstChunk.pos.y)
+            if (this.firstChunk.vel.y < -1f && otherObject is Player && this.firstChunk.pos.y > otherObject.firstChunk.pos.y)
             {
-                if (Hat.modules.TryGetValue(otherObject as Player,out var hatModule))
-                {
-                    if (hatModule.haveHat)
-                    {
-                        Hat.PlacePlayerHat(otherObject as Player, hatModule);
-                    }
-                    Hat.WearHat(this, hatModule);
-                    
-                }
+
+                WearHat(otherObject);
+                //if (Hat.modules.TryGetValue(otherObject as Player,out var hatModule))
+                //{
+                //    if (hatModule.haveHat)
+                //    {
+                //        Hat.PlacePlayerHat(otherObject as Player, hatModule);
+                //    }
+                //    //Hat.WearHat(this, hatModule);
+
+                //}
+
+            }
+        }
+
+        public void WearHat(PhysicalObject wearer)
+        {
+            if (!Weared)
+            {
+                room.PlaySound(SoundID.Big_Spider_Spit, firstChunk);
+                wearers = wearer;
             }
         }
 
@@ -316,14 +349,14 @@ namespace CowBoySlug
 
             for (int i = 0; i < bodyChunks.Length; i++)
             {
-                bodyChunks[i].HardSetPosition(center+Vector2.up);
+                bodyChunks[i].HardSetPosition(center + Vector2.up);
             }
         }
-        public  void InitiateSprites(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
+        public void InitiateSprites(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
         {
             sLeaser.sprites = new FSprite[3];
 
-            for (int i = 0; i < bodyChunks.Length+1; i++)
+            for (int i = 0; i < bodyChunks.Length + 1; i++)
                 sLeaser.sprites[i] = new FSprite("Circle20");
 
             TriangleMesh.Triangle[] tris = new TriangleMesh.Triangle[]
@@ -331,16 +364,16 @@ namespace CowBoySlug
                 new TriangleMesh.Triangle(0, 1, 2),
                 new TriangleMesh.Triangle(1, 2, 3),
             };
-            sLeaser.sprites[bodyChunks.Length]= new TriangleMesh("Futile_White",tris,true, true);
+            sLeaser.sprites[bodyChunks.Length] = new TriangleMesh("Futile_White", tris, true, true);
 
             AddToContainer(sLeaser, rCam, null);
         }
-        public  void ApplyPalette(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, RoomPalette palette)
+        public void ApplyPalette(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, RoomPalette palette)
         {
             if (!setMainColor)
             {
                 Color color = Color.Lerp(palette.blackColor, mainColor, Random.Range(0.1f, 0.4f));
-                mainColor= color;
+                mainColor = color;
                 setMainColor = true;
                 Abst.mainColor = this.mainColor;
                 Abst.setMainColor = this.setMainColor;
@@ -355,35 +388,35 @@ namespace CowBoySlug
             Abst.decorateColor = this.decorateColor;
             Abst.shape = this.shape;
         }
-        public  void AddToContainer(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, FContainer? newContainer)
+        public void AddToContainer(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, FContainer? newContainer)
         {
             newContainer ??= rCam.ReturnFContainer("Items");
 
             foreach (FSprite fsprite in sLeaser.sprites)
                 newContainer.AddChild(fsprite);
         }
-        public  void DrawSprites(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
+        public void DrawSprites(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
         {
 
             var rotationNow = Custom.DegToVec((Custom.VecToDeg(bodyChunks[0].Rotation)));
             for (int i = 0; i < 2; i++)
             {
                 Vector2 showPos = Vector2.Lerp(bodyChunks[0].lastPos, bodyChunks[0].pos, timeStacker);
-                Vector2 showPos2 = showPos - rotationNow * (this.bodyChunks[0].rad-2) ;
-                if (i!=0)
+                Vector2 showPos2 = showPos - rotationNow * (this.bodyChunks[0].rad - 2);
+                if (i != 0)
                 {
                     showPos = showPos2;
                 }
                 var spr = sLeaser.sprites[i];
-                spr.SetPosition( showPos- camPos);
-                spr.rotation = Custom.VecToDeg(rotationNow) ;
+                spr.SetPosition(showPos - camPos);
+                spr.rotation = Custom.VecToDeg(rotationNow);
                 spr.scale = bodyChunks[0].rad / 10f;
-                if (i!=0)
+                if (i != 0)
                 {
                     spr.scaleX *= 2.5f;
                     spr.scaleY *= 0.6f;
                 }
-                
+
 
 
             }
@@ -392,7 +425,7 @@ namespace CowBoySlug
 
 
             sLeaser.sprites[2].color = decorateColor;
-            Vector2 vector = Vector2.Lerp(bodyChunks[0].lastPos, bodyChunks[0].pos,timeStacker)-camPos;
+            Vector2 vector = Vector2.Lerp(bodyChunks[0].lastPos, bodyChunks[0].pos, timeStacker) - camPos;
             Vector2 dir = rotationNow;
             Vector2 per = Custom.PerpendicularVector(dir);
 
@@ -403,9 +436,10 @@ namespace CowBoySlug
                 sLeaser.CleanSpritesAndRemove();
         }
 
+
     }
 
-   
+
 
 
 

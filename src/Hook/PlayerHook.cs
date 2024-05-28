@@ -25,7 +25,7 @@ namespace CowBoySLug
             On.Player.Update += Player_Update;//
 
             
-            On.Player.GrabUpdate += Player_GrabUpdate;
+            //On.Player.GrabUpdate += Player_GrabUpdate;
             On.Player.SleepUpdate += Player_SleepUpdate;
 
         }
@@ -50,21 +50,21 @@ namespace CowBoySLug
             }
         }
 
-        private static void Player_GrabUpdate(On.Player.orig_GrabUpdate orig, Player self, bool eu)
-        {
-            orig.Invoke(self, eu);
-            if (Hat.modules.TryGetValue(self,out var hatModule))
-            {
-                bool flag = hatModule.haveHat;
-                bool flag2 = self.wantToPickUp>0&&self.input[0].y < 0&&self.grasps[0]==null&&self.grasps[1]==null;
-                if (flag&&flag2) 
-                {
-                    Hat.PlacePlayerHat(self, hatModule);
+        //private static void Player_GrabUpdate(On.Player.orig_GrabUpdate orig, Player self, bool eu)
+        //{
+        //    orig.Invoke(self, eu);
+        //    if (Hat.modules.TryGetValue(self,out var hatModule))
+        //    {
+        //        bool flag = hatModule.haveHat;
+        //        bool flag2 = self.wantToPickUp>0&&self.input[0].y < 0&&self.grasps[0]==null&&self.grasps[1]==null;
+        //        if (flag&&flag2) 
+        //        {
+        //            Hat.PlacePlayerHat(self, hatModule);
 
 
-                }
-            }
-        }
+        //        }
+        //    }
+        //}
 
         //初始化牛仔角色 
         private static void CowBoy_ctor(On.Player.orig_ctor orig, Player self, AbstractCreature abstractCreature, World world)
