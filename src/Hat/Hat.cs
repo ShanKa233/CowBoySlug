@@ -22,6 +22,8 @@ namespace CowBoySlug
 
             On.Player.Grabability += Player_Grabability;//让帽子戴着的时候不会被抓到
 
+            On.Player.ThrowObject += Player_ThrowObject;//扔帽子的时候运行的方法
+
             //On.Player.ctor += PlayerHat_ctor;//用老的增加玩家贴图的方式来初始化绘制帽子
 
             //On.PlayerGraphics.InitiateSprites += Hat_InitiateSprites;
@@ -30,26 +32,39 @@ namespace CowBoySlug
 
         }
 
+        private static void Player_ThrowObject(On.Player.orig_ThrowObject orig, Player self, int grasp, bool eu)
+        {
+            //如果扔的是帽子就改变一下帽子的飞行方向
+            CowBoyHat hat = self.grasps[grasp].grabbed as CowBoyHat;
+            if (hat != null)
+            {
+                if (self.input[0].x == 0 && self.input[0].y > 0)
+                {
+                    hat.rotation = new Vector2(self.input[0].x, 0.3f * self.input[0].y).normalized;
+
+                }
+                else
+                {
+                    hat.rotation = new Vector2(self.ThrowDirection, 0.3f * self.input[0].y).normalized;
+
+                }
+            }
+
+            orig.Invoke(self, grasp, eu);
+        }
+
         private static Player.ObjectGrabability Player_Grabability(On.Player.orig_Grabability orig, Player self, PhysicalObject obj)
         {
             CowBoyHat hat = obj as CowBoyHat;
-            if (hat!=null)
+            if (hat != null)
             {
                 //如果帽子被戴着而且被自己戴着,就不能拿自己的帽子
-                if (hat.wearers!=null&&hat.wearers==self) return Player.ObjectGrabability.CantGrab;
+                if (hat.wearers != null && hat.wearers == self) return Player.ObjectGrabability.CantGrab;
 
                 //在这个位置直接修改帽子的拿取来让他不会戴着的时候被抓
             }
             return orig.Invoke(self, obj);
         }
-
-        //估计以后废案
-        private static void PlayerHat_ctor(On.Player.orig_ctor orig, Player self, AbstractCreature abstractCreature, World world)
-        {
-            orig.Invoke(self, abstractCreature, world);
-            Hat.modules.Add(self, new HatModule());
-        }
-
         private static bool Hat_CanBeSwallowed(On.Player.orig_CanBeSwallowed orig, Player self, PhysicalObject testObj)
         {
             if (testObj is CowBoyHat)
@@ -116,8 +131,8 @@ namespace CowBoySlug
                 new TriangleMesh.Triangle(1, 2, 3),
             };
             sLeaser.sprites[index + 2] = new TriangleMesh("Futile_White", tris, false, false);
-            var triangleMash = (sLeaser.sprites[index+2] as TriangleMesh);
-            
+            var triangleMash = (sLeaser.sprites[index + 2] as TriangleMesh);
+
 
             self.AddToContainer(sLeaser, rCam, null);
         }
@@ -133,7 +148,7 @@ namespace CowBoySlug
                 {
                     sLeaser.sprites[i].alpha = 0;
                 }
-                (sLeaser.sprites[index + 2] as TriangleMesh).alpha=0;
+                (sLeaser.sprites[index + 2] as TriangleMesh).alpha = 0;
                 return;
             }
 
@@ -144,7 +159,7 @@ namespace CowBoySlug
             (sLeaser.sprites[index + 2] as TriangleMesh).alpha = 1;
 
             var body = self.player.mainBodyChunk;
-            Vector2 vector = sLeaser.sprites[3].GetPosition() + Custom.DegToVec(sLeaser.sprites[3].rotation+FixHatRotation(self)) * (7f);
+            Vector2 vector = sLeaser.sprites[3].GetPosition() + Custom.DegToVec(sLeaser.sprites[3].rotation + FixHatRotation(self)) * (7f);
 
 
             for (int i = index; i < index + 2; i++)
@@ -158,7 +173,7 @@ namespace CowBoySlug
                 }
                 var spr = sLeaser.sprites[i];
                 spr.SetPosition(showPos);
-                spr.rotation = sLeaser.sprites[3].rotation+ FixHatRotation(self);
+                spr.rotation = sLeaser.sprites[3].rotation + FixHatRotation(self);
                 spr.scale = 6 / 10f;
                 if (i != index)
                 {
@@ -173,7 +188,7 @@ namespace CowBoySlug
 
 
             //sLeaser.sprites[2].color = decorateColor;
-            Vector2 dir = Custom.DegToVec(sLeaser.sprites[3].rotation+FixHatRotation(self));
+            Vector2 dir = Custom.DegToVec(sLeaser.sprites[3].rotation + FixHatRotation(self));
             Vector2 per = Custom.PerpendicularVector(dir);
 
             //Hat.DrawHatDecoratePice(hatModule.shape, sLeaser.sprites[index + 2] as TriangleMesh, vector, per, dir,self);
@@ -210,7 +225,7 @@ namespace CowBoySlug
             }
         }
 
-        public static void DrawHatDecoratePice(HatType shape, TriangleMesh sprite,Vector2 vector,Vector2 per,Vector2 dir, PlayerGraphics player)
+        public static void DrawHatDecoratePice(HatType shape, TriangleMesh sprite, Vector2 vector, Vector2 per, Vector2 dir, PlayerGraphics player)
         {
             switch (shape)
             {
@@ -264,7 +279,7 @@ namespace CowBoySlug
                         sprite.MoveVertice(2, vector + (per * 7) + (dir * -2));
                         sprite.MoveVertice(3, vector + (per * 6) + (dir * 0));
                     }
-                    
+
                     break;
             }
         }
@@ -275,7 +290,7 @@ namespace CowBoySlug
                 return false;
             }
             var player = self.player;
-            
+
             if (player.bodyMode == Player.BodyModeIndex.Crawl)
             {
                 if (player.mainBodyChunk.pos.x > player.bodyChunks[1].pos.x)
@@ -309,8 +324,8 @@ namespace CowBoySlug
 
     public enum HatType
     {
-        None ,
-        Strap ,
+        None,
+        Strap,
         Feather,
         Bone,
         Star,
@@ -319,7 +334,7 @@ namespace CowBoySlug
         Spider,
         Love,
         Eye,
-        Moon,Bug,
+        Moon, Bug,
 
     }
 }

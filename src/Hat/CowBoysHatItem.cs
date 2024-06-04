@@ -120,8 +120,7 @@ namespace CowBoySlug
             scaleX = 1;
             scaleY = 1;
             saturation = 0.5f;
-            hue = 1f;
-
+            hue = 0.9f;
 
         }
 
@@ -161,13 +160,11 @@ namespace CowBoySlug
     sealed class CowBoyHatProperties : ItemProperties
     {
         public override void Throwable(Player player, ref bool throwable)
-        => throwable = true;
-        public override void Grabability(Player player, ref Player.ObjectGrabability grabability)
-        {
-            // The shotStart should only be able to grab one Crate at a time
-            grabability = Player.ObjectGrabability.OneHand;
+            => throwable = true;
 
-        }
+        public override void Grabability(Player player, ref Player.ObjectGrabability grabability)
+            => grabability = Player.ObjectGrabability.OneHand;
+
     }
 
     public class CowBoyHat : PhysicalObject, IDrawable
@@ -176,8 +173,14 @@ namespace CowBoySlug
         //佩戴者
         public PhysicalObject wearers;
 
-        int decorateIndex;
+        //飞行方向
+        public Vector2 rotation;
+        public Vector2 lastRotation = Vector2.zero;
+
+
+        public float minSpeed = 3;
         CowBoyHatAbstract Abst { get; }
+
 
         public bool setMainColor = false;
         public Color mainColor = Color.blue;
@@ -185,12 +188,12 @@ namespace CowBoySlug
         public HatType shape;
 
 
-        public Vector2 rotation;
-        public Vector2 lastRotation = Vector2.zero;
 
 
         public float rotationSpeed;
         public Vector2? setRotation;
+
+
 
         public CowBoyHat(CowBoyHatAbstract abstr) : base(abstr)
         {
@@ -221,7 +224,9 @@ namespace CowBoySlug
             {
                 bodyChunks[i] = new BodyChunk(this, i, positions[i], 6, mass / bodyChunks.Length * 1f);
             }
-            decorateIndex = bodyChunks.Length - 1;
+
+
+            var decorateIndex = bodyChunks.Length - 1;
 
             //用于定位装饰
             bodyChunks[decorateIndex].rad = 0;
@@ -242,7 +247,8 @@ namespace CowBoySlug
 
 
             //这个物体的基础属性
-            airFriction = 0.85f;
+            airFriction = 0.999f;
+            //airFriction = 0.85f;
             surfaceFriction = 0.02f;
             waterFriction = 0.3f;
 
@@ -292,7 +298,7 @@ namespace CowBoySlug
                 //firstChunk.pos = wearers.firstChunk.pos;
                 var distance = Vector2.Distance(wearers.firstChunk.pos, firstChunk.pos);
 
-                firstChunk.vel = Custom.LerpMap(distance, 1, 30, 1, 10) * Custom.DirVec(firstChunk.pos, wearers.firstChunk.pos);
+                firstChunk.vel = Custom.LerpMap(distance, 1, 30, 1, 25) * Custom.DirVec(firstChunk.pos, wearers.firstChunk.pos);
 
                 this.CollideWithObjects = false;
             }
@@ -304,7 +310,8 @@ namespace CowBoySlug
         }
         public override void Update(bool eu)
         {
-            //this.lastRotation = this.rotation;
+            this.lastRotation = this.rotation;
+
             //if (this.setRotation != null)
             //{
             //    this.rotation = this.setRotation.Value;
@@ -316,15 +323,39 @@ namespace CowBoySlug
             //    num2 += this.rotationSpeed;
             //    this.rotation = Custom.DegToVec(num2);
             //}
+
+
             WearersUpdate();
 
             base.Update(eu);
+
+            if (firstChunk.vel.magnitude > minSpeed&&grabbedBy.Count==0)
+            {
+                firstChunk.vel = firstChunk.vel.magnitude * rotation.normalized;
+                rotation = (rotation - new Vector2(0, g * 0.01f)).normalized;
+                //room. PlaySound(SoundID.Vulture_Jet_LOOP, firstChunk);
+            }
+            else
+            {
+                rotation = Vector2.up;
+            }
+
+
+            if (!Weared && g > 0)
+            {
+                firstChunk.vel.y *= 0.55f;
+            }
+
+        }
+        public override void TerrainImpact(int chunk, IntVector2 direction, float speed, bool firstContact)
+        {
+            base.TerrainImpact(chunk, direction, speed, firstContact);
+            if (direction.x != 0 && direction.y == 0) { rotation.x *= -1; }
         }
         public override void Collide(PhysicalObject otherObject, int myChunk, int otherChunk)
         {
             base.Collide(otherObject, myChunk, otherChunk);
-
-            if (this.firstChunk.vel.y < -1f && otherObject is Player && this.firstChunk.pos.y > otherObject.firstChunk.pos.y)
+            if (this.firstChunk.vel.y < 0 && otherObject is Player && this.firstChunk.pos.y > otherObject.firstChunk.pos.y)
             {
 
                 WearHat(otherObject);
@@ -406,7 +437,16 @@ namespace CowBoySlug
                 return;
             }
 
-            var rotationNow = Custom.DegToVec((Custom.VecToDeg(bodyChunks[0].Rotation)));
+            //var rotationNow = Custom.DegToVec((Custom.VecToDeg(bodyChunks[0].Rotation)));
+            //var rotationNow = Custom.PerpendicularVector(firstChunk.vel.normalized);
+
+            var rotationNow = Vector2.Lerp(lastRotation, rotation, timeStacker);
+            if (firstChunk.vel.magnitude > minSpeed)
+            {
+                rotationNow = Custom.PerpendicularVector(rotationNow) * (Custom.VecToDeg(rotationNow) > 0.5 ? 1 : -1);
+
+            }
+
             for (int i = 0; i < 2; i++)
             {
                 Vector2 showPos = Vector2.Lerp(bodyChunks[0].lastPos, bodyChunks[0].pos, timeStacker);
@@ -426,19 +466,19 @@ namespace CowBoySlug
                 }
 
             }
-            lastRotation = rotationNow;
+            //lastRotation = rotationNow;
 
 
             sLeaser.sprites[2].color = decorateColor;
-            Vector2 vector = Vector2.Lerp(bodyChunks[0].lastPos, bodyChunks[0].pos, timeStacker) - camPos;
-            Vector2 dir = rotationNow;
-            Vector2 per = Custom.PerpendicularVector(dir);
+            //Vector2 vector = Vector2.Lerp(bodyChunks[0].lastPos, bodyChunks[0].pos, timeStacker) - camPos;
+            //Vector2 dir = rotationNow;
+            //Vector2 per = Custom.PerpendicularVector(dir);
 
             if (slatedForDeletetion || room != rCam.room)
                 sLeaser.CleanSpritesAndRemove();
         }
 
-        public float PlayerHeadInfo(Player player,float timeStacker,ref Vector2 headPosition)
+        public float PlayerHeadInfo(Player player, float timeStacker, ref Vector2 headPosition)
         {
             var playerGra = player.graphicsModule as PlayerGraphics;
 
@@ -471,10 +511,10 @@ namespace CowBoySlug
         }
         public void WearDraw(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
         {
-            
+
             var body = firstChunk;
-            Vector2 headPosition=Vector2.Lerp(firstChunk.lastPos,firstChunk.pos,timeStacker);
-            float rotation = PlayerHeadInfo(wearers as Player,timeStacker,ref headPosition);
+            Vector2 headPosition = Vector2.Lerp(firstChunk.lastPos, firstChunk.pos, timeStacker);
+            float rotation = PlayerHeadInfo(wearers as Player, timeStacker, ref headPosition);
             headPosition -= camPos;
             Vector2 vector = headPosition + Custom.DegToVec(rotation + FixHatRotation(wearers as Player)) * (7f);
             //Vector2 vector = Vector2.Lerp(firstChunk.lastPos,firstChunk.pos,timeStacker)-camPos + Custom.DegToVec(rotation + FixHatRotation(wearers as Player)) * (7f);
