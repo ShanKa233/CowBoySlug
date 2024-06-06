@@ -55,6 +55,8 @@ namespace CowBoySLug
         {
             orig(self);
 
+            LoadHats.Hook();
+
             RopeSpear.Hook();
             
             Hat.Hook();

@@ -248,7 +248,7 @@ namespace CowBoySlug
 
             //这个物体的基础属性
             airFriction = 0.999f;
-            //airFriction = 0.85f;
+
             surfaceFriction = 0.02f;
             waterFriction = 0.3f;
 
@@ -265,6 +265,7 @@ namespace CowBoySlug
         }
 
         //是否被戴着
+        public bool Flying => firstChunk.vel.magnitude > minSpeed && grabbedBy.Count == 0&&!Weared;
         public bool Weared => wearers != null;
         public void WearersUpdate()
         {
@@ -312,24 +313,12 @@ namespace CowBoySlug
         {
             this.lastRotation = this.rotation;
 
-            //if (this.setRotation != null)
-            //{
-            //    this.rotation = this.setRotation.Value;
-            //    this.setRotation = null;
-            //}
-            //else
-            //{
-            //    float num2 = Custom.AimFromOneVectorToAnother(new Vector2(0f, 0f), this.rotation);
-            //    num2 += this.rotationSpeed;
-            //    this.rotation = Custom.DegToVec(num2);
-            //}
-
 
             WearersUpdate();
 
             base.Update(eu);
 
-            if (firstChunk.vel.magnitude > minSpeed&&grabbedBy.Count==0)
+            if (firstChunk.vel.magnitude > minSpeed && grabbedBy.Count == 0)
             {
                 firstChunk.vel = firstChunk.vel.magnitude * rotation.normalized;
                 rotation = (rotation - new Vector2(0, g * 0.01f)).normalized;
@@ -350,12 +339,16 @@ namespace CowBoySlug
         public override void TerrainImpact(int chunk, IntVector2 direction, float speed, bool firstContact)
         {
             base.TerrainImpact(chunk, direction, speed, firstContact);
-            if (direction.x != 0 && direction.y == 0) { rotation.x *= -1; }
+            if (direction.x != 0 && direction.y == 0&&Flying)
+            {
+                rotation.x *= -1;
+                room.PlaySound(SoundID.Weapon_Skid,firstChunk,false,0.4f,0.4f);
+            }
         }
         public override void Collide(PhysicalObject otherObject, int myChunk, int otherChunk)
         {
             base.Collide(otherObject, myChunk, otherChunk);
-            if (this.firstChunk.vel.y < 0 && otherObject is Player && this.firstChunk.pos.y > otherObject.firstChunk.pos.y)
+            if (otherObject is Player&&this.firstChunk.vel.y- otherObject.firstChunk.vel.y < 0  && this.firstChunk.pos.y > otherObject.firstChunk.pos.y&&otherChunk==0)
             {
 
                 WearHat(otherObject);
@@ -405,7 +398,8 @@ namespace CowBoySlug
         {
             if (!setMainColor)
             {
-                Color color = Color.Lerp(palette.blackColor, mainColor, Random.Range(0.1f, 0.4f));
+                Color color = Color.Lerp(palette.blackColor, palette.skyColor, Random.Range(0.01f, 0.2f));
+                //Color color = ;
                 mainColor = color;
                 setMainColor = true;
                 Abst.mainColor = this.mainColor;
