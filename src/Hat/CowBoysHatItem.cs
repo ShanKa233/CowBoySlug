@@ -56,8 +56,10 @@ namespace CowBoySlug
                 scaleY = float.TryParse(p[3], out var y) ? y : 1,
 
                 setMainColor = bool.TryParse(p[4], out var seted) ? seted : false,
-                //shape = int.TryParse(p[5], out var sp) ? (HatType)sp : (HatType)UnityEngine.Random.Range(0,10),
-                shape = int.TryParse(p[5], out var sp) ? (HatType)sp : HatType.Bone,
+                //shapeId = int.TryParse(p[5], out var sp) ? (HatType)sp : (HatType)UnityEngine.Random.Range(0,10),
+
+                shapeId = p[5],
+
                 mainColor = seted ? Custom.hexToColor(p[6]) : Color.gray,
                 decorateColor = seted ? Custom.hexToColor(p[7]) : Color.gray,
 
@@ -66,7 +68,6 @@ namespace CowBoySlug
 
             };
 
-            // If this is coming from a sandbox unlock, the hue and size should depend on the data value (see CrateIcon below).
             if (unlock is SandboxUnlock u)
             {
                 result.hue = u.Data / 1000f;
@@ -77,8 +78,11 @@ namespace CowBoySlug
                     result.scaleY += 0.2f;
                 }
             }
+
             return result;
         }
+
+
         private static readonly CowBoyHatProperties properties = new();
 
         public override ItemProperties Properties(PhysicalObject forObject)
@@ -139,7 +143,8 @@ namespace CowBoySlug
         public bool setMainColor;
         public Color mainColor;
         public Color decorateColor;
-        public HatType shape;
+
+        public string shapeId;
 
 
 
@@ -152,7 +157,7 @@ namespace CowBoySlug
 
 
 
-            return this.SaveToString($"{hue};{saturation};{scaleX};{scaleY};{setMainColor};{(int)shape};{color1};{color2}");
+            return this.SaveToString($"{hue};{saturation};{scaleX};{scaleY};{setMainColor};{(int)shapeId};{color1};{color2}");
         }
     }
 
@@ -185,7 +190,10 @@ namespace CowBoySlug
         public bool setMainColor = false;
         public Color mainColor = Color.blue;
         public Color decorateColor;
-        public HatType shape;
+
+        public string shapeId;
+
+        //public HatType shapeId;
 
 
 
@@ -199,15 +207,19 @@ namespace CowBoySlug
         {
             Abst = abstr;
             this.setMainColor = abstr.setMainColor;
-            this.shape = abstr.shape;
+
+            this.shapeId = abstr.shapeId;
+            //this.shapeId = abstr.shapeId;
+            //this.shapeId = abstr.shapeId;
+
             this.mainColor = abstr.mainColor;
             this.decorateColor = abstr.decorateColor;
 
             if (this.shape == HatType.None)
             {
-                this.shape = abstr.shape = (HatType)Random.Range(1, 40);
+                this.shape = abstr.shapeId = (HatType)Random.Range(1, 40);
             }
-            Debug.Log("[COWBOY]:HatSpawn:" + abstr.shape);
+            Debug.Log("[COWBOY]:HatSpawn:" + abstr.shapeId);
 
 
             float mass = 0.1f;
@@ -322,7 +334,6 @@ namespace CowBoySlug
             {
                 firstChunk.vel = firstChunk.vel.magnitude * rotation.normalized;
                 rotation = (rotation - new Vector2(0, g * 0.01f)).normalized;
-                //room. PlaySound(SoundID.Vulture_Jet_LOOP, firstChunk);
             }
             else
             {
@@ -404,7 +415,7 @@ namespace CowBoySlug
                 setMainColor = true;
                 Abst.mainColor = this.mainColor;
                 Abst.setMainColor = this.setMainColor;
-                Abst.shape = this.shape;
+                Abst.shapeId = this.shape;
             }
             foreach (var sprite in sLeaser.sprites)
                 sprite.color = mainColor;
@@ -413,7 +424,7 @@ namespace CowBoySlug
             Abst.setMainColor = this.setMainColor;
             Abst.mainColor = this.mainColor;
             Abst.decorateColor = this.decorateColor;
-            Abst.shape = this.shape;
+            Abst.shapeId = this.shape;
         }
 
         public void AddToContainer(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, FContainer? newContainer)
@@ -460,9 +471,6 @@ namespace CowBoySlug
                 }
 
             }
-            //lastRotation = rotationNow;
-
-
             sLeaser.sprites[2].color = decorateColor;
             //Vector2 vector = Vector2.Lerp(bodyChunks[0].lastPos, bodyChunks[0].pos, timeStacker) - camPos;
             //Vector2 dir = rotationNow;
@@ -511,8 +519,6 @@ namespace CowBoySlug
             float rotation = PlayerHeadInfo(wearers as Player, timeStacker, ref headPosition);
             headPosition -= camPos;
             Vector2 vector = headPosition + Custom.DegToVec(rotation + FixHatRotation(wearers as Player)) * (7f);
-            //Vector2 vector = Vector2.Lerp(firstChunk.lastPos,firstChunk.pos,timeStacker)-camPos + Custom.DegToVec(rotation + FixHatRotation(wearers as Player)) * (7f);
-
 
             for (int i = 0; i < 2; i++)
             {
@@ -544,7 +550,7 @@ namespace CowBoySlug
             //Vector2 dir = Custom.DegToVec(sLeaser.sprites[3].rotation + FixHatRotation(wearers as Player));
             //Vector2 per = Custom.PerpendicularVector(dir);
 
-            //Hat.DrawHatDecoratePice(hatModule.shape, sLeaser.sprites[index + 2] as TriangleMesh, vector, per, dir,self);
+            //Hat.DrawHatDecoratePice(hatModule.shapeId, sLeaser.sprites[index + 2] as TriangleMesh, vector, per, dir,self);
 
         }
         public static float FixHatRotation(Player player)

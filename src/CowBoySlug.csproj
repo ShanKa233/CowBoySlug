@@ -6,6 +6,10 @@
     </PropertyGroup>
     
     <ItemGroup>
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    </ItemGroup>
+    
+    <ItemGroup>
         <Reference Include="..\lib\BepInEx.dll">
           <Private>false</Private>
         </Reference>
@@ -51,6 +55,7 @@
       <Reference Include="HOOKS-Assembly-CSharp">
         <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Rain World\BepInEx\plugins\HOOKS-Assembly-CSharp.dll</HintPath>
       </Reference>
+      <Reference Include="System.Web.Extensions" />
       <Reference Include="Unity.Mathematics">
         <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Rain World\RainWorld_Data\Managed\Unity.Mathematics.dll</HintPath>
       </Reference>

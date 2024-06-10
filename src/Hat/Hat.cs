@@ -191,7 +191,7 @@ namespace CowBoySlug
             Vector2 dir = Custom.DegToVec(sLeaser.sprites[3].rotation + FixHatRotation(self));
             Vector2 per = Custom.PerpendicularVector(dir);
 
-            //Hat.DrawHatDecoratePice(hatModule.shape, sLeaser.sprites[index + 2] as TriangleMesh, vector, per, dir,self);
+            //Hat.DrawHatDecoratePice(hatModule.shapeId, sLeaser.sprites[index + 2] as TriangleMesh, vector, per, dir,self);
 
         }
 
