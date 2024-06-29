@@ -18,11 +18,11 @@ namespace CowBoySlug
         public string sprite_name { get; set; }
 
         //附加方式有贴纸,飘带(stiker)
-        public string addition_type { get; set; }
+        //public string addition_type { get; set; }
 
 
         //戴上后贴图会不会归位
-        public bool centerlock { get; set; }
+        //public bool centerlock { get; set; }
         public override string ToString() => String.Format("\tid:{0},\tsprite_name:{1}", id, sprite_name);
     }
 
@@ -62,6 +62,18 @@ namespace CowBoySlug
                 LoadInDirectory(dir, rootPath);
             }
 
+            try
+            {
+                foreach (var png in info.GetFiles("*.png"))
+                {
+                    Futile.atlasManager.LoadImage(cowBoyHatFolderName + Path.DirectorySeparatorChar + png.Name.Replace(".png", ""));
+                }
+            }
+            catch (Exception)
+            {
+                Debug.LogError("Can'tFindHatPng");
+            }
+
             foreach (var file in info.GetFiles("*.json"))
             {
 
@@ -71,15 +83,14 @@ namespace CowBoySlug
                 var hat = JsonConvert.DeserializeObject<HatData>(JSONstring);
 
 
-                if (hat.id != null&&hat.sprite_name!=null)
+                if (hat.id != null && hat.sprite_name != null)
                 {
-
-                    if (hat.addition_type == null) hat.addition_type = "stiker";
+                    //if (hat.addition_type == null) hat.addition_type = "stiker";
 
                     HatData.HatsDictionary.Add(hat.id, hat);
+                    UnityEngine.Debug.Log("[cowboyhat]" + hat);
                 }
 
-                UnityEngine.Debug.Log("[cowboyhat]" + hat);
             }
 
 

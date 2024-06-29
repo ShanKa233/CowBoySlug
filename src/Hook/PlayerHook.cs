@@ -26,28 +26,7 @@ namespace CowBoySLug
 
             
             //On.Player.GrabUpdate += Player_GrabUpdate;
-            On.Player.SleepUpdate += Player_SleepUpdate;
-
-        }
-
-        private static void Player_SleepUpdate(On.Player.orig_SleepUpdate orig, Player self)
-        {
-            orig.Invoke(self);
-            if (Hat.modules.TryGetValue(self, out var hatModule))
-            {
-                if ((hatModule.haveHat&&self.readyForWin&& self.touchedNoInputCounter > (ModManager.MMF ? 40 : 20))||(self.forceSleepCounter > 260))
-                {
-                    var newHat = new CowBoyHat(new CowBoyHatAbstract(self.room.world, (self).abstractCreature.pos, self.room.game.GetNewID()));
-                    newHat.mainColor = hatModule.mainColor;
-                    newHat.decorateColor = hatModule.decorateColor;
-                    newHat.shape = hatModule.shape;
-                    newHat.setMainColor = true;
-                    hatModule.haveHat = false;
-
-                    newHat.PlaceInRoom(self.room);
-                    newHat.room.abstractRoom.AddEntity(newHat.abstractPhysicalObject);
-                }
-            }
+            
         }
 
         //private static void Player_GrabUpdate(On.Player.orig_GrabUpdate orig, Player self, bool eu)

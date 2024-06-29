@@ -1,6 +1,6 @@
 {
     "id":"flower",
-    
-    "type":"A"
+    "sprite_name":"flower_hat",
+    "addition_type":"stiker"
 
 }
