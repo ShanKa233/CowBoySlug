@@ -181,6 +181,7 @@ namespace CowBoySlug
 
         //水平角度从0到2为360度
         public float levelAngle = 360;
+
         public static float RotatingLevel(float levelAngle)
         {
             while (levelAngle > 360 || levelAngle < 0)
@@ -273,8 +274,6 @@ namespace CowBoySlug
 
 
 
-
-
             //这个物体的基础属性
             airFriction = 0.999f;
 
@@ -342,6 +341,8 @@ namespace CowBoySlug
         {
             base.Update(eu);
 
+            //PlumeUpdate();
+
             RotatingDexorate(rotationSpeed);
             this.lastRotation = this.rotation;
             rotationSpeed *= 0.8f;
@@ -349,7 +350,7 @@ namespace CowBoySlug
             WearersUpdate();
 
 
-            if (firstChunk.vel.magnitude > minSpeed && grabbedBy.Count == 0&&!Weared)
+            if (firstChunk.vel.magnitude > minSpeed && grabbedBy.Count == 0 && !Weared)
             {
                 firstChunk.vel = firstChunk.vel.magnitude * rotation.normalized;
                 rotation = (rotation - new Vector2(0, g * 0.01f)).normalized;
@@ -514,37 +515,7 @@ namespace CowBoySlug
 
             }
 
-            DrawDecorate(sLeaser.sprites, sLeaser.sprites[3] as TriangleMesh, rotationNow, centerPos - camPos);
-
-            //var size = 7f;
-            //sLeaser.sprites[2].color = decorateColor;
-            //var mesh = (sLeaser.sprites[2] as TriangleMesh);
-
-            //Vector2 brim = Custom.PerpendicularVector(rotationNow) * (this.bodyChunks[0].rad) * 2f;
-            //var decoratePos = Vector2.Lerp(centerPos - brim, centerPos + brim, levelAngle >= 180 ? 2 - levelAngle / 180 : levelAngle / 180) - camPos;
-
-            //decoratePos += rotationNow * 2;
-            
-            //if (levelAngle > 180)
-            //{
-            //    mesh.MoveVertice(2, decoratePos - rotationNow * size - Custom.PerpendicularVector(rotationNow) * size);
-            //    mesh.MoveVertice(3, decoratePos - rotationNow * size + Custom.PerpendicularVector(rotationNow) * size);
-
-            //    mesh.MoveVertice(1, decoratePos + rotationNow * size + Custom.PerpendicularVector(rotationNow) * size);
-            //    mesh.MoveVertice(0, decoratePos + rotationNow * size - Custom.PerpendicularVector(rotationNow) * size);
-
-            //    sLeaser.sprites[2].MoveBehindOtherNode(sLeaser.sprites[0]);
-            //}
-            //else
-            //{
-            //    mesh.MoveVertice(0, decoratePos - rotationNow * size - Custom.PerpendicularVector(rotationNow) * size);
-            //    mesh.MoveVertice(1, decoratePos - rotationNow * size + Custom.PerpendicularVector(rotationNow) * size);
-
-            //    mesh.MoveVertice(3, decoratePos + rotationNow * size + Custom.PerpendicularVector(rotationNow) * size);
-            //    mesh.MoveVertice(2, decoratePos + rotationNow * size - Custom.PerpendicularVector(rotationNow) * size);
-
-            //    sLeaser.sprites[2].MoveInFrontOfOtherNode(sLeaser.sprites[1]);
-            //}
+            DrawDecorate(sLeaser.sprites, sLeaser.sprites[3] as TriangleMesh, rotationNow, centerPos - camPos,timeStacker);
 
             if (slatedForDeletetion || room != rCam.room)
                 sLeaser.CleanSpritesAndRemove();
@@ -611,15 +582,15 @@ namespace CowBoySlug
                 }
 
                 spr.color = mainColor;
-                DrawDecorate(sLeaser.sprites, sLeaser.sprites[3] as TriangleMesh, Custom.DegToVec(rotation + FixHatRotation(wearers as Player)).normalized,vector,levelAngle+FixHatLevelAngle(wearers as Player));
+                DrawDecorate(sLeaser.sprites, sLeaser.sprites[3] as TriangleMesh, Custom.DegToVec(rotation + FixHatRotation(wearers as Player)).normalized, vector, levelAngle + FixHatLevelAngle(wearers as Player),timeStacker);
 
             }
         }
-        public void DrawDecorate(FSprite[] sprites, TriangleMesh mesh, Vector2 rotationDir, Vector2 centerPos)
+        public void DrawDecorate(FSprite[] sprites, TriangleMesh mesh, Vector2 rotationDir, Vector2 centerPos,float timeStacker)
         {
-            DrawDecorate(sprites, mesh, rotationDir,  centerPos, levelAngle);
+            DrawDecorate(sprites, mesh, rotationDir, centerPos, levelAngle, timeStacker);
         }
-        public void DrawDecorate(FSprite[] sprites,TriangleMesh mesh,Vector2 rotationDir,Vector2 centerPos, float levelAngle)
+        public void DrawDecorate(FSprite[] sprites, TriangleMesh mesh, Vector2 rotationDir, Vector2 centerPos, float levelAngle,float timeStacker)
         {
             levelAngle = RotatingLevel(levelAngle);
             sprites[2].color = Color.Lerp(decorateColor, mainColor, 0.5f);
@@ -719,6 +690,8 @@ namespace CowBoySlug
                 return 0;
             }
         }
+
+        
 
     }
 
