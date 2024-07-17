@@ -36,6 +36,7 @@ namespace CowBoySlug
             {
                 InitHatData();
                 loaded = true;
+                //UnityEngine.Debug.Log(("帽子类型是", HatType.Strap.ToString()));
             }
         }
 

@@ -13,9 +13,6 @@
         <Reference Include="..\lib\BepInEx.dll">
           <Private>false</Private>
         </Reference>
-        <Reference Include="..\lib\Fisobs.dll">
-          <Private>false</Private>
-        </Reference>
         <Reference Include="..\lib\Mono.Cecil.dll">
           <Private>false</Private>
         </Reference>
@@ -51,6 +48,9 @@
       </Reference>
       <Reference Include="Assembly-CSharp">
         <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Rain World\BepInEx\utils\PUBLIC-Assembly-CSharp.dll</HintPath>
+      </Reference>
+      <Reference Include="Fisobs">
+        <HintPath>C:\Program Files (x86)\Steam\steamapps\workshop\content\312520\2920541687\newest\plugins\Fisobs.dll</HintPath>
       </Reference>
       <Reference Include="HOOKS-Assembly-CSharp">
         <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Rain World\BepInEx\plugins\HOOKS-Assembly-CSharp.dll</HintPath>

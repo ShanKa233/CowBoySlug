@@ -52,7 +52,9 @@ namespace CowBoySlug
                 scaleY = float.TryParse(p[3], out var y) ? y : 1,
 
                 setMainColor = bool.TryParse(p[4], out var seted) ? seted : false,
-                //shapeID = int.TryParse(p[5], out var sp) ? (HatType)sp : (HatType)UnityEngine.Random.Range(0,10),
+
+                //shapeID = int.TryParse(p[5], out var sp) ? ((HatType)sp).ToString() : p[5],
+
                 shapeID = p[5],
 
                 mainColor = seted ? Custom.hexToColor(p[6]) : Custom.HSL2RGB(Random.Range(0.01f, 0.9f), 0.5f, 0.3f),
@@ -155,6 +157,7 @@ namespace CowBoySlug
 
             //return this.SaveToString($"{hue};{saturation};{scaleX};{scaleY};{setMainColor};{(int)shapeID};{color1};{color2}");
             return this.SaveToString($"{hue};{saturation};{scaleX};{scaleY};{setMainColor};{shapeID};{color1};{color2}");
+            //return this.SaveToString($"{hue};{saturation};{scaleX};{scaleY};{setMainColor};{shapeID};{color1};{color2}");
         }
     }
 
@@ -234,7 +237,8 @@ namespace CowBoySlug
             if (this.shapeID == null)
             {
                 //this.shapeID = abstr.shapeID = "NoAdorn";
-                this.shapeID = abstr.shapeID = "flower";
+                //this.shapeID = abstr.shapeID = "flower";
+                this.shapeID = abstr.shapeID = HatData.HatsDictionary.ToArray()[Random.Range(0, HatData.HatsDictionary.Count - 1)].Value.id;
             }
 
             Debug.Log("[COWBOY]:HatSpawn:" + abstr.shapeID);
@@ -305,11 +309,15 @@ namespace CowBoySlug
             if (Weared && wearers is Player)
             {
                 var player = (Player)wearers;
-
                 bool flag2 = player.wantToPickUp > 0 && player.input[0].y < 0 && player.grasps[0] == null && player.grasps[1] == null;
                 if (flag2)
                 {
                     room.PlaySound(SoundID.Big_Spider_Spit, firstChunk);
+
+                    if (Hat.modules.TryGetValue(wearers as Player, out var abstractHatWearStick) && abstractHatWearStick != null)
+                    {
+                        abstractHatWearStick.Deactivate();
+                    }
                     wearers = null;
                 }
 
@@ -317,6 +325,10 @@ namespace CowBoySlug
             if (Weared && Vector2.Distance(wearers.firstChunk.pos, firstChunk.pos) > 300)
             {
                 room.PlaySound(SoundID.Big_Spider_Spit, firstChunk);
+                if (Hat.modules.TryGetValue(wearers as Player,out var abstractHatWearStick)&&abstractHatWearStick!=null)
+                {
+                    abstractHatWearStick.Deactivate();
+                }
                 wearers = null;
             }
 
@@ -396,6 +408,13 @@ namespace CowBoySlug
             {
                 room.PlaySound(SoundID.Big_Spider_Spit, firstChunk);
                 wearers = wearer;
+                if (wearer is Player)
+                {
+                    //AbstractHatWearStick.GetHatModule(wearer as Player).Hatlist.Add(this);
+                    Hat.modules.Add(wearer as Player, new AbstractHatWearStick(this.abstractPhysicalObject, wearer.abstractPhysicalObject as AbstractCreature));
+                    
+
+                }
             }
         }
 
@@ -515,7 +534,7 @@ namespace CowBoySlug
 
             }
 
-            DrawDecorate(sLeaser.sprites, sLeaser.sprites[3] as TriangleMesh, rotationNow, centerPos - camPos,timeStacker);
+            DrawDecorate(sLeaser.sprites, sLeaser.sprites[3] as TriangleMesh, rotationNow, centerPos - camPos, timeStacker);
 
             if (slatedForDeletetion || room != rCam.room)
                 sLeaser.CleanSpritesAndRemove();
@@ -582,15 +601,15 @@ namespace CowBoySlug
                 }
 
                 spr.color = mainColor;
-                DrawDecorate(sLeaser.sprites, sLeaser.sprites[3] as TriangleMesh, Custom.DegToVec(rotation + FixHatRotation(wearers as Player)).normalized, vector, levelAngle + FixHatLevelAngle(wearers as Player),timeStacker);
+                DrawDecorate(sLeaser.sprites, sLeaser.sprites[3] as TriangleMesh, Custom.DegToVec(rotation + FixHatRotation(wearers as Player)).normalized, vector, levelAngle + FixHatLevelAngle(wearers as Player), timeStacker);
 
             }
         }
-        public void DrawDecorate(FSprite[] sprites, TriangleMesh mesh, Vector2 rotationDir, Vector2 centerPos,float timeStacker)
+        public void DrawDecorate(FSprite[] sprites, TriangleMesh mesh, Vector2 rotationDir, Vector2 centerPos, float timeStacker)
         {
             DrawDecorate(sprites, mesh, rotationDir, centerPos, levelAngle, timeStacker);
         }
-        public void DrawDecorate(FSprite[] sprites, TriangleMesh mesh, Vector2 rotationDir, Vector2 centerPos, float levelAngle,float timeStacker)
+        public void DrawDecorate(FSprite[] sprites, TriangleMesh mesh, Vector2 rotationDir, Vector2 centerPos, float levelAngle, float timeStacker)
         {
             levelAngle = RotatingLevel(levelAngle);
             sprites[2].color = Color.Lerp(decorateColor, mainColor, 0.5f);
@@ -616,21 +635,20 @@ namespace CowBoySlug
 
             if (levelAngle >= 180)
             {
-                mesh.MoveVertice(2, decoratePos - rotationDir * size - Custom.PerpendicularVector(rotationDir) * size);
-                mesh.MoveVertice(3, decoratePos - rotationDir * size + Custom.PerpendicularVector(rotationDir) * size);
-
-                mesh.MoveVertice(1, decoratePos + rotationDir * size + Custom.PerpendicularVector(rotationDir) * size);
-                mesh.MoveVertice(0, decoratePos + rotationDir * size - Custom.PerpendicularVector(rotationDir) * size);
+                mesh.MoveVertice(2, decoratePos - rotationDir * size - per * size);
+                mesh.MoveVertice(3, decoratePos + rotationDir * size - per * size);
+                mesh.MoveVertice(0, decoratePos - rotationDir * size + per * size);
+                mesh.MoveVertice(1, decoratePos + rotationDir * size + per * size);
 
                 mesh.MoveBehindOtherNode(sprites[0]);
             }
             else
             {
-                mesh.MoveVertice(0, decoratePos - rotationDir * size - Custom.PerpendicularVector(rotationDir) * size);
-                mesh.MoveVertice(1, decoratePos - rotationDir * size + Custom.PerpendicularVector(rotationDir) * size);
+                mesh.MoveVertice(0, decoratePos - rotationDir * size - per * size);
+                mesh.MoveVertice(1, decoratePos + rotationDir * size - per * size);
+                mesh.MoveVertice(2, decoratePos - rotationDir * size + per * size);
+                mesh.MoveVertice(3, decoratePos + rotationDir * size + per * size);
 
-                mesh.MoveVertice(3, decoratePos + rotationDir * size + Custom.PerpendicularVector(rotationDir) * size);
-                mesh.MoveVertice(2, decoratePos + rotationDir * size - Custom.PerpendicularVector(rotationDir) * size);
                 mesh.MoveInFrontOfOtherNode(sprites[2]);
             }
 
@@ -691,7 +709,7 @@ namespace CowBoySlug
             }
         }
 
-        
+
 
     }
 

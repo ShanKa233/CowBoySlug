@@ -13,7 +13,7 @@ namespace CowBoySlug
 {
     public static class Hat
     {
-        public static ConditionalWeakTable<Player, HatModule> modules = new ConditionalWeakTable<Player, HatModule>();
+        public static ConditionalWeakTable<Player, AbstractHatWearStick> modules = new ConditionalWeakTable<Player, AbstractHatWearStick>();
 
         public static void Hook()
         {
@@ -24,6 +24,8 @@ namespace CowBoySlug
 
             On.Player.ThrowObject += Player_ThrowObject;//扔帽子的时候运行的方法
 
+            //On.Creature.PlaceInRoom += Creature_PlaceInRoom;
+
             //On.Player.ctor += PlayerHat_ctor;//用老的增加玩家贴图的方式来初始化绘制帽子
 
             //On.PlayerGraphics.InitiateSprites += Hat_InitiateSprites;
@@ -31,6 +33,33 @@ namespace CowBoySlug
             //On.PlayerGraphics.DrawSprites += Hat_DrawSprites;
 
         }
+
+        //private static void Creature_PlaceInRoom(On.Creature.orig_PlaceInRoom orig, Creature self, Room placeRoom)
+        //{
+        //    orig.Invoke(self,placeRoom);
+        //    if (self is Player&&AbstractHatWearStick.GetHatModule(self as Player).HaveHat)
+        //    {
+        //        var hatList = AbstractHatWearStick.GetHatModule(self as Player).Hatlist;
+        //        foreach (var hat in hatList)
+        //        {
+        //            if (hat.wearers == self)
+        //            {
+        //                //hat.PlaceInRoom(placeRoom);
+        //                UnityEngine.Debug.Log("帽子放下");
+        //                placeRoom.AddObject(hat);
+        //                for (int j = 0; j < hat.bodyChunks.Length; j++)
+        //                {
+        //                    hat.bodyChunks[j].pos = self.mainBodyChunk.pos;
+        //                    hat.bodyChunks[j].lastPos = self.mainBodyChunk.pos;
+        //                    hat.bodyChunks[j].lastLastPos = self.mainBodyChunk.pos;
+        //                    hat.bodyChunks[j].setPos = default(Vector2?);
+        //                    hat.bodyChunks[j].vel *= 0f;
+        //                }
+        //            }
+        //        }
+
+        //    }
+        //}
 
         private static void Player_ThrowObject(On.Player.orig_ThrowObject orig, Player self, int grasp, bool eu)
         {
@@ -88,112 +117,6 @@ namespace CowBoySlug
         public static FAtlas hatAtlas;
 
 
-        private static void Hat_AddToContainer(On.PlayerGraphics.orig_AddToContainer orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, FContainer newContatiner)
-        {
-            orig.Invoke(self, sLeaser, rCam, newContatiner);
-            if (!modules.TryGetValue(self.player, out var hatModule)) { return; }
-
-            var index = hatModule.hatIndex;
-
-            //防止重复执行的flag
-            bool flag = index > 0 && sLeaser.sprites.Length > index;
-            if (!flag) { return; }
-
-
-            newContatiner = rCam.ReturnFContainer("Midground");
-            for (int i = 0; i < 3; i++)
-            {
-                newContatiner.AddChild(sLeaser.sprites[index + i]);
-            }
-
-        }
-        private static void Hat_InitiateSprites(On.PlayerGraphics.orig_InitiateSprites orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
-        {
-            orig.Invoke(self, sLeaser, rCam);
-            if (!modules.TryGetValue(self.player, out var hatModule)) { return; }
-
-            //值数等于原本扩容前的身体精灵数组长度
-            var index = sLeaser.sprites.Length;
-            hatModule.hatIndex = index;
-            //给原本的身体精灵扩容
-            Array.Resize<FSprite>(ref sLeaser.sprites, sLeaser.sprites.Length + 3);
-
-            for (int i = index; i < index + 2; i++)
-            {
-                sLeaser.sprites[i] = new FSprite("Circle20");
-            }
-
-
-
-            TriangleMesh.Triangle[] tris = new TriangleMesh.Triangle[]
-            {
-                new TriangleMesh.Triangle(0, 1, 2),
-                new TriangleMesh.Triangle(1, 2, 3),
-            };
-            sLeaser.sprites[index + 2] = new TriangleMesh("Futile_White", tris, false, false);
-            var triangleMash = (sLeaser.sprites[index + 2] as TriangleMesh);
-
-
-            self.AddToContainer(sLeaser, rCam, null);
-        }
-
-        private static void Hat_DrawSprites(On.PlayerGraphics.orig_DrawSprites orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
-        {
-            orig.Invoke(self, sLeaser, rCam, timeStacker, camPos);
-            if (!modules.TryGetValue(self.player, out var hatModule)) { return; }
-            var index = hatModule.hatIndex;
-            if (!hatModule.haveHat)
-            {
-                for (int i = index; i < index + 2; i++)
-                {
-                    sLeaser.sprites[i].alpha = 0;
-                }
-                (sLeaser.sprites[index + 2] as TriangleMesh).alpha = 0;
-                return;
-            }
-
-            for (int i = hatModule.hatIndex; i < hatModule.hatIndex + 2; i++)
-            {
-                sLeaser.sprites[i].alpha = 1;
-            }
-            (sLeaser.sprites[index + 2] as TriangleMesh).alpha = 1;
-
-            var body = self.player.mainBodyChunk;
-            Vector2 vector = sLeaser.sprites[3].GetPosition() + Custom.DegToVec(sLeaser.sprites[3].rotation + FixHatRotation(self)) * (7f);
-
-
-            for (int i = index; i < index + 2; i++)
-            {
-
-                Vector2 showPos = vector;
-                Vector2 showPos2 = showPos - Custom.DegToVec(sLeaser.sprites[3].rotation + FixHatRotation(self)) * (6 - 4);
-                if (i != index)
-                {
-                    showPos = showPos2;
-                }
-                var spr = sLeaser.sprites[i];
-                spr.SetPosition(showPos);
-                spr.rotation = sLeaser.sprites[3].rotation + FixHatRotation(self);
-                spr.scale = 6 / 10f;
-                if (i != index)
-                {
-                    spr.scaleX *= 2.5f;
-                    spr.scaleY *= 0.6f;
-                }
-
-                spr.color = hatModule.mainColor;
-
-            }
-            sLeaser.sprites[index + 2].color = hatModule.decorateColor;
-
-
-            //sLeaser.sprites[2].color = decorateColor;
-            Vector2 dir = Custom.DegToVec(sLeaser.sprites[3].rotation + FixHatRotation(self));
-            Vector2 per = Custom.PerpendicularVector(dir);
-
-            //Hat.DrawHatDecoratePice(hatModule.shapeID, sLeaser.sprites[index + 2] as TriangleMesh, vector, per, dir,self);
-
-        }
 
 
         public static float FixHatRotation(PlayerGraphics self)
@@ -306,20 +229,29 @@ namespace CowBoySlug
         }
     }
 
-    public class HatModule
+    public class AbstractHatWearStick : AbstractPhysicalObject.AbstractObjectStick
     {
-        public int hatIndex = 0;
+        public AbstractPhysicalObject AbsHat => this.A;
+        public AbstractPhysicalObject Wearer => this.B;
 
-        public Color mainColor = Color.black;
-        public Color decorateColor = Color.black;
-        public HatType shape = HatType.Strap;
+        AbstractCreature wearer;
+        AbstractPhysicalObject hat;
 
-        public bool haveHat = false;
-        public HatModule()
+        public List<CowBoyHat> Hatlist = new List<CowBoyHat>();
+
+        public AbstractHatWearStick(AbstractPhysicalObject hat, AbstractCreature wearer) : base(hat, wearer)
         {
-
+            this.hat = hat;
+            this.wearer = wearer;
 
         }
+
+        public bool HaveHat => Hatlist.Count > 0;
+
+        //public static AbstractHatWearStick GetHatModule(Player player) => Hat.modules.GetValue(player, (p) => new AbstractHatWearStick());
+
+        //public static AbstractHatWearStick GetHatModule(Player player) => Hat.modules.GetValue(player, (p) => new AbstractHatWearStick());
+
     }
 
     public enum HatType
