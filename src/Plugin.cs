@@ -159,3 +159,4 @@ namespace CowBoySLug
         public byte type=0;
     }
 }
+
