@@ -6,27 +6,24 @@ using System.Text;
 using System.Threading.Tasks;
 using CowBoySlug;
 using CowBoySLug;
+using CowBoySlug.CowBoy.Ability.RopeUse;
+using CowBoySlug.CowBoySlugMod;
 using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
 using RWCustom;
-using CowBoySlug.CowBoy.Ability.RopeUse;
-using CowBoySlug.CowBoySlugMod;
 
 namespace CowBoySLug
 {
     internal class PlayerHook
     {
-
         //public static ConditionalWeakTable<Player, CowBoyModule> cowboyModules = new ConditionalWeakTable<Player, CowBoyModule>();
         public static void Hook()
         {
             On.Player.ctor += CowBoy_ctor;
 
-            On.Player.Update += Player_Update;//
+            On.Player.Update += Player_Update; //
 
-            
             //On.Player.GrabUpdate += Player_GrabUpdate;
-            
         }
 
         //private static void Player_GrabUpdate(On.Player.orig_GrabUpdate orig, Player self, bool eu)
@@ -36,7 +33,7 @@ namespace CowBoySLug
         //    {
         //        bool flag = hatModule.haveHat;
         //        bool flag2 = self.wantToPickUp>0&&self.input[0].y < 0&&self.grasps[0]==null&&self.grasps[1]==null;
-        //        if (flag&&flag2) 
+        //        if (flag&&flag2)
         //        {
         //            Hat.PlacePlayerHat(self, hatModule);
 
@@ -45,14 +42,21 @@ namespace CowBoySLug
         //    }
         //}
 
-        //初始化牛仔角色 
-        private static void CowBoy_ctor(On.Player.orig_ctor orig, Player self, AbstractCreature abstractCreature, World world)
+        //初始化牛仔角色
+        private static void CowBoy_ctor(
+            On.Player.orig_ctor orig,
+            Player self,
+            AbstractCreature abstractCreature,
+            World world
+        )
         {
-           
             orig.Invoke(self, abstractCreature, world);
 
             //特殊饱腹度系统相关
-            if (Plugin.menu.foodMod.Value && self.room.world.game.session.characterStats.name == CowBoy.Name)
+            if (
+                Plugin.menu.foodMod.Value
+                && self.room.world.game.session.characterStats.name == CowBoy.Name
+            )
             {
                 if (self.PlaceKarmaFlower)
                 {
@@ -67,9 +71,9 @@ namespace CowBoySLug
             {
                 self.slugcatStats.foodToHibernate = self.slugcatStats.maxFood;
             }
-
         }
-        static private void Player_Update(On.Player.orig_Update orig, Player self, bool eu)
+
+        private static void Player_Update(On.Player.orig_Update orig, Player self, bool eu)
         {
             orig.Invoke(self, eu);
 
@@ -77,15 +81,12 @@ namespace CowBoySLug
             {
                 cowBoyModule.Update();
 
-                if (Plugin.menu.foodMod.Value&& self.room.world.game.session.characterStats.name==CowBoy.Name)cowBoyModule.UseFood();
-
+                if (
+                    Plugin.menu.foodMod.Value
+                    && self.room.world.game.session.characterStats.name == CowBoy.Name
+                )
+                    cowBoyModule.UseFood();
             }
-
         }
-
-
-
-
-
     }
 }

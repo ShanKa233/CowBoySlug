@@ -1,13 +1,6 @@
-﻿using BepInEx.Configuration;
-using CowBoySLug;
-using MonoMod;
+﻿using CowBoySLug;
 using RWCustom;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace CowBoySlug.CowBoy.Ability.RopeUse
