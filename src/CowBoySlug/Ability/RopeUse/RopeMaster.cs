@@ -54,7 +54,7 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
                             player.firstChunk,
                             false,
                             0.5f,
-                            0.2f,
+                            0.2f
                         );
 
                         for (int n = 2; n > 0; n--)
