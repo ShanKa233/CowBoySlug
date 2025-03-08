@@ -337,37 +337,69 @@ namespace CowBoySlug
                     && player.grasps[1] == null;
                 if (flag2)
                 {
-                    room.PlaySound(SoundID.Big_Spider_Spit, firstChunk);
-
-                    if (Hat.TryGetHat(player, out var abstractHatWearStick) && abstractHatWearStick != null)
-                    {
-                        abstractHatWearStick.Deactivate(); // 取消佩戴
-                        Hat.RemoveHat(player);
-                    }
-                    
-                    // 从玩家的帽子列表中移除
                     var exPlayer = player.GetCowBoyData();
-                    exPlayer.UnstackHat(this);
                     
-                    wearers = null; // 清空佩戴者
+                    // 只取下列表中最后一个帽子（即索引最大的帽子）
+                    if (exPlayer.hatList.Count > 0)
+                    {
+                        // 获取最后一个帽子
+                        CowBoyHat lastHat = exPlayer.hatList[exPlayer.hatList.Count - 1];
+                        
+                        // 如果当前帽子不是最后一个帽子，则不取下
+                        if (lastHat != this)
+                        {
+                            return;
+                        }
+                        
+                        // 如果是最后一个帽子，则取下
+                        room.PlaySound(SoundID.Big_Spider_Spit, firstChunk);
+                        
+                        if (Hat.TryGetHat(player, out var abstractHatWearStick) && abstractHatWearStick != null)
+                        {
+                            abstractHatWearStick.Deactivate(); // 取消佩戴
+                            Hat.RemoveHat(player);
+                        }
+                        
+                        // 从玩家的帽子列表中移除
+                        exPlayer.UnstackHat(this);
+                        
+                        wearers = null; // 清空佩戴者
+                    }
                 }
             }
             if (Weared && Vector2.Distance(wearers.firstChunk.pos, firstChunk.pos) > 300)
             {
-                room.PlaySound(SoundID.Big_Spider_Spit, firstChunk);
                 if (wearers is Player player)
                 {
-                    if (Hat.TryGetHat(player, out var abstractHatWearStick) && abstractHatWearStick != null)
-                    {
-                        abstractHatWearStick.Deactivate(); // 取消佩戴
-                        Hat.RemoveHat(player);
-                    }
-                    
-                    // 从玩家的帽子列表中移除
                     var exPlayer = player.GetCowBoyData();
-                    exPlayer.UnstackHat(this);
+                    
+                    // 只取下列表中最后一个帽子（即索引最大的帽子）
+                    if (exPlayer.hatList.Count > 0)
+                    {
+                        // 获取最后一个帽子
+                        CowBoyHat lastHat = exPlayer.hatList[exPlayer.hatList.Count - 1];
+                        
+                        // 如果当前帽子不是最后一个帽子，则不取下
+                        if (lastHat != this)
+                        {
+                            return;
+                        }
+                        
+                        // 如果是最后一个帽子，则取下
+                        room.PlaySound(SoundID.Big_Spider_Spit, firstChunk);
+                        
+                        if (Hat.TryGetHat(player, out var abstractHatWearStick) && abstractHatWearStick != null)
+                        {
+                            abstractHatWearStick.Deactivate(); // 取消佩戴
+                            Hat.RemoveHat(player);
+                        }
+                        
+                        // 从玩家的帽子列表中移除
+                        exPlayer.UnstackHat(this);
+                        
+                        wearers = null; // 清空佩戴者
+                    }
                 }
-                wearers = null; // 清空佩戴者
             }
 
             // 如果佩戴者还被记录着就执行下面的update
