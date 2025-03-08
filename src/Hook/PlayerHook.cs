@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using CowBoySlug;
 using CowBoySLug;
 using CowBoySlug.CowBoy.Ability.RopeUse;
-using CowBoySlug.CowBoySlugMod;
 using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
 using RWCustom;
@@ -55,7 +54,7 @@ namespace CowBoySLug
             //特殊饱腹度系统相关
             if (
                 Plugin.menu.foodMod.Value
-                && self.room.world.game.session.characterStats.name == CowBoy.Name
+                && self.room.world.game.session.characterStats.name == CowBoyModule.Name
             )
             {
                 if (self.PlaceKarmaFlower)
@@ -67,7 +66,7 @@ namespace CowBoySLug
                     self.playerState.foodInStomach = self.slugcatStats.maxFood;
                 }
             }
-            else if (self.room.world.game.session.characterStats.name == CowBoy.Name)
+            else if (self.room.world.game.session.characterStats.name == CowBoyModule.Name)
             {
                 self.slugcatStats.foodToHibernate = self.slugcatStats.maxFood;
             }
@@ -83,7 +82,7 @@ namespace CowBoySLug
 
                 if (
                     Plugin.menu.foodMod.Value
-                    && self.room.world.game.session.characterStats.name == CowBoy.Name
+                    && self.room.world.game.session.characterStats.name == CowBoyModule.Name
                 )
                     cowBoyModule.UseFood();
             }

@@ -9,8 +9,33 @@ namespace CowBoySlug
 {
     public static class Hat
     {
-        public static ConditionalWeakTable<Player, AbstractHatWearStick> modules =
-            new ConditionalWeakTable<Player, AbstractHatWearStick>();
+        public static Dictionary<Player, AbstractHatWearStick> modules = new Dictionary<Player, AbstractHatWearStick>();
+
+        public static void AddHat(Player player, AbstractHatWearStick stick)
+        {
+            if (modules.ContainsKey(player))
+            {
+                modules[player].Deactivate();
+                modules[player] = stick;
+            }
+            else
+            {
+                modules.Add(player, stick);
+            }
+        }
+
+        public static void RemoveHat(Player player)
+        {
+            if (modules.ContainsKey(player))
+            {
+                modules.Remove(player);
+            }
+        }
+
+        public static bool TryGetHat(Player player, out AbstractHatWearStick stick)
+        {
+            return modules.TryGetValue(player, out stick);
+        }
 
         public static void Hook()
         {
@@ -293,16 +318,20 @@ namespace CowBoySlug
         AbstractCreature wearer;
         AbstractPhysicalObject hat;
 
-        public List<CowBoyHat> Hatlist = new List<CowBoyHat>();
+        //public List<CowBoyHat> Hatlist = new List<CowBoyHat>();
+        //public bool HaveHat => Hatlist.Count > 0;
 
         public AbstractHatWearStick(AbstractPhysicalObject hat, AbstractCreature wearer)
             : base(hat, wearer)
         {
             this.hat = hat;
             this.wearer = wearer;
+            if(wearer.realizedCreature!=null&& wearer.realizedCreature as Player != null)
+            {
+
+            }
         }
 
-        public bool HaveHat => Hatlist.Count > 0;
 
         // public static AbstractHatWearStick GetHatModule(Player player) =>
         // Hat.modules.GetValue(player, (p) => new AbstractHatWearStick());

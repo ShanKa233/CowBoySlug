@@ -22,19 +22,24 @@ namespace CowBoySlug
 {
     public class CowBoyHatFisob : Fisob
     {
+        // 定义帽子的抽象物体类型
         public static readonly AbstractPhysicalObject.AbstractObjectType AbstrCrate = new(
             "CowBoyHat",
             true
         );
+
+        // 定义帽子的多人解锁ID
         public static readonly MultiplayerUnlocks.SandboxUnlockID mCrate = new("CowBoyHat", true);
 
         public CowBoyHatFisob()
             : base(AbstrCrate)
         {
-            Icon = new CowBoyHatIcon();
+            Icon = new CowBoyHatIcon(); // 设置帽子的图标
 
+            // 设置沙盒性能成本
             SandboxPerformanceCost = new(linear: 0.2f, 0f);
 
+            // 注册解锁
             RegisterUnlock(mCrate, parent: MultiplayerUnlocks.SandboxUnlockID.Slugcat, data: 0);
         }
 
@@ -44,13 +49,16 @@ namespace CowBoySlug
             SandboxUnlock? unlock
         )
         {
+            // 解析保存的数据
             string[] p = saveData.CustomData.Split(';');
 
+            // 确保数组长度至少为8
             if (p.Length < 8)
             {
                 p = new string[8];
             }
 
+            // 创建帽子的抽象实例
             var result = new CowBoyHatAbstract(world, saveData.Pos, saveData.ID)
             {
                 hue = float.TryParse(p[0], out var h) ? h : 0,
@@ -60,19 +68,17 @@ namespace CowBoySlug
 
                 setMainColor = bool.TryParse(p[4], out var seted) ? seted : false,
 
-                // shapeID = int.TryParse(p[5], out var sp) ? ((HatType)sp).ToString() :
-                // p[5],
-
-                shapeID = p[5],
+                shapeID = p[5], // 帽子的形状ID
 
                 mainColor = seted
-                    ? Custom.hexToColor(p[6])
-                    : Custom.HSL2RGB(Random.Range(0.01f, 0.9f), 0.5f, 0.3f),
+                    ? Custom.hexToColor(p[6]) // 如果设置了主颜色，则从保存数据中获取
+                    : Custom.HSL2RGB(Random.Range(0.01f, 0.9f), 0.5f, 0.3f), // 否则随机生成颜色
                 decorateColor = seted
-                    ? Custom.hexToColor(p[7])
-                    : Custom.HSL2RGB(Random.Range(0.01f, 0.9f), 0.5f, 0.3f),
+                    ? Custom.hexToColor(p[7]) // 如果设置了装饰颜色，则从保存数据中获取
+                    : Custom.HSL2RGB(Random.Range(0.01f, 0.9f), 0.5f, 0.3f), // 否则随机生成颜色
             };
 
+            // 如果有解锁信息，则更新颜色和缩放
             if (unlock is SandboxUnlock u)
             {
                 result.hue = u.Data / 1000f;
@@ -84,40 +90,36 @@ namespace CowBoySlug
                 }
             }
 
-            return result;
+            return result; // 返回解析后的帽子实例
         }
 
         private static readonly CowBoyHatProperties properties = new();
 
         public override ItemProperties Properties(PhysicalObject forObject)
         {
-            // If you need to use the forObject parameter, pass it to your
-            // ItemProperties class's constructor. The Mosquitoes example from the
-            // Fisobs github demonstrates this.
+            // 返回帽子的属性
             return properties;
         }
     }
 
     sealed class CowBoyHatIcon : Icon
     {
-        // In vanilla, you only have one int value to store custom data.
-        // In this example, that is the hue of the object, which is scaled by 1000
-        // For example, 0 is red, 70 is orange
+        // 返回帽子的颜色数据
         public override int Data(AbstractPhysicalObject apo)
         {
             return apo is CowBoyHatAbstract crate ? (int)(crate.hue * 1000f) : 0;
         }
 
+        // 返回帽子的精灵颜色
         public override Color SpriteColor(int data)
         {
             return new Color(229 / 255f, 136 / 255f, 70 / 255f);
         }
 
+        // 返回帽子的精灵名称
         public override string SpriteName(int data)
         {
-            // Fisobs autoloads the embedded resource named `icon_{Type}` automatically
-            // For Crates, this is `icon_Crate`
-            return "icon_CowBoyHat";
+            return "icon_CowBoyHat"; // 自动加载的资源名称
         }
     }
 
@@ -126,49 +128,48 @@ namespace CowBoySlug
         public CowBoyHatAbstract(World world, WorldCoordinate pos, EntityID ID)
             : base(world, CowBoyHatFisob.AbstrCrate, null, pos, ID)
         {
-            scaleX = 1;
+            scaleX = 1; // 默认缩放
             scaleY = 1;
-            saturation = 0.5f;
-            hue = 0.9f;
+            saturation = 0.5f; // 默认饱和度
+            hue = 0.9f; // 默认色调
         }
 
         public override void Realize()
         {
             base.Realize();
             if (realizedObject == null)
-                realizedObject = new CowBoyHat(this);
+                realizedObject = new CowBoyHat(this); // 实现帽子对象
         }
 
-        public float hue;
-        public float saturation;
-        public float scaleX;
-        public float scaleY;
+        public float hue; // 色调
+        public float saturation; // 饱和度
+        public float scaleX; // X轴缩放
+        public float scaleY; // Y轴缩放
 
-        public bool setMainColor;
-        public Color mainColor;
-        public Color decorateColor;
+        public bool setMainColor; // 是否设置主颜色
+        public Color mainColor; // 主颜色
+        public Color decorateColor; // 装饰颜色
 
-        public string shapeID;
+        public string shapeID; // 帽子形状ID
 
         public override string ToString()
         {
             var color1 = Custom.colorToHex(mainColor);
             var color2 = Custom.colorToHex(decorateColor);
 
-            // return
-            // this.SaveToString($"{hue};{saturation};{scaleX};{scaleY};{setMainColor};{(int)shapeID};{color1};{color2}");
+            // 返回保存字符串
             return this.SaveToString(
                 $"{hue};{saturation};{scaleX};{scaleY};{setMainColor};{shapeID};{color1};{color2}"
             );
-            // return
-            // this.SaveToString($"{hue};{saturation};{scaleX};{scaleY};{setMainColor};{shapeID};{color1};{color2}");
         }
     }
 
     sealed class CowBoyHatProperties : ItemProperties
     {
+        // 设置可投掷性
         public override void Throwable(Player player, ref bool throwable) => throwable = true;
 
+        // 设置抓取能力
         public override void Grabability(Player player, ref Player.ObjectGrabability grabability) =>
             grabability = Player.ObjectGrabability.OneHand;
     }
@@ -185,6 +186,7 @@ namespace CowBoySlug
         // 水平角度从0到2为360度
         public float levelAngle = 360;
 
+        // 旋转角度限制
         public static float RotatingLevel(float levelAngle)
         {
             while (levelAngle > 360 || levelAngle < 0)
@@ -197,6 +199,7 @@ namespace CowBoySlug
             return levelAngle;
         }
 
+        // 旋转装饰
         public void RotatingDexorate(float angle)
         {
             levelAngle += angle;
@@ -209,20 +212,16 @@ namespace CowBoySlug
             }
         }
 
-        public float minSpeed = 3;
+        public float minSpeed = 3; // 最小速度
         CowBoyHatAbstract Abst { get; }
 
-        public bool setMainColor = false;
-        public Color mainColor = Color.blue;
-        public Color decorateColor;
+        public bool setMainColor = false; // 是否设置主颜色
+        public Color mainColor = Color.blue; // 主颜色
+        public Color decorateColor; // 装饰颜色
 
-        public string shapeID;
+        public string shapeID; // 帽子形状ID
 
-        // public HatType shapeID;
-
-        public float rotationSpeed;
-
-        // public Vector2? setRotation;
+        public float rotationSpeed; // 旋转速度
 
         public CowBoyHat(CowBoyHatAbstract abstr)
             : base(abstr)
@@ -235,10 +234,9 @@ namespace CowBoySlug
             this.mainColor = abstr.mainColor;
             this.decorateColor = abstr.decorateColor;
 
+            // 随机选择帽子形状ID
             if (this.shapeID == null)
             {
-                // this.shapeID = abstr.shapeID = "NoAdorn";
-                // this.shapeID = abstr.shapeID = "flower";
                 this.shapeID = abstr.shapeID = HatData
                     .HatsDictionary.ToArray()[Random.Range(0, HatData.HatsDictionary.Count - 1)]
                     .Value.id;
@@ -246,7 +244,7 @@ namespace CowBoySlug
 
             Debug.Log("[COWBOY]:HatSpawn:" + abstr.shapeID);
 
-            float mass = 0.1f;
+            float mass = 0.1f; // 质量
             var positions = new List<Vector2>();
 
             // 添加各个部件的基本位置
@@ -272,7 +270,6 @@ namespace CowBoySlug
             bodyChunks[decorateIndex].rad = 0;
             bodyChunks[decorateIndex].mass = 0.02f;
             bodyChunks[decorateIndex].collideWithTerrain = false;
-            ;
 
             bodyChunkConnections = new BodyChunkConnection[bodyChunks.Length - 1];
 
@@ -289,20 +286,17 @@ namespace CowBoySlug
             }
 
             // 这个物体的基础属性
-            airFriction = 0.999f;
+            airFriction = 0.999f; // 空气摩擦
+            surfaceFriction = 0.02f; // 表面摩擦
+            waterFriction = 0.3f; // 水摩擦
 
-            surfaceFriction = 0.02f;
-            waterFriction = 0.3f;
-
-            gravity = 0.85f;
-
-            bounce = 1f;
-            collisionLayer = 1;
+            gravity = 0.85f; // 重力
+            bounce = 1f; // 弹性
+            collisionLayer = 1; // 碰撞层
 
             buoyancy = 0.999f; // 浮力
-            GoThroughFloors = true;
-            // TODO:帽子是否该阻挡武器
-            canBeHitByWeapons = true;
+            GoThroughFloors = true; // 穿过地板
+            canBeHitByWeapons = true; // 可以被武器击中
         }
 
         // 让被打了之后帽子掉落
@@ -311,20 +305,26 @@ namespace CowBoySlug
             base.HitByWeapon(weapon);
             if (Weared)
             {
-                wearers = null;
+                wearers = null; // 如果被佩戴，清空佩戴者
             }
         }
 
         // 是否被戴着
         public bool Flying =>
             firstChunk.vel.magnitude > minSpeed && grabbedBy.Count == 0 && !Weared;
-        public bool Weared => wearers != null;
+        public bool Weared => wearers != null; // 检查是否被佩戴
 
         public void WearersUpdate()
         {
             // 如果帽子有佩戴者而且佩戴者不存在就不再记录佩戴者
             if (wearers != null && wearers.slatedForDeletetion)
             {
+                if (wearers is Player player)
+                {
+                    var exPlayer = player.GetCowBoyData();
+                    exPlayer.UnstackHat(this);
+                    Hat.RemoveHat(player);
+                }
                 wearers = null;
             }
             if (Weared && wearers is Player)
@@ -339,44 +339,51 @@ namespace CowBoySlug
                 {
                     room.PlaySound(SoundID.Big_Spider_Spit, firstChunk);
 
-                    if (
-                        Hat.modules.TryGetValue(wearers as Player, out var abstractHatWearStick)
-                        && abstractHatWearStick != null
-                    )
+                    if (Hat.TryGetHat(player, out var abstractHatWearStick) && abstractHatWearStick != null)
                     {
-                        abstractHatWearStick.Deactivate();
+                        abstractHatWearStick.Deactivate(); // 取消佩戴
+                        Hat.RemoveHat(player);
                     }
-                    wearers = null;
+                    
+                    // 从玩家的帽子列表中移除
+                    var exPlayer = player.GetCowBoyData();
+                    exPlayer.UnstackHat(this);
+                    
+                    wearers = null; // 清空佩戴者
                 }
             }
             if (Weared && Vector2.Distance(wearers.firstChunk.pos, firstChunk.pos) > 300)
             {
                 room.PlaySound(SoundID.Big_Spider_Spit, firstChunk);
-                if (
-                    Hat.modules.TryGetValue(wearers as Player, out var abstractHatWearStick)
-                    && abstractHatWearStick != null
-                )
+                if (wearers is Player player)
                 {
-                    abstractHatWearStick.Deactivate();
+                    if (Hat.TryGetHat(player, out var abstractHatWearStick) && abstractHatWearStick != null)
+                    {
+                        abstractHatWearStick.Deactivate(); // 取消佩戴
+                        Hat.RemoveHat(player);
+                    }
+                    
+                    // 从玩家的帽子列表中移除
+                    var exPlayer = player.GetCowBoyData();
+                    exPlayer.UnstackHat(this);
                 }
-                wearers = null;
+                wearers = null; // 清空佩戴者
             }
 
             // 如果佩戴者还被记录着就执行下面的update
             if (Weared)
             {
-                // firstChunk.pos = wearers.firstChunk.pos;
                 var distance = Vector2.Distance(wearers.firstChunk.pos, firstChunk.pos);
 
                 firstChunk.vel =
                     Custom.LerpMap(distance, 1, 30, 1, 25)
                     * Custom.DirVec(firstChunk.pos, wearers.firstChunk.pos);
 
-                this.CollideWithObjects = false;
+                this.CollideWithObjects = false; // 不与其他物体碰撞
             }
             else
             {
-                this.CollideWithObjects = true;
+                this.CollideWithObjects = true; // 与其他物体碰撞
             }
         }
 
@@ -384,30 +391,28 @@ namespace CowBoySlug
         {
             base.Update(eu);
 
-            // PlumeUpdate();
-
-            RotatingDexorate(rotationSpeed);
+            RotatingDexorate(rotationSpeed); // 旋转装饰
             this.lastRotation = this.rotation;
-            rotationSpeed *= 0.8f;
+            rotationSpeed *= 0.8f; // 减少旋转速度
 
-            WearersUpdate();
+            WearersUpdate(); // 更新佩戴者状态
 
             if (firstChunk.vel.magnitude > minSpeed && grabbedBy.Count == 0 && !Weared)
             {
-                firstChunk.vel = firstChunk.vel.magnitude * rotation.normalized;
-                rotation = (rotation - new Vector2(0, g * 0.01f)).normalized;
+                firstChunk.vel = firstChunk.vel.magnitude * rotation.normalized; // 根据旋转方向调整速度
+                rotation = (rotation - new Vector2(0, g * 0.01f)).normalized; // 更新旋转方向
 
                 // 让他在飞的时候提升转速
                 rotationSpeed += (firstChunk.vel.x * 0.6f);
             }
             else
             {
-                rotation = Vector2.up;
+                rotation = Vector2.up; // 重置旋转方向
             }
 
             if (!Weared && g > 0)
             {
-                firstChunk.vel.y *= 0.55f;
+                firstChunk.vel.y *= 0.55f; // 减少下落速度
             }
         }
 
@@ -421,7 +426,7 @@ namespace CowBoySlug
             base.TerrainImpact(chunk, direction, speed, firstContact);
             if (direction.x != 0 && direction.y == 0 && Flying)
             {
-                rotation.x *= -1;
+                rotation.x *= -1; // 反转旋转方向
                 room.PlaySound(SoundID.Weapon_Skid, firstChunk, false, 0.4f, 0.4f);
             }
         }
@@ -436,7 +441,7 @@ namespace CowBoySlug
                 && otherChunk == 0
             )
             {
-                WearHat(otherObject);
+                WearHat(otherObject); // 佩戴帽子
             }
         }
 
@@ -445,18 +450,21 @@ namespace CowBoySlug
             if (!Weared)
             {
                 room.PlaySound(SoundID.Big_Spider_Spit, firstChunk);
-                wearers = wearer;
-                if (wearer is Player)
+                wearers = wearer; // 设置佩戴者
+                if (wearer is Player player)
                 {
-                    // AbstractHatWearStick.GetHatModule(wearer as
-                    // Player).Hatlist.Add(this);
-                    Hat.modules.Add(
-                        wearer as Player,
+                    // 使用新的AddHat方法添加帽子和玩家的关系
+                    Hat.AddHat(
+                        player,
                         new AbstractHatWearStick(
                             this.abstractPhysicalObject,
-                            wearer.abstractPhysicalObject as AbstractCreature
+                            player.abstractPhysicalObject as AbstractCreature
                         )
                     );
+                    
+                    // 将帽子添加到玩家的帽子列表中
+                    var exPlayer = player.GetCowBoyData();
+                    exPlayer.StackHat(this);
                 }
             }
         }
@@ -469,7 +477,7 @@ namespace CowBoySlug
 
             for (int i = 0; i < bodyChunks.Length; i++)
             {
-                bodyChunks[i].HardSetPosition(center + Vector2.up);
+                bodyChunks[i].HardSetPosition(center + Vector2.up); // 设置位置
             }
         }
 
@@ -478,7 +486,7 @@ namespace CowBoySlug
             sLeaser.sprites = new FSprite[4];
 
             for (int i = 0; i < 2; i++)
-                sLeaser.sprites[i] = new FSprite("Circle20");
+                sLeaser.sprites[i] = new FSprite("Circle20"); // 创建基本精灵
 
             TriangleMesh.Triangle[] tris = new TriangleMesh.Triangle[]
             {
@@ -486,14 +494,14 @@ namespace CowBoySlug
                 new TriangleMesh.Triangle(1, 2, 3),
             };
 
-            sLeaser.sprites[2] = new TriangleMesh("Futile_White", tris, true, true);
+            sLeaser.sprites[2] = new TriangleMesh("Futile_White", tris, true, true); // 创建白色三角形精灵
 
             if (HatData.HatsDictionary.TryGetValue(Abst.shapeID, out var hatData))
             {
                 var imagiName =
                     LoadHats.cowBoyHatFolderName
                     + Path.DirectorySeparatorChar
-                    + hatData.sprite_name;
+                    + hatData.sprite_name; // 加载帽子图像
                 var hatImagi = new FSprite(imagiName);
                 sLeaser.sprites[3] = new TriangleMesh(imagiName, tris, true, true);
 
@@ -508,7 +516,7 @@ namespace CowBoySlug
                 sLeaser.sprites[3] = new TriangleMesh("Futile_White", tris, true, true);
             }
 
-            AddToContainer(sLeaser, rCam, null);
+            AddToContainer(sLeaser, rCam, null); // 添加到容器
         }
 
         public void ApplyPalette(
@@ -524,15 +532,15 @@ namespace CowBoySlug
                     palette.skyColor,
                     Random.Range(0.01f, 0.2f)
                 );
-                mainColor = color;
+                mainColor = color; // 设置主颜色
                 setMainColor = true;
                 Abst.mainColor = this.mainColor;
                 Abst.setMainColor = this.setMainColor;
 
-                Abst.shapeID = this.shapeID;
+                Abst.shapeID = this.shapeID; // 设置形状ID
             }
             foreach (var sprite in sLeaser.sprites)
-                sprite.color = mainColor;
+                sprite.color = mainColor; // 应用颜色
 
             decorateColor = decorateColor == null ? Color.white : decorateColor;
 
@@ -548,10 +556,40 @@ namespace CowBoySlug
             FContainer? newContainer
         )
         {
-            newContainer ??= rCam.ReturnFContainer("Items");
+            newContainer ??= rCam.ReturnFContainer("Items"); // 获取容器
 
+            // 如果帽子被佩戴，使用特殊的容器
+            if (Weared && wearers is Player player)
+            {
+                // 获取帽子在列表中的索引位置
+                var exPlayer = player.GetCowBoyData();
+                int hatIndex = exPlayer.hatList.IndexOf(this);
+                
+                // 使用特殊的容器，确保帽子按照正确的顺序显示
+                // 下标更大的帽子（后添加的）显示在下标更小的帽子（先添加的）之上
+                newContainer = rCam.ReturnFContainer("HUD");
+                
+                // 先从容器中移除所有精灵，然后按照正确的顺序重新添加
+                foreach (FSprite fsprite in sLeaser.sprites)
+                {
+                    if (fsprite.container != null)
+                    {
+                        fsprite.RemoveFromContainer();
+                    }
+                }
+            }
+
+            // 添加精灵到容器
             foreach (FSprite fsprite in sLeaser.sprites)
+            {
                 newContainer.AddChild(fsprite);
+                
+                // 如果帽子被佩戴，将精灵移到容器的最前面
+                if (Weared)
+                {
+                    fsprite.MoveToFront();
+                }
+            }
         }
 
         public void DrawSprites(
@@ -563,7 +601,7 @@ namespace CowBoySlug
         {
             if (Weared)
             {
-                WearDraw(sLeaser, rCam, timeStacker, camPos);
+                WearDraw(sLeaser, rCam, timeStacker, camPos); // 绘制佩戴状态
                 return;
             }
 
@@ -604,7 +642,7 @@ namespace CowBoySlug
             );
 
             if (slatedForDeletetion || room != rCam.room)
-                sLeaser.CleanSpritesAndRemove();
+                sLeaser.CleanSpritesAndRemove(); // 清理精灵
         }
 
         public float PlayerHeadInfo(Player player, float timeStacker, ref Vector2 headPosition)
@@ -662,7 +700,7 @@ namespace CowBoySlug
                 headPosition.y -= 1.9f;
                 num3 = Mathf.Lerp(num3, 45f * Mathf.Sign(vector.x - vector2.x), 0.7f);
             }
-            return num3;
+            return num3; // 返回头部旋转角度
         }
 
         public void WearDraw(
@@ -675,9 +713,38 @@ namespace CowBoySlug
             var body = firstChunk;
             Vector2 headPosition = Vector2.Lerp(firstChunk.lastPos, firstChunk.pos, timeStacker);
             float rotation = PlayerHeadInfo(wearers as Player, timeStacker, ref headPosition);
+
             headPosition -= camPos;
             Vector2 vector =
                 headPosition + Custom.DegToVec(rotation + FixHatRotation(wearers as Player)) * (7f);
+            
+            // 获取帽子在列表中的索引位置
+            int hatIndex = 0;
+            float heightOffset = 0f;
+            
+            if (wearers is Player player)
+            {
+                var exPlayer = player.GetCowBoyData();
+                hatIndex = exPlayer.hatList.IndexOf(this);
+                
+                // 根据索引计算高度偏移，每顶帽子向上偏移3个单位
+                heightOffset = hatIndex * 8f;
+                
+                // 调整精灵的显示顺序
+                // 由于FNode.depth是只读的，我们需要使用其他方法来调整显示顺序
+                // 我们可以通过调整容器中的顺序来实现
+                for (int i = 0; i < sLeaser.sprites.Length; i++)
+                {
+                    if (sLeaser.sprites[i].container != null)
+                    {
+                        // 将精灵移到容器的最前面
+                        sLeaser.sprites[i].MoveToFront();
+                    }
+                }
+            }
+            
+            // 根据高度偏移调整帽子位置
+            vector += Custom.DegToVec(rotation + FixHatRotation(wearers as Player)) * heightOffset;
 
             for (int i = 0; i < 2; i++)
             {
@@ -700,7 +767,7 @@ namespace CowBoySlug
                     spr.scaleY *= 0.6f;
                 }
 
-                spr.color = mainColor;
+                spr.color = mainColor; // 设置颜色
                 DrawDecorate(
                     sLeaser.sprites,
                     sLeaser.sprites[3] as TriangleMesh,
@@ -733,8 +800,8 @@ namespace CowBoySlug
         )
         {
             levelAngle = RotatingLevel(levelAngle);
-            sprites[2].color = Color.Lerp(decorateColor, mainColor, 0.5f);
-            mesh.color = decorateColor;
+            sprites[2].color = Color.Lerp(decorateColor, mainColor, 0.5f); // 设置装饰颜色
+            mesh.color = decorateColor; // 设置网格颜色
 
             // 绘制绑带
             var strap = sprites[2] as TriangleMesh;
@@ -744,7 +811,7 @@ namespace CowBoySlug
             strap.MoveVertice(2, centerPos + (per * 7) + (rotationDir * -2));
             strap.MoveVertice(3, centerPos + (per * 6) + (rotationDir * 0));
 
-            var size = 7f;
+            var size = 7f; // 装饰大小
 
             // 装饰最远伸出的距离
             Vector2 brim = Custom.PerpendicularVector(rotationDir) * (this.bodyChunks[0].rad) * 2f;
@@ -765,7 +832,7 @@ namespace CowBoySlug
                 mesh.MoveVertice(0, decoratePos - rotationDir * size + per * size);
                 mesh.MoveVertice(1, decoratePos + rotationDir * size + per * size);
 
-                mesh.MoveBehindOtherNode(sprites[0]);
+                mesh.MoveBehindOtherNode(sprites[0]); // 绘制在后面
             }
             else
             {
@@ -774,62 +841,77 @@ namespace CowBoySlug
                 mesh.MoveVertice(2, decoratePos - rotationDir * size + per * size);
                 mesh.MoveVertice(3, decoratePos + rotationDir * size + per * size);
 
-                mesh.MoveInFrontOfOtherNode(sprites[2]);
+                mesh.MoveInFrontOfOtherNode(sprites[2]); // 绘制在前面
             }
         }
 
         public static float FixHatRotation(Player player)
         {
+            // 根据玩家状态调整帽子旋转
             if (player.bodyMode == Player.BodyModeIndex.Crawl)
             {
                 if (player.mainBodyChunk.pos.x > player.bodyChunks[1].pos.x)
                 {
-                    return -70;
+                    return -70; // 向左旋转
                 }
                 else
                 {
-                    return 70;
+                    return 70; // 向右旋转
                 }
             }
             else if (player.bodyMode == Player.BodyModeIndex.Stand && player.input[0].x > 0)
             {
-                return -20;
+                return -20; // 向左旋转
             }
             else if (player.bodyMode == Player.BodyModeIndex.Stand && player.input[0].x < 0)
             {
-                return 20;
+                return 20; // 向右旋转
             }
             else
             {
-                return 0;
+                return 0; // 不旋转
             }
         }
 
         public static float FixHatLevelAngle(Player player)
         {
+            // 根据玩家状态调整帽子水平角度
             if (player.bodyMode == Player.BodyModeIndex.Crawl)
             {
                 if (player.mainBodyChunk.pos.x > player.bodyChunks[1].pos.x)
                 {
-                    return -90;
+                    return -90; // 向左倾斜
                 }
                 else
                 {
-                    return 90;
+                    return 90; // 向右倾斜
                 }
             }
             else if (player.bodyMode == Player.BodyModeIndex.Stand && player.input[0].x > 0)
             {
-                return -90;
+                return -90; // 向左倾斜
             }
             else if (player.bodyMode == Player.BodyModeIndex.Stand && player.input[0].x < 0)
             {
-                return 90;
+                return 90; // 向右倾斜
             }
             else
             {
-                return 0;
+                return 0; // 不倾斜
             }
+        }
+
+        public override void Destroy()
+        {
+            // 如果帽子被佩戴，从玩家的帽子列表中移除
+            if (Weared && wearers is Player player)
+            {
+                var exPlayer = player.GetCowBoyData();
+                exPlayer.UnstackHat(this);
+                Hat.RemoveHat(player);
+            }
+            
+            base.Destroy();
         }
     }
 }

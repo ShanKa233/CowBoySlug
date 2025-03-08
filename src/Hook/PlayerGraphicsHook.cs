@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using CowBoySLug;
 using CowBoySlug.CowBoy;
 using CowBoySlug.CowBoy.Ability.RopeUse;
-using CowBoySlug.CowBoySlugMod;
 using RWCustom;
 using SlugBase.DataTypes;
 using UnityEngine;

@@ -64,7 +64,6 @@ namespace CowBoySLug
             SewHook.Hook();
 
             SuperShootModule.OnHook();
-            DroneJumpHook.Hook();
 
             //Camouflage.Hook();
             WhiteDropWorm.Hook();
