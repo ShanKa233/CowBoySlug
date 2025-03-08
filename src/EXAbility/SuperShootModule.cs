@@ -160,6 +160,7 @@ namespace CowBoySlug.ExAbility
             if (origFlag&&self.IsSuperRock(out SuperShootModule superRock))
             {
                 if (result.obj is Creature)
+                
                 {
                     (result.obj as Creature).Violence(self.firstChunk, new Vector2?(self.firstChunk.vel * self.firstChunk.mass), result.chunk, result.onAppendagePos, Creature.DamageType.Blunt, 5, 80);
                 }
@@ -254,61 +255,6 @@ namespace CowBoySlug.ExAbility
 
 
         }
-
-        //public void RockMake(Rock rock)
-        //{
-        //    //检查玩家有没有做出正确的操作
-        //    bool triga1 = player.input[0].x != 0 || player.input[0].y != 0;
-        //    bool triga2 = stopTime > 15 && player.switchHandsCounter > 0;
-        //    if (triga1 && triga2 && rock != null)
-        //    {
-        //        if (PlayerHook.rockModule.TryGetValue(rock, out var value))
-        //        {
-        //            PlayerHook.rockModule.Remove(rock);
-        //        }
-        //        PlayerHook.rockModule.Add(rock, new SuperRockModule(rock));
-        //    }
-        //}//确认是否属于超级投掷出去的石头并打上标记
-
     }
-    //public class SuperRockModule
-    //{
-    //    //public bool isSuperRock = true;
-    //    //public Rock player;
-    //    //public Color rockColor = new Color(103 / 255f, 5 / 255f, 4 / 255f);
-    //    //public bool canMoreFast = true;
-
-
-    //    public void RockPowerUp()
-    //    {
-    //        var rock = player;
-    //        if (rock != null && PlayerHook.rockModule.TryGetValue(rock, out var superRock) && superRock.isSuperRock)
-    //        {
-
-    //            var player = rock.thrownBy as Player;
-    //            if (player != null)
-    //            {
-    //                rock.firstChunk.vel = new Vector2(player.input[0].x, player.input[0].y) * 250;
-    //                player.mushroomCounter = 2;
-    //                player.mushroomEffect = 0.5f;
-    //            }
-    //            canMoreFast = false;
-    //        }
-
-    //    private static void SuperRock_CreatureViolence(On.Creature.orig_Violence orig, Creature player, BodyChunk source, UnityEngine.Vector2? directionAndMomentum, BodyChunk hitChunk, PhysicalObject.Appendage.Pos hitAppendage, Creature.DamageType type, float damage, float stunBonus)
-    //    {
-    //        if (source != null)
-    //        {
-    //            var superRock = source.owner as Rock;
-    //            if (superRock != null && rockModule.TryGetValue(superRock, out var flag) && flag.isSuperRock)
-    //            {
-    //                damage = 5;
-    //                stunBonus = 20;
-    //            }
-    //        }
-
-    //        orig.Invoke(player, source, directionAndMomentum, hitChunk, hitAppendage, type, damage, stunBonus);
-    //    }
-
-
+  
 }

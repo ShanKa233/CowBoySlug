@@ -10,6 +10,7 @@ using CowBoySlug.CowBoy.Ability.RopeUse;
 using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
 using RWCustom;
+using UnityEngine;
 
 namespace CowBoySLug
 {
@@ -18,11 +19,15 @@ namespace CowBoySLug
         //public static ConditionalWeakTable<Player, CowBoyModule> cowboyModules = new ConditionalWeakTable<Player, CowBoyModule>();
         public static void Hook()
         {
-            On.Player.ctor += CowBoy_ctor;
-
-            On.Player.Update += Player_Update; //
-
-            //On.Player.GrabUpdate += Player_GrabUpdate;
+            try
+            {
+                On.Player.ctor += CowBoy_ctor;
+                On.Player.Update += Player_Update;
+            }
+            catch (Exception ex)
+            {
+                UnityEngine.Debug.LogError($"[CowBoySlug] Exception in PlayerHook.Hook: {ex.Message}\n{ex.StackTrace}");
+            }
         }
 
         //private static void Player_GrabUpdate(On.Player.orig_GrabUpdate orig, Player self, bool eu)
@@ -49,42 +54,92 @@ namespace CowBoySLug
             World world
         )
         {
-            orig.Invoke(self, abstractCreature, world);
-
-            //特殊饱腹度系统相关
-            if (
-                Plugin.menu.foodMod.Value
-                && self.room.world.game.session.characterStats.name == CowBoyModule.Name
-            )
+            try
             {
-                if (self.PlaceKarmaFlower)
+                orig.Invoke(self, abstractCreature, world);
+
+                // 检查必要的对象
+                if (self == null || 
+                    Plugin.menu == null || 
+                    Plugin.menu.foodMod == null || 
+                    self.room == null || 
+                    self.room.world == null || 
+                    self.room.world.game == null || 
+                    self.room.world.game.session == null || 
+                    self.room.world.game.session.characterStats == null)
                 {
-                    self.slugcatStats.maxFood += 4;
+                    return;
                 }
-                if (self.playerState.foodInStomach < self.slugcatStats.maxFood)
+
+                //特殊饱腹度系统相关
+                if (
+                    Plugin.menu.foodMod.Value
+                    && self.room.world.game.session.characterStats.name == CowBoyModule.Name
+                )
                 {
-                    self.playerState.foodInStomach = self.slugcatStats.maxFood;
+                    if (self.PlaceKarmaFlower)
+                    {
+                        self.slugcatStats.maxFood += 4;
+                    }
+                    if (self.playerState.foodInStomach < self.slugcatStats.maxFood)
+                    {
+                        self.playerState.foodInStomach = self.slugcatStats.maxFood;
+                    }
+                }
+                else if (self.room.world.game.session.characterStats.name == CowBoyModule.Name)
+                {
+                    self.slugcatStats.foodToHibernate = self.slugcatStats.maxFood;
                 }
             }
-            else if (self.room.world.game.session.characterStats.name == CowBoyModule.Name)
+            catch (Exception ex)
             {
-                self.slugcatStats.foodToHibernate = self.slugcatStats.maxFood;
+                UnityEngine.Debug.LogError($"[CowBoySlug] Exception in CowBoy_ctor: {ex.Message}\n{ex.StackTrace}");
             }
         }
 
         private static void Player_Update(On.Player.orig_Update orig, Player self, bool eu)
         {
-            orig.Invoke(self, eu);
-
-            if (self.IsCowBoys(out var cowBoyModule))
+            try
             {
+                orig.Invoke(self, eu);
+                bool isCowBoy = self.IsCowBoys(out var cowBoyModule);
+                if (!isCowBoy)
+                {
+                    // 不是牛仔角色，直接返回
+                    return;
+                }
                 cowBoyModule.Update();
 
-                if (
-                    Plugin.menu.foodMod.Value
-                    && self.room.world.game.session.characterStats.name == CowBoyModule.Name
-                )
+                // 检查Plugin.menu
+                if (Plugin.menu == null || Plugin.menu.foodMod == null || !Plugin.menu.foodMod.Value)
+                {
+                    // foodMod未启用或配置有问题，直接返回
+                    return;
+                }
+
+                // 检查self.room
+                if (self.room == null)
+                {
+                    return;
+                }
+
+                // 检查self.room.world及其相关对象
+                if (self.room.world == null || 
+                    self.room.world.game == null || 
+                    self.room.world.game.session == null || 
+                    self.room.world.game.session.characterStats == null)
+                {
+                    return;
+                }
+
+                if (self.room.world.game.session.characterStats.name == CowBoyModule.Name)
+                {
                     cowBoyModule.UseFood();
+                }
+            }
+            catch (Exception ex)
+            {
+                UnityEngine.Debug.LogError($"[CowBoySlug] Exception in PlayerHook.Player_Update: {ex.Message}\n{ex.StackTrace}");
             }
         }
     }
