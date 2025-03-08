@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CowBoySLug;
+using CowBoySlug.Compatibility;
 using Fisobs.Core;
 using Fisobs.Items;
 using Fisobs.Properties;
@@ -497,6 +498,12 @@ namespace CowBoySlug
                     // 将帽子添加到玩家的帽子列表中
                     var exPlayer = player.GetCowBoyData();
                     exPlayer.StackHat(this);
+                    
+                    // 如果Rain-Meadow存在，发送网络更新
+                    if (Compatibility.Meadow.MeadowCompat.MeadowExists)
+                    {
+                        Compatibility.Meadow.MeadowCompat.SendHatUpdate(this, player);
+                    }
                 }
             }
         }

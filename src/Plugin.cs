@@ -1,6 +1,7 @@
 using System;
 using BepInEx;
 using CowBoySlug;
+using CowBoySlug.Compatibility;
 using CowBoySlug.CowBoy.Ability.RopeUse;
 using CowBoySlug.ExAbility;
 using CowBoySlug.Menu;
@@ -67,6 +68,9 @@ namespace CowBoySLug
 
             //Camouflage.Hook();
             WhiteDropWorm.Hook();
+            
+            // 初始化兼容性管理器
+            CowBoySlug.Compatibility.CompatibilityManager.Initialize();
 
             // if (!enableGhostPlayer)
             // // {
