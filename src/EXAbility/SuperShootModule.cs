@@ -1,4 +1,5 @@
-﻿using CowBoySLug;
+﻿using CowBoySlug;
+using CowBoySlug.Compatibility;
 using RWCustom;
 using System;
 using System.Collections.Generic;
@@ -34,6 +35,7 @@ namespace CowBoySlug.ExAbility
     {
         public static int MaxReboundTime = 12;
         Rock rock;
+        public Rock Rock => rock;
         public int powerCount = 0;
 
         public Color origColor;
@@ -42,7 +44,31 @@ namespace CowBoySlug.ExAbility
         public Color nowColor => Color.Lerp(origColor, endColor, Mathf.InverseLerp(0, MaxReboundTime, powerCount));
         public void Rebound(Vector2? shootDir = null)
         {
-            powerCount--;
+            if (powerCount < MaxReboundTime)
+            {
+                powerCount++;
+                
+                // 如果Rain-Meadow存在，发送网络更新
+                if (Compatibility.SuperShoot.SuperShootCompat.MeadowExists)
+                {
+                    // 查找持有石头的玩家
+                    Player player = null;
+                    foreach (var grasp in rock.grabbedBy)
+                    {
+                        if (grasp.grabber is Player p)
+                        {
+                            player = p;
+                            break;
+                        }
+                    }
+                    
+                    if (player != null)
+                    {
+                        Compatibility.SuperShoot.SuperShootCompat.SendSuperShootUpdate(this, player);
+                    }
+                }
+            }
+            
             rock.room.AddObject(new Explosion.ExplosionLight(rock.firstChunk.pos, 50f, 0.3f, 3, new Color(1f, 1f, 1f)));
             rock.room.AddObject(new Explosion.ExplosionLight(rock.firstChunk.pos, 50f, 0.3f, 2, rock.SuperRock().nowColor));
 
@@ -210,7 +236,7 @@ namespace CowBoySlug.ExAbility
             orig.Invoke(self, grasp, eu);
 
             //测有没有扔出超级石头的资格
-            bool canSuperShoot = rock != null && Plugin.RockShot.TryGet(self, out bool flag) && flag;
+            bool canSuperShoot = rock != null && CowBoySLug.Plugin.RockShot.TryGet(self, out bool flag) && flag;
             if (!canSuperShoot) return;
 
             if (self.switchHandsProcess > 0f)

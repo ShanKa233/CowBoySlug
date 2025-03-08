@@ -16,6 +16,18 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
         public static ConditionalWeakTable<Player, RopeMaster> modules =
             new ConditionalWeakTable<Player, RopeMaster>();
 
+        /// <summary>
+        /// 获取玩家的RopeMaster数据
+        /// </summary>
+        public static RopeMaster GetRopeMasterData(Player player)
+        {
+            if (modules.TryGetValue(player, out var ropeMaster))
+            {
+                return ropeMaster;
+            }
+            return null;
+        }
+
         // 能使用这个能力的词条
         public static readonly PlayerFeature<bool> RopeMasterFeature = PlayerBool(
             "cowboyslug/rope_master"
@@ -110,12 +122,16 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
             }
 
             // 生成新的绳子
-            CowRope.SpawnRope(
+            CowRope rope = new CowRope(
                 self,
                 spear,
                 Color.Lerp(self.ShortCutColor(), mod.ropeColor, 0.5f),
                 mod.ropeColor
             );
+            self.room.AddObject(rope);
+            
+            // 更新当前绳索
+            mod.currentRope = rope;
         }
 
         private static void Player_UpdateMSC(On.Player.orig_UpdateMSC orig, Player self)
@@ -154,6 +170,68 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
 
         // 绳子颜色
         public Color ropeColor = new Color(247 / 255f, 213 / 255f, 131 / 255f);
+        
+        // 当前的绳索
+        private CowRope currentRope;
+        
+        /// <summary>
+        /// 是否有绳索
+        /// </summary>
+        public bool HaveRope => currentRope != null && !currentRope.slatedForDeletetion;
+        
+        /// <summary>
+        /// 部署绳索
+        /// </summary>
+        public void DeployRope()
+        {
+            if (HaveRope) return;
+            
+            // 查找玩家持有的矛
+            Spear spear = null;
+            for (int i = 0; i < player.grasps.Length; i++)
+            {
+                if (player.grasps[i]?.grabbed is Spear s)
+                {
+                    spear = s;
+                    break;
+                }
+            }
+            
+            // 如果没有找到矛，尝试在房间中查找
+            if (spear == null && player.room != null)
+            {
+                foreach (var obj in player.room.physicalObjects)
+                {
+                    foreach (var item in obj)
+                    {
+                        if (item is Spear s && Vector2.Distance(player.firstChunk.pos, s.firstChunk.pos) < 100f)
+                        {
+                            spear = s;
+                            break;
+                        }
+                    }
+                    if (spear != null) break;
+                }
+            }
+            
+            // 如果找到了矛，创建绳索
+            if (spear != null)
+            {
+                currentRope = new CowRope(player, spear, ropeColor, Color.white);
+                player.room.AddObject(currentRope);
+            }
+        }
+        
+        /// <summary>
+        /// 收回绳索
+        /// </summary>
+        public void RetractRope()
+        {
+            if (!HaveRope) return;
+            
+            currentRope.Destroy();
+            currentRope = null;
+        }
 
         public RopeMaster(Player player)
         {

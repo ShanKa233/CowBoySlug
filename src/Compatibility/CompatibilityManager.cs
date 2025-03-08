@@ -24,6 +24,8 @@ namespace CowBoySlug.Compatibility
             {
                 // 初始化各个兼容性模块
                 Meadow.MeadowCompat.Initialize();
+                RopeUse.RopeUseCompat.Initialize();
+                SuperShoot.SuperShootCompat.Initialize();
                 
                 // 在这里添加其他兼容性模块的初始化
                 // OtherMod.OtherModCompat.Initialize();

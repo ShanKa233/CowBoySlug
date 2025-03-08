@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using UnityEngine;
+using CowBoySlug.Compatibility;
 
 namespace CowBoySlug.CowBoy.Ability.RopeUse
 {
@@ -136,6 +137,18 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
 
     public void RemoveRope()
     {
+      // 如果Rain-Meadow存在，发送网络更新
+      if (Compatibility.RopeUse.RopeUseCompat.MeadowExists && owner != null)
+      {
+          var ropeMaster = RopeMaster.GetRopeMasterData(owner);
+          if (ropeMaster != null)
+          {
+              // 更新绳索状态为已收回
+              ropeMaster.RetractRope();
+              Compatibility.RopeUse.RopeUseCompat.SendRopeUpdate(ropeMaster, owner);
+          }
+      }
+      
       owner = null;
       rope = null;
     }
@@ -144,6 +157,16 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
     {
       this.owner = owner;
       this.rope = rope;
+      
+      // 如果Rain-Meadow存在，发送网络更新
+      if (Compatibility.RopeUse.RopeUseCompat.MeadowExists && owner != null)
+      {
+          var ropeMaster = RopeMaster.GetRopeMasterData(owner);
+          if (ropeMaster != null)
+          {
+              Compatibility.RopeUse.RopeUseCompat.SendRopeUpdate(ropeMaster, owner);
+          }
+      }
     }
 
     //检测是否是带绳的矛
