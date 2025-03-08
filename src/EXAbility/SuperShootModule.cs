@@ -27,114 +27,119 @@ namespace CowBoySlug.ExAbility
             if (rock == null) return false;
 
             superRock = rock.SuperRock();
-            return superRock.powerCount > 0;
+            return superRock.remainingBounces > 0;
         }
 
     }
     public class SuperShootModule
     {
-        public static int MaxReboundTime = 12;
+        public static int MaxBounceCount = 12;
         Rock rock;
         public Rock Rock => rock;
-        public int powerCount = 0;
+        public int remainingBounces = 0;
+        
+        // 添加玩家引用
+        private Player throwerPlayer;
+        public Player ThrowerPlayer => throwerPlayer;
+        
+        // 移除反弹冷却时间
+        // private int reboundCooldown = 0;
+        // private const int ReboundCooldownMax = 5; // 5帧的冷却时间
 
-        public Color origColor;
-        public Color endColor = Color.yellow;
+        public Color normalColor;
+        public Color superShotColor = Color.yellow;
 
-        public Color nowColor => Color.Lerp(origColor, endColor, Mathf.InverseLerp(0, MaxReboundTime, powerCount));
-        public void Rebound(Vector2? shootDir = null)
+        public Color currentColor => Color.Lerp(normalColor, superShotColor, Mathf.InverseLerp(0, MaxBounceCount, remainingBounces));
+        
+        // 添加玩家参数，如果为null则使用已保存的throwerPlayer
+        public void Bounce(Vector2? bounceDirection = null, Player player = null)
         {
-            if (powerCount < MaxReboundTime)
+            // 如果提供了玩家参数，更新throwerPlayer
+            if (player != null)
             {
-                powerCount++;
-                
-                // 如果Rain-Meadow存在，发送网络更新
-                if (Compatibility.SuperShoot.SuperShootCompat.MeadowExists)
-                {
-                    // 查找持有石头的玩家
-                    Player player = null;
-                    foreach (var grasp in rock.grabbedBy)
-                    {
-                        if (grasp.grabber is Player p)
-                        {
-                            player = p;
-                            break;
-                        }
-                    }
-                    
-                    if (player != null)
-                    {
-                        Compatibility.SuperShoot.SuperShootCompat.SendSuperShootUpdate(this, player);
-                    }
-                }
+                throwerPlayer = player;
             }
             
-            rock.room.AddObject(new Explosion.ExplosionLight(rock.firstChunk.pos, 50f, 0.3f, 3, new Color(1f, 1f, 1f)));
-            rock.room.AddObject(new Explosion.ExplosionLight(rock.firstChunk.pos, 50f, 0.3f, 2, rock.SuperRock().nowColor));
-
-
-            var dir = shootDir ?? -rock.firstChunk.contactPoint.ToVector2() + Custom.RNV() * 0.2f;
-
-            //if (rock.firstChunk.contactPoint.x != 0) dir.x *= -1;
-            //if (rock.firstChunk.contactPoint.y != 0) dir.y *= -1;
-
-            //IntVector2 throwDir = new IntVector2(0, 0);
-
-            //if (dir.x > 0)
-            //    throwDir.x = 1;
-            //else if (dir.x < 0)
-            //    throwDir.x = -1;
-
-            //if (dir.y > 0)
-            //    throwDir.y = 1;
-            //else if (dir.y < 0)
-            //    throwDir.y = -1;
-
-            rock.room.ScreenMovement(new Vector2?(rock.firstChunk.pos), rock.throwDir.ToVector2() * 1.5f, 0f);
-            rock.room.PlaySound(SoundID.Rock_Hit_Wall, rock.firstChunk);
-
-
-            rock.throwDir = new IntVector2(Math.Sign(-dir.x), Math.Sign(-dir.y));
-            rock.changeDirCounter = 3;
-            rock.ChangeOverlap(true);
-            //rock.firstChunk.MoveFromOutsideMyUpdate(false, rock.firstChunk.pos);
-            rock.firstChunk.vel = dir * 40f * Custom.LerpMap(powerCount, 0, MaxReboundTime, 0.5f, 10f);
-            rock.ChangeMode(Rock.Mode.Thrown);
-            rock.setRotation = dir;
-            rock.rotationSpeed = 10f;
-
-
-            if (rock.room.BeingViewed)
+            // 移除冷却检查
+            // if (reboundCooldown > 0)
+            // {
+            //     return;
+            // }
+            
+            // 每次反弹时减少剩余反弹次数
+            if (remainingBounces > 0)
             {
-                for (int i = 0; i < 7; i++)
+                remainingBounces--;
+                
+                // 如果Rain-Meadow存在，发送网络更新
+                if (Compatibility.SuperShoot.SuperShootCompat.MeadowExists && throwerPlayer != null)
                 {
-                    rock.room.AddObject(new Spark(rock.firstChunk.pos + rock.throwDir.ToVector2() * (rock.firstChunk.rad - 1f), Custom.DegToVec(Random.value * 360f) * 10f * Random.value + -dir * 3f, nowColor, null, 2, 4));
+                    Compatibility.SuperShoot.SuperShootCompat.SendSuperShootUpdate(this, throwerPlayer);
+                }
+                
+                // 移除设置冷却时间
+                // reboundCooldown = ReboundCooldownMax;
+                
+                rock.room.AddObject(new Explosion.ExplosionLight(rock.firstChunk.pos, 50f, 0.3f, 3, new Color(1f, 1f, 1f)));
+                rock.room.AddObject(new Explosion.ExplosionLight(rock.firstChunk.pos, 50f, 0.3f, 2, rock.SuperRock().currentColor));
+
+
+                var direction = bounceDirection ?? -rock.firstChunk.contactPoint.ToVector2() + Custom.RNV() * 0.2f;
+
+                rock.room.ScreenMovement(new Vector2?(rock.firstChunk.pos), rock.throwDir.ToVector2() * 1.5f, 0f);
+                rock.room.PlaySound(SoundID.Rock_Hit_Wall, rock.firstChunk);
+
+
+                rock.throwDir = new IntVector2(Math.Sign(-direction.x), Math.Sign(-direction.y));
+                rock.changeDirCounter = 3;
+                rock.ChangeOverlap(true);
+                
+                // 根据剩余的反弹次数调整速度
+                float speedMultiplier = Custom.LerpMap(remainingBounces, 0, MaxBounceCount, 0.5f, 10f);
+                rock.firstChunk.vel = direction * 40f * speedMultiplier;
+                
+                rock.ChangeMode(Rock.Mode.Thrown);
+                rock.setRotation = direction;
+                rock.rotationSpeed = 10f;
+
+
+                if (rock.room.BeingViewed)
+                {
+                    for (int i = 0; i < 7; i++)
+                    {
+                        rock.room.AddObject(new Spark(rock.firstChunk.pos + rock.throwDir.ToVector2() * (rock.firstChunk.rad - 1f), Custom.DegToVec(Random.value * 360f) * 10f * Random.value + -direction * 3f, currentColor, null, 2, 4));
+                    }
                 }
             }
-
+            else
+            {
+                // 如果没有剩余反弹次数，则不再反弹，恢复正常行为
+                rock.ChangeMode(Rock.Mode.Free);
+            }
         }
 
         public void SetColor(Color oldColor, Color powerColor)
         {
-            if (powerCount == 0)
+            if (remainingBounces == 0)
             {
-                origColor = oldColor;
+                normalColor = oldColor;
             }
-            endColor = powerColor;
+            superShotColor = powerColor;
         }
         public void SetColor(Color powerColor)
         {
-            if (powerCount == 0)
+            if (remainingBounces == 0)
             {
-                origColor = rock.color;
+                normalColor = rock.color;
             }
-            endColor = powerColor;
+            superShotColor = powerColor;
         }
 
 
         public SuperShootModule(Rock rock)
         {
             this.rock = rock;
+            this.throwerPlayer = null;
         }
         public static void OnHook()
         {
@@ -157,7 +162,7 @@ namespace CowBoySlug.ExAbility
         private static bool Rock_HitSomething(On.Rock.orig_HitSomething orig, Rock self, SharedPhysics.CollisionResult result, bool eu)
         {
             bool origFlag = orig.Invoke(self, result, eu);
-            if (origFlag&&self.IsSuperRock(out SuperShootModule superRock))
+            if (origFlag && self.IsSuperRock(out SuperShootModule superRock))
             {
                 if (result.obj is Creature)
                 
@@ -174,9 +179,17 @@ namespace CowBoySlug.ExAbility
         {
             if (self.IsSuperRock(out var superRock))
             {
-                if (self.firstChunk.ContactPoint.x != 0 || self.firstChunk.ContactPoint.y != 0)
+                // 移除冷却时间更新
+                // if (superRock.reboundCooldown > 0)
+                // {
+                //     superRock.reboundCooldown--;
+                // }
+                
+                // 只有当还有剩余反弹次数时才检查接触点
+                if (superRock.remainingBounces > 0 && (self.firstChunk.ContactPoint.x != 0 || self.firstChunk.ContactPoint.y != 0))
                 {
-                    superRock.Rebound();
+                    // 传递已保存的玩家引用
+                    superRock.Bounce();
                 }
             }
             orig.Invoke(self, eu);
@@ -185,31 +198,33 @@ namespace CowBoySlug.ExAbility
         private static void WhenRockCantAttackStop(On.Weapon.orig_ChangeMode orig, Weapon self, Weapon.Mode newMode)
         {
             orig.Invoke(self, newMode);
-            if (self.IsSuperRock(out var superRock) && newMode == Weapon.Mode.Free && superRock.powerCount > 0)
+            if (self.IsSuperRock(out var superRock) && newMode == Weapon.Mode.Free && superRock.remainingBounces > 0)
             {
-                superRock.Rebound();
+                // 传递已保存的玩家引用
+                superRock.Bounce();
             }
         }
 
         private static void Weapon_HitWall(On.Weapon.orig_HitWall orig, Weapon self)
         {
             var rock = (self as Rock);
-            if (rock != null && rock.SuperRock().powerCount > 0)
+            if (rock != null && rock.SuperRock().remainingBounces > 0)
             {
-                rock.SuperRock().Rebound();
+                // 传递已保存的玩家引用
+                rock.SuperRock().Bounce();
                 return;
             }
 
             orig.Invoke(self);
         }
+        
         private static void Weapon_WeaponDeflect(On.Weapon.orig_WeaponDeflect orig, Weapon self, Vector2 inbetweenPos, Vector2 deflectDir, float bounceSpeed)
         {
-            if (self.IsSuperRock(out var superRock))
+            if (self.IsSuperRock(out var superRock) && superRock.remainingBounces > 0)
             {
-                //player.firstChunk.pos = Vector2.Lerp(player.firstChunk.pos, inbetweenPos, 0.5f);
-                //player.firstChunk.vel = deflectDir * bounceSpeed * 0.5f;
                 self.vibrate = 20;
-                superRock.Rebound(deflectDir);
+                // 传递已保存的玩家引用
+                superRock.Bounce(deflectDir);
                 return;
             }
             orig.Invoke(self, inbetweenPos, deflectDir, bounceSpeed);
@@ -218,9 +233,9 @@ namespace CowBoySlug.ExAbility
         private static void ChangeRockColor(On.Rock.orig_DrawSprites orig, Rock self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
         {
             orig.Invoke(self, sLeaser, rCam, timeStacker, camPos);
-            if (self.SuperRock().powerCount > 0)
+            if (self.SuperRock().remainingBounces > 0)
             {
-                var color = self.SuperRock().nowColor;
+                var color = self.SuperRock().currentColor;
                 if (sLeaser.sprites[0].color != color)
                     sLeaser.sprites[0].color = color;
 
@@ -232,11 +247,11 @@ namespace CowBoySlug.ExAbility
 
         private static void Player_ThrowObject(On.Player.orig_ThrowObject orig, Player self, int grasp, bool eu)
         {
-            //获取扔的俗头
+            //获取扔的石头
             Rock rock = self.grasps[grasp].grabbed as Rock;
             orig.Invoke(self, grasp, eu);
 
-            //测有没有扔出超级石头的资格
+            //检查是否有资格使用超级射击
             bool canSuperShoot = rock != null && CowBoySLug.Plugin.RockShot.TryGet(self, out bool flag) && flag;
             if (!canSuperShoot) return;
 
@@ -247,13 +262,12 @@ namespace CowBoySlug.ExAbility
                 self.mushroomCounter = 2;
                 self.mushroomEffect = 0.5f;
 
-                rock.SuperRock().powerCount = MaxReboundTime;
+                // 设置初始反弹次数为最大值
+                rock.SuperRock().remainingBounces = MaxBounceCount;
                 rock.SuperRock().SetColor(Color.red);
-                rock.SuperRock().Rebound(new Vector2(self.ThrowDirection, self.input[0].y));
-                
+                // 传递玩家引用
+                rock.SuperRock().Bounce(new Vector2(self.ThrowDirection, self.input[0].y), self);
             }
-
-
         }
     }
   

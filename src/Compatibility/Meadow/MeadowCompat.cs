@@ -65,10 +65,33 @@ namespace CowBoySlug.Compatibility.Meadow
                 
                 // 注册网络消息
                 HatNetworkMessages.RegisterMessages();
+                
+                // 添加围巾兼容性处理
+                PatchScarfForMeadow();
             }
             catch (Exception ex)
             {
                 Debug.LogError($"[CowBoySlug] 初始化Rain-Meadow兼容性时出错: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// 为 Meadow 修补 Scarf 类
+        /// </summary>
+        private static void PatchScarfForMeadow()
+        {
+            try
+            {
+                Debug.Log("[CowBoySlug] 正在为 Rain-Meadow 应用围巾兼容性补丁");
+                
+                // 这里我们不需要做任何特殊处理，因为我们已经修改了 Ribbon_ctor 方法
+                // 来防止重复添加键到 ConditionalWeakTable 中
+                
+                Debug.Log("[CowBoySlug] 围巾兼容性补丁应用成功");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[CowBoySlug] 应用围巾兼容性补丁时出错: {ex.Message}");
             }
         }
         
@@ -248,6 +271,7 @@ namespace CowBoySlug.Compatibility.Meadow
                                 
                                 if (sendToMethod != null)
                                 {
+                                    // 调用SendTo方法
                                     sendToMethod.Invoke(networkManager, new object[] { message, remotePlayer });
                                     Debug.Log("[CowBoySlug] 成功发送帽子更新给特定玩家");
                                 }

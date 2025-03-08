@@ -133,13 +133,13 @@ namespace CowBoySlug.Compatibility.SuperShoot
                 // 解析消息内容
                 PropertyInfo playerIdProperty = message.GetType().GetProperty("PlayerId");
                 PropertyInfo rockIdProperty = message.GetType().GetProperty("RockId");
-                PropertyInfo powerCountProperty = message.GetType().GetProperty("PowerCount");
+                PropertyInfo bounceCountProperty = message.GetType().GetProperty("BounceCount");
                 
-                if (playerIdProperty != null && rockIdProperty != null && powerCountProperty != null)
+                if (playerIdProperty != null && rockIdProperty != null && bounceCountProperty != null)
                 {
                     string playerId = (string)playerIdProperty.GetValue(message);
                     string rockId = (string)rockIdProperty.GetValue(message);
-                    int powerCount = (int)powerCountProperty.GetValue(message);
+                    int bounceCount = (int)bounceCountProperty.GetValue(message);
                     
                     // 查找对应的玩家
                     Player player = FindPlayerById(playerId);
@@ -149,8 +149,8 @@ namespace CowBoySlug.Compatibility.SuperShoot
                         Rock rock = FindRockById(rockId, player);
                         if (rock != null)
                         {
-                            // 应用超级射击数据
-                            ApplySuperShootData(rock, powerCount);
+                            // 应用超级射击数据，但不触发反弹，同时传递玩家引用
+                            ApplySuperShootData(rock, bounceCount, false, player);
                         }
                     }
                 }
@@ -229,18 +229,51 @@ namespace CowBoySlug.Compatibility.SuperShoot
         /// <summary>
         /// 应用超级射击数据
         /// </summary>
-        private static void ApplySuperShootData(Rock rock, int powerCount)
+        private static void ApplySuperShootData(Rock rock, int bounceCount, bool triggerRebound = true, Player throwerPlayer = null)
         {
             try
             {
                 // 获取或创建超级射击模块
                 var superRock = rock.SuperRock();
                 
-                // 设置能量值
-                superRock.powerCount = powerCount;
+                // 设置剩余反弹次数
+                superRock.remainingBounces = bounceCount;
                 
                 // 更新颜色
-                superRock.SetColor(superRock.nowColor);
+                superRock.SetColor(superRock.currentColor);
+                
+                // 如果提供了玩家引用，更新throwerPlayer
+                if (throwerPlayer != null)
+                {
+                    // 使用Bounce方法更新throwerPlayer
+                    superRock.Bounce(null, throwerPlayer);
+                    // 不触发实际的反弹，所以立即恢复bounceCount
+                    superRock.remainingBounces = bounceCount;
+                }
+                
+                // 如果需要触发反弹，并且石头在房间中，且还有剩余反弹次数
+                if (triggerRebound && rock.room != null && bounceCount > 0)
+                {
+                    // 不直接调用 Bounce，而是设置石头的速度，让游戏逻辑自然触发反弹
+                    if (rock.firstChunk.vel.magnitude < 10f)
+                    {
+                        // 如果石头速度太低，给它一个初始速度
+                        rock.firstChunk.vel = new Vector2(UnityEngine.Random.Range(-1f, 1f), UnityEngine.Random.Range(-1f, 1f)).normalized * 20f;
+                    }
+                    else
+                    {
+                        // 保持当前方向，但调整速度
+                        rock.firstChunk.vel = rock.firstChunk.vel.normalized * 20f;
+                    }
+                    
+                    // 确保石头处于投掷状态
+                    rock.ChangeMode(Rock.Mode.Thrown);
+                }
+                else if (bounceCount <= 0)
+                {
+                    // 如果没有剩余反弹次数，则不再反弹，恢复正常行为
+                    rock.ChangeMode(Rock.Mode.Free);
+                }
             }
             catch (Exception ex)
             {
@@ -253,33 +286,25 @@ namespace CowBoySlug.Compatibility.SuperShoot
         /// </summary>
         public static object CreateSuperShootSyncMessage(SuperShootModule superShoot, Player player)
         {
-            if (!SuperShootCompat.MeadowExists || _superShootSyncMessageType == null) return null;
-            
             try
             {
+                // 获取Rain-Meadow程序集
+                Assembly meadowAssembly = CompatibilityManager.GetAssembly("Rain Meadow");
+                if (meadowAssembly == null || _superShootSyncMessageType == null) return null;
+                
                 // 创建消息实例
                 object message = Activator.CreateInstance(_superShootSyncMessageType);
                 
                 // 设置消息属性
                 PropertyInfo playerIdProperty = _superShootSyncMessageType.GetProperty("PlayerId");
                 PropertyInfo rockIdProperty = _superShootSyncMessageType.GetProperty("RockId");
-                PropertyInfo powerCountProperty = _superShootSyncMessageType.GetProperty("PowerCount");
+                PropertyInfo bounceCountProperty = _superShootSyncMessageType.GetProperty("BounceCount");
                 
-                if (playerIdProperty != null && rockIdProperty != null && powerCountProperty != null)
+                if (playerIdProperty != null && rockIdProperty != null && bounceCountProperty != null)
                 {
-                    // 获取玩家ID
-                    string playerId = GetPlayerId(player);
-                    
-                    // 获取石头ID
-                    string rockId = GetRockId(superShoot);
-                    
-                    // 获取能量值
-                    int powerCount = superShoot.powerCount;
-                    
-                    // 设置属性值
-                    playerIdProperty.SetValue(message, playerId);
-                    rockIdProperty.SetValue(message, rockId);
-                    powerCountProperty.SetValue(message, powerCount);
+                    playerIdProperty.SetValue(message, GetPlayerId(player));
+                    rockIdProperty.SetValue(message, GetRockId(superShoot));
+                    bounceCountProperty.SetValue(message, superShoot.remainingBounces);
                     
                     return message;
                 }

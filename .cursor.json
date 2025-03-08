@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "name": "使用完整的 UnityEngine.Debug 命名空间",
+      "pattern": "\\bDebug\\.(Log|LogWarning|LogError)\\b",
+      "message": "请使用完整的命名空间: UnityEngine.Debug.Log 而不是 Debug.Log",
+      "severity": "warning"
+    }
+  ],
+  "formatOnSave": true,
+  "formatOnType": true,
+  "codeActions": {
+    "Debug.Log": {
+      "pattern": "\\bDebug\\.(Log|LogWarning|LogError)\\b",
+      "replacement": "UnityEngine.Debug.$1",
+      "title": "使用完整的 UnityEngine.Debug 命名空间"
+    }
+  }
+} 

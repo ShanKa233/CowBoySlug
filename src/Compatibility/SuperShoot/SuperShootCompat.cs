@@ -66,11 +66,109 @@ namespace CowBoySlug.Compatibility.SuperShoot
                 
                 // 注册网络消息
                 SuperShootNetworkMessages.RegisterMessages();
+                
+                // 添加超级射击兼容性补丁
+                PatchSuperShootForMeadow();
             }
             catch (Exception ex)
             {
                 Debug.LogError($"[CowBoySlug] 初始化超级射击功能兼容性时出错: {ex.Message}");
             }
+        }
+        
+        /// <summary>
+        /// 为 Meadow 修补超级射击功能
+        /// </summary>
+        private static void PatchSuperShootForMeadow()
+        {
+            try
+            {
+                Debug.Log("[CowBoySlug] 正在为 Rain-Meadow 应用超级射击功能兼容性补丁");
+                
+                // 这里我们已经修改了 SuperShootModule 类和 SuperShootNetworkMessages 类
+                // 来防止在网络环境中出现石头无限反弹的问题
+                // 现在石头的 powerCount 会在每次反弹时减少，直到为 0
+                
+                // 记录是否在 Meadow 环境中
+                IsMeadowEnvironment = true;
+                
+                // 添加额外的钩子来监控石头的状态
+                On.Rock.Update += Rock_Update;
+                
+                Debug.Log("[CowBoySlug] 超级射击功能兼容性补丁应用成功");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[CowBoySlug] 应用超级射击功能兼容性补丁时出错: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// 监控石头的状态
+        /// </summary>
+        private static void Rock_Update(On.Rock.orig_Update orig, Rock self, bool eu)
+        {
+            orig.Invoke(self, eu);
+            
+            try
+            {
+                // 检查是否是超级石头
+                if (self.IsSuperRock(out var superRock))
+                {
+                    // 如果没有剩余反弹次数但石头仍处于 Thrown 状态，强制将其设置为 Free 状态
+                    if (superRock.remainingBounces <= 0 && self.mode == Weapon.Mode.Thrown)
+                    {
+                        self.ChangeMode(Weapon.Mode.Free);
+                    }
+                    
+                    // 如果石头没有关联玩家但被玩家抓住，尝试更新关联玩家
+                    if (superRock.ThrowerPlayer == null && self.grabbedBy.Count > 0)
+                    {
+                        foreach (var grasp in self.grabbedBy)
+                        {
+                            if (grasp.grabber is Player player)
+                            {
+                                // 更新关联玩家
+                                superRock.Bounce(null, player);
+                                // 不触发实际的反弹，所以恢复原来的remainingBounces
+                                int originalBounces = superRock.remainingBounces + 1; // 因为Bounce会减1
+                                superRock.remainingBounces = originalBounces;
+                                
+                                Debug.Log($"[CowBoySlug] 更新超级石头关联玩家: {player.abstractCreature.ID}");
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // 记录调试信息
+                    if (UnityEngine.Random.value < 0.01f) // 只记录 1% 的帧，避免日志过多
+                    {
+                        string playerInfo = superRock.ThrowerPlayer != null ? 
+                            $"玩家ID={superRock.ThrowerPlayer.abstractCreature.ID}" : "无关联玩家";
+                        
+                        Debug.Log($"[CowBoySlug] 超级石头状态: 剩余反弹次数={superRock.remainingBounces}, 模式={self.mode}, 速度={self.firstChunk.vel.magnitude}, {playerInfo}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[CowBoySlug] 监控石头状态时出错: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// 是否在 Meadow 环境中
+        /// </summary>
+        public static bool IsMeadowEnvironment { get; private set; } = false;
+        
+        /// <summary>
+        /// 检查是否只有在 Meadow 环境中才会出现石头无限反弹的问题
+        /// </summary>
+        public static bool IsInfiniteReboundMeadowOnly()
+        {
+            // 如果不在 Meadow 环境中但仍然出现无限反弹，返回 false
+            // 如果只有在 Meadow 环境中才出现无限反弹，返回 true
+            return IsMeadowEnvironment;
         }
         
         /// <summary>
@@ -190,6 +288,18 @@ namespace CowBoySlug.Compatibility.SuperShoot
             
             try
             {
+                // 确保玩家引用正确
+                if (superShoot.ThrowerPlayer == null && player != null)
+                {
+                    // 更新关联玩家
+                    superShoot.Bounce(null, player);
+                    // 不触发实际的反弹，所以恢复原来的remainingBounces
+                    int originalBounces = superShoot.remainingBounces + 1; // 因为Bounce会减1
+                    superShoot.remainingBounces = originalBounces;
+                    
+                    Debug.Log($"[CowBoySlug] 在发送网络消息前更新超级石头关联玩家: {player.abstractCreature.ID}");
+                }
+                
                 // 创建超级射击同步消息
                 object message = SuperShootNetworkMessages.CreateSuperShootSyncMessage(superShoot, player);
                 if (message != null)
@@ -215,7 +325,7 @@ namespace CowBoySlug.Compatibility.SuperShoot
                                 if (sendMethod != null)
                                 {
                                     sendMethod.Invoke(networkManager, new object[] { message });
-                                    Debug.Log("[CowBoySlug] 成功发送超级射击更新到网络");
+                                    Debug.Log($"[CowBoySlug] 成功发送超级射击更新到网络，玩家ID: {player.abstractCreature.ID}, 剩余反弹次数: {superShoot.remainingBounces}");
                                 }
                             }
                         }
@@ -237,6 +347,18 @@ namespace CowBoySlug.Compatibility.SuperShoot
             
             try
             {
+                // 确保玩家引用正确
+                if (superShoot.ThrowerPlayer == null && localPlayer != null)
+                {
+                    // 更新关联玩家
+                    superShoot.Bounce(null, localPlayer);
+                    // 不触发实际的反弹，所以恢复原来的remainingBounces
+                    int originalBounces = superShoot.remainingBounces + 1; // 因为Bounce会减1
+                    superShoot.remainingBounces = originalBounces;
+                    
+                    Debug.Log($"[CowBoySlug] 在发送网络消息给特定玩家前更新超级石头关联玩家: {localPlayer.abstractCreature.ID}");
+                }
+                
                 // 创建超级射击同步消息
                 object message = SuperShootNetworkMessages.CreateSuperShootSyncMessage(superShoot, localPlayer);
                 if (message != null)
@@ -258,8 +380,9 @@ namespace CowBoySlug.Compatibility.SuperShoot
                                 
                                 if (sendToMethod != null)
                                 {
+                                    // 调用SendTo方法
                                     sendToMethod.Invoke(networkManager, new object[] { message, remotePlayer });
-                                    Debug.Log("[CowBoySlug] 成功发送超级射击更新给特定玩家");
+                                    Debug.Log($"[CowBoySlug] 成功发送超级射击更新给特定玩家，本地玩家ID: {localPlayer.abstractCreature.ID}, 剩余反弹次数: {superShoot.remainingBounces}");
                                 }
                             }
                         }

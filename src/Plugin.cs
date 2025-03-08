@@ -12,7 +12,7 @@ using static SlugBase.Features.FeatureTypes;
 
 namespace CowBoySLug
 {
-    [BepInPlugin(MOD_ID, "CowBoySLug.ShanKa", "0.2.36")]
+    [BepInPlugin(MOD_ID, "CowBoySLug.ShanKa", "0.2.50")] // 版本号在 modinfo.json 和 workshopdata.json 中更新
     class Plugin : BaseUnityPlugin
     {
         public const string MOD_ID = "CowBoySLug.ShanKa";
@@ -41,6 +41,9 @@ namespace CowBoySLug
 
             //加载GhostPlayer扩展
             typeof(GhostPlayerImports).ModInterop();
+            
+            // 初始化版本管理器
+            VersionManager.Initialize();
         }
 
         public static RemixMenu menu = new RemixMenu();
@@ -91,8 +94,11 @@ namespace CowBoySLug
             }
             catch (Exception ex)
             {
-                Debug.Log($"CowBoySLug.ShanKa options failed init error {menu}{ex}");
+                UnityEngine.Debug.LogError($"CowBoySLug.ShanKa options failed init error {menu}{ex}");
             }
+            
+            // 在初始化完成后更新补丁版本号
+            VersionManager.UpdateVersion(0);
         }
 
         private void LoadResources(RainWorld rainWorld)

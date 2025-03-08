@@ -40,22 +40,41 @@ namespace CowBoySlug
         )
         {
             orig.Invoke(self, ow);
-            //加到字典里
-            if (HaveScarf.TryGet(self.player, out var value) && value)
-                modules.Add(self.player, new ScarfModule(self.player));
-            if (!modules.TryGetValue(self.player, out var module))
-                return;
-
-            module.ribbon = new GenericBodyPart[2];
-            for (int i = 0; i < module.ribbon.Length; i++)
+            
+            try
             {
-                module.ribbon[i] = new GenericBodyPart(
-                    self,
-                    1,
-                    0.8f,
-                    0.3f,
-                    self.player.mainBodyChunk
-                );
+                //加到字典里 - 先检查是否已存在
+                if (HaveScarf.TryGet(self.player, out var value) && value)
+                {
+                    // 检查键是否已经存在
+                    if (!modules.TryGetValue(self.player, out _))
+                    {
+                        modules.Add(self.player, new ScarfModule(self.player));
+                    }
+                }
+                
+                if (!modules.TryGetValue(self.player, out var module))
+                    return;
+
+                // 检查 ribbon 是否已经初始化
+                if (module.ribbon == null)
+                {
+                    module.ribbon = new GenericBodyPart[2];
+                    for (int i = 0; i < module.ribbon.Length; i++)
+                    {
+                        module.ribbon[i] = new GenericBodyPart(
+                            self,
+                            1,
+                            0.8f,
+                            0.3f,
+                            self.player.mainBodyChunk
+                        );
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                UnityEngine.Debug.LogError($"[CowBoySlug] Exception in Ribbon_ctor: {ex.Message}\n{ex.StackTrace}");
             }
         }
 
