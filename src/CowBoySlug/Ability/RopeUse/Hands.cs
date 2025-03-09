@@ -220,10 +220,6 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
             this.cycleTime = cycleTime;
             this.abxy = abxy;
             this.look = look;
-            if (Plugin.enableGhostPlayer && !GhostPlayerImports.IsNetworkPlayer(player))
-            {
-                GhostPlayerImports.TrySendImportantValue(new CowBoyData() { id = GhostPlayerImports.GetPlayerNetID(player), type = 1 }, false);
-            }
         }
 
 

@@ -43,8 +43,16 @@ namespace CowBoySlug
             
             try
             {
-                //加到字典里 - 先检查是否已存在
-                if (HaveScarf.TryGet(self.player, out var value) && value)
+                // 检查是否是牛仔猫或网络玩家
+                bool shouldHaveScarf = false;
+                
+                // 检查是否是牛仔猫
+                if (self.player.slugcatStats.name == CowBoyModule.Name)
+                {
+                    shouldHaveScarf = true;
+                }
+            
+                if (shouldHaveScarf || (HaveScarf.TryGet(self.player, out var value) && value))
                 {
                     // 检查键是否已经存在
                     if (!modules.TryGetValue(self.player, out _))
@@ -187,14 +195,28 @@ namespace CowBoySlug
         )
         {
             orig.Invoke(self, sLeaser, rCam, timeStacker, camPos);
-            if (!modules.TryGetValue(self.player, out var module))
+            
+            // 检查是否是牛仔猫或网络玩家
+            bool shouldDrawScarf = false;
+            
+            // 检查是否是牛仔猫
+            if (self.player.slugcatStats.name == CowBoyModule.Name)
+            {
+                shouldDrawScarf = true;
+            }
+            if (!shouldDrawScarf && !modules.TryGetValue(self.player, out var module))
                 return;
+                
             if (!elementLoaded())
+                return;
+                
+            if (!modules.TryGetValue(self.player, out module))
                 return;
 
             var scarfIndex = module.scarfIndex;
             //颜色设定
             Color scarfColor = ScarfColor.GetColor(self).Value;
+            
             sLeaser.sprites[scarfIndex].color = scarfColor;
 
             //材质赋值

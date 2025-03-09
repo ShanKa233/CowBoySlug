@@ -55,6 +55,9 @@
       <Reference Include="HOOKS-Assembly-CSharp">
         <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Rain World\BepInEx\plugins\HOOKS-Assembly-CSharp.dll</HintPath>
       </Reference>
+      <Reference Include="Rain Meadow">
+        <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\workshop\content\312520\3388224007\plugins\Rain Meadow.dll</HintPath>
+      </Reference>
       <Reference Include="System.Web.Extensions" />
       <Reference Include="Unity.Mathematics">
         <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Rain World\RainWorld_Data\Managed\Unity.Mathematics.dll</HintPath>

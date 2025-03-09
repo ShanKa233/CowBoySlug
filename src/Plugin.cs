@@ -1,7 +1,6 @@
 using System;
 using BepInEx;
 using CowBoySlug;
-using CowBoySlug.Compatibility;
 using CowBoySlug.CowBoy.Ability.RopeUse;
 using CowBoySlug.ExAbility;
 using CowBoySlug.Menu;
@@ -9,6 +8,10 @@ using Fisobs.Core;
 using MonoMod.ModInterop;
 using SlugBase.Features;
 using static SlugBase.Features.FeatureTypes;
+using System.Reflection;
+using System.Linq;
+using SlugBase.DataTypes;
+using UnityEngine;
 
 namespace CowBoySLug
 {
@@ -18,89 +21,106 @@ namespace CowBoySLug
         public const string MOD_ID = "CowBoySLug.ShanKa";
 
         public static readonly PlayerFeature<bool> RockShot = PlayerBool("cowboyslug/rock_shot"); //扔石头
+        // 能使用这个能力的词条
+        public static readonly PlayerFeature<bool> RopeMasterFeature = PlayerBool(
+            "cowboyslug/rope_master"
+        );
+
+        // 绳子颜色
+        public static readonly PlayerColor RopeColor = new PlayerColor("Rope");
+
+
 
         //public static readonly PlayerFeature<bool> HaveScarf = PlayerBool("cowboyslug/scarf");//有围巾
 
         //public static readonly PlayerColor ScarfColor = new PlayerColor("Scarf");//围巾颜色
 
         #region 检查其他mod是否启用
-        //检查GhostPlayer是否启用
-        public static bool enableGhostPlayer = false;
-
         //检查猫拳是否启用
         public static bool enableCatPunchPunch = false;
 
+        //检查Rain-Meadow是否启用
+        public static bool enableRainMeadow = false;
+
+        // Rain-Meadow程序集
+        public static Assembly rainMeadowAssembly = null;
         #endregion
+
+        // 插件实例
+        public static Plugin instance;
+
         // Add hooks
         public void OnEnable()
         {
+            instance = this;
             On.RainWorld.OnModsInit += Extras.WrapInit(LoadResources);
             On.RainWorld.OnModsInit += RainWorld_OnModsInit;
 
             Content.Register(new CowBoyHatFisob());
-
-            //加载GhostPlayer扩展
-            typeof(GhostPlayerImports).ModInterop();
-            
             // 初始化版本管理器
             VersionManager.Initialize();
         }
 
         public static RemixMenu menu = new RemixMenu();
 
+        public bool IsInit { get; private set; }
+
         private void RainWorld_OnModsInit(On.RainWorld.orig_OnModsInit orig, RainWorld self)
         {
             orig(self);
-            LoadHats.Hook();
-
-            RopeSpear.Hook();
-
-            Hat.Hook();
-
-            //控制绳子的能力的hook
-            RopeMaster.Hook();
-
-            PlayerHook.Hook();
-            PlayerGraphicsHook.Hook();
-
-            Hands.Hook();
-
-            SewHook.Hook();
-
-            SuperShootModule.OnHook();
-
-            //Camouflage.Hook();
-            WhiteDropWorm.Hook();
-            
-            // 初始化兼容性管理器
-            CowBoySlug.Compatibility.CompatibilityManager.Initialize();
-
-            // if (!enableGhostPlayer)
-            // // {
-            //     foreach (var mod in ModManager.ActiveMods)
-            //     {
-            //         if (mod.id == "ghostplayer")
-            //             enableGhostPlayer = true;
-            //     }
-            //     if (enableGhostPlayer)
-            //     {
-            //         GhostPlayerImports.Register(typeof(CowBoyData));
-            //     }
-            // }
-
             try
             {
-                MachineConnector.SetRegisteredOI("CowBoySLug.ShanKa", menu);
+                // if (IsInit)
+                // {
+                //     return;
+                // }
+
+                // IsInit = true;
+
+                //init
+                // 检查其他mod是否启用
+                Compatibility.ModCompat_Helpers.InitModCompat();
+
+                LoadHats.Hook();
+                RopeSpear.Hook();
+
+                Hat.Hook();
+
+                //控制绳子的能力的hook
+
+                PlayerHook.Hook();
+                PlayerGraphicsHook.Hook();
+
+                Hands.Hook();
+
+                SewHook.Hook();
+
+                RopeMaster.Hook();
+                SuperShootModule.OnHook();
+
+                //Camouflage.Hook();
+                WhiteDropWorm.Hook();
+
+
+                try
+                {
+                    MachineConnector.SetRegisteredOI("CowBoySLug.ShanKa", menu);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"CowBoySLug.ShanKa options failed init error {menu}{ex}");
+                }
+
+                // 在初始化完成后更新补丁版本号
+                VersionManager.UpdateVersion(0);
+
+                Debug.Log("[CowBoySlug] 初始化完成");
             }
             catch (Exception ex)
             {
-                UnityEngine.Debug.LogError($"CowBoySLug.ShanKa options failed init error {menu}{ex}");
+                Debug.LogError($"[CowBoySlug] 初始化时出错: {ex.Message}\n{ex.StackTrace}");
             }
-            
-            // 在初始化完成后更新补丁版本号
-            VersionManager.UpdateVersion(0);
         }
-
         private void LoadResources(RainWorld rainWorld)
         {
             Futile.atlasManager.LoadAtlas("atlases/CowBoyHead");
@@ -108,39 +128,4 @@ namespace CowBoySLug
         }
     }
 
-    //GhostPlayer联机API
-    [ModImportName("GhostPlayerExtension")]
-    public static class GhostPlayerImports
-    {
-        public delegate bool TryGetImportantValueDel(Type type, out object obj);
-        public delegate bool TryGetValueForPlayerDel(Player player, Type type, out object obj);
-
-        public static Func<Type, bool> Register;
-
-        public static TryGetValueForPlayerDel TryGetValueForPlayer;
-        public static Func<Player, object, bool> TrySetValueForPlayer;
-
-        public static TryGetImportantValueDel TryGetImportantValue;
-        public static Func<object, bool, bool> TrySendImportantValue;
-
-        public static Func<Player, string, bool> SendMessage;
-
-        //public static Func<Player, string, bool> SendConsoleMessage;
-
-        public static Action<Action<string[]>> RegisterCommandEvent;
-
-        public static Func<Player, int> GetPlayerNetID;
-        public static Func<Player, string> GetPlayerNetName;
-        public static Func<Player, bool> IsNetworkPlayer;
-        public static Func<bool> IsConnected;
-
-        //public static Func<string, string> GetPlayerRoom;
-        //public static Func<string, string> GetPlayerRegion;
-    }
-
-    public class CowBoyData
-    {
-        public int id;
-        public byte type = 0;
-    }
 }

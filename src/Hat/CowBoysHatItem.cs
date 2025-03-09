@@ -7,7 +7,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CowBoySLug;
-using CowBoySlug.Compatibility;
 using Fisobs.Core;
 using Fisobs.Items;
 using Fisobs.Properties;
@@ -339,31 +338,31 @@ namespace CowBoySlug
                 if (flag2)
                 {
                     var exPlayer = player.GetCowBoyData();
-                    
+
                     // 只取下列表中最后一个帽子（即索引最大的帽子）
                     if (exPlayer.hatList.Count > 0)
                     {
                         // 获取最后一个帽子
                         CowBoyHat lastHat = exPlayer.hatList[exPlayer.hatList.Count - 1];
-                        
+
                         // 如果当前帽子不是最后一个帽子，则不取下
                         if (lastHat != this)
                         {
                             return;
                         }
-                        
+
                         // 如果是最后一个帽子，则取下
                         room.PlaySound(SoundID.Big_Spider_Spit, firstChunk);
-                        
+
                         if (Hat.TryGetHat(player, out var abstractHatWearStick) && abstractHatWearStick != null)
                         {
                             abstractHatWearStick.Deactivate(); // 取消佩戴
                             Hat.RemoveHat(player);
                         }
-                        
+
                         // 从玩家的帽子列表中移除
                         exPlayer.UnstackHat(this);
-                        
+
                         wearers = null; // 清空佩戴者
                     }
                 }
@@ -373,31 +372,31 @@ namespace CowBoySlug
                 if (wearers is Player player)
                 {
                     var exPlayer = player.GetCowBoyData();
-                    
+
                     // 只取下列表中最后一个帽子（即索引最大的帽子）
                     if (exPlayer.hatList.Count > 0)
                     {
                         // 获取最后一个帽子
                         CowBoyHat lastHat = exPlayer.hatList[exPlayer.hatList.Count - 1];
-                        
+
                         // 如果当前帽子不是最后一个帽子，则不取下
                         if (lastHat != this)
                         {
                             return;
                         }
-                        
+
                         // 如果是最后一个帽子，则取下
                         room.PlaySound(SoundID.Big_Spider_Spit, firstChunk);
-                        
+
                         if (Hat.TryGetHat(player, out var abstractHatWearStick) && abstractHatWearStick != null)
                         {
                             abstractHatWearStick.Deactivate(); // 取消佩戴
                             Hat.RemoveHat(player);
                         }
-                        
+
                         // 从玩家的帽子列表中移除
                         exPlayer.UnstackHat(this);
-                        
+
                         wearers = null; // 清空佩戴者
                     }
                 }
@@ -417,6 +416,52 @@ namespace CowBoySlug
             else
             {
                 this.CollideWithObjects = true; // 与其他物体碰撞
+            }
+        }
+
+        public void ChangeOverlap(CowBoyHat otherHat)
+        {
+            try
+            {
+                // 只在帽子被佩戴时调用
+                if (!Weared || otherHat == null || !otherHat.Weared || otherHat == this) return;
+
+                // 确保两个帽子都在同一个玩家身上
+                if (wearers != otherHat.wearers) return;
+
+                // 获取玩家的帽子列表
+                if (wearers is Player player)
+                {
+                    var exPlayer = player.GetCowBoyData();
+                    if (exPlayer != null)
+                    {
+                        // 获取两个帽子的索引
+                        int myIndex = exPlayer.hatList.IndexOf(this);
+                        int otherIndex = exPlayer.hatList.IndexOf(otherHat);
+
+                        if (myIndex != -1 && otherIndex != -1)
+                        {
+                            // 根据索引调整精灵的层级
+                            foreach (var sprite in sLeaser.sprites)
+                            {
+                                if (sprite != null)
+                                {
+                                    // 索引越大，层级越高
+                                    if (myIndex > otherIndex)
+                                    {
+                                        sprite.MoveInFrontOfOtherNode(otherHat.sLeaser.sprites[0]);
+                                    }
+                                }
+                            }
+
+                            Debug.Log($"[CowBoySlug] 调整帽子层级 - {abstractPhysicalObject.ID}(索引:{myIndex}) 与 {otherHat.abstractPhysicalObject.ID}(索引:{otherIndex})");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[CowBoySlug] 调整帽子层级时出错: {ex}");
             }
         }
 
@@ -494,16 +539,12 @@ namespace CowBoySlug
                             player.abstractPhysicalObject as AbstractCreature
                         )
                     );
-                    
+
                     // 将帽子添加到玩家的帽子列表中
                     var exPlayer = player.GetCowBoyData();
                     exPlayer.StackHat(this);
-                    
-                    // 如果Rain-Meadow存在，发送网络更新
-                    if (Compatibility.Meadow.MeadowCompat.MeadowExists)
-                    {
-                        Compatibility.Meadow.MeadowCompat.SendHatUpdate(this, player);
-                    }
+
+                 
                 }
             }
         }
@@ -520,8 +561,11 @@ namespace CowBoySlug
             }
         }
 
+        private RoomCamera.SpriteLeaser sLeaser;
+
         public void InitiateSprites(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
         {
+            this.sLeaser = sLeaser;  // 保存SpriteLeaser引用
             sLeaser.sprites = new FSprite[4];
 
             for (int i = 0; i < 2; i++)
@@ -603,11 +647,11 @@ namespace CowBoySlug
                 // 获取帽子在列表中的索引位置
                 var exPlayer = player.GetCowBoyData();
                 int hatIndex = exPlayer.hatList.IndexOf(this);
-                
+
                 // 使用特殊的容器，确保帽子按照正确的顺序显示
                 // 下标更大的帽子（后添加的）显示在下标更小的帽子（先添加的）之上
                 newContainer = rCam.ReturnFContainer("HUD");
-                
+
                 // 先从容器中移除所有精灵，然后按照正确的顺序重新添加
                 foreach (FSprite fsprite in sLeaser.sprites)
                 {
@@ -622,7 +666,7 @@ namespace CowBoySlug
             foreach (FSprite fsprite in sLeaser.sprites)
             {
                 newContainer.AddChild(fsprite);
-                
+
                 // 如果帽子被佩戴，将精灵移到容器的最前面
                 if (Weared)
                 {
@@ -640,7 +684,7 @@ namespace CowBoySlug
         {
             if (Weared)
             {
-                WearDraw(sLeaser, rCam, timeStacker, camPos); // 绘制佩戴状态
+                WearDraw(sLeaser, rCam, timeStacker, camPos);
                 return;
             }
 
@@ -749,6 +793,42 @@ namespace CowBoySlug
             Vector2 camPos
         )
         {
+            // 调整层级
+            if (wearers is Player player2)
+            {
+
+                var exPlayer = player2.GetCowBoyData();
+                if (exPlayer != null)
+                {
+                    int myIndex = exPlayer.hatList.IndexOf(this);
+                    if (myIndex != -1)
+                    {
+                        // 遍历所有帽子
+                        for (int i = 0; i < exPlayer.hatList.Count; i++)
+                        {
+                            if (i == myIndex) continue; // 跳过自己
+
+                            CowBoyHat otherHat = exPlayer.hatList[i];
+                            if (otherHat?.sLeaser?.sprites != null && otherHat.sLeaser.sprites.Length > 0)
+                            {
+                                // 根据索引调整精灵的层级
+                                foreach (var sprite in sLeaser.sprites)
+                                {
+                                    if (sprite != null)
+                                    {
+                                        // 索引越大，层级越高
+                                        if (myIndex > i)
+                                        {
+                                            sprite.MoveInFrontOfOtherNode(otherHat.sLeaser.sprites[0]);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             var body = firstChunk;
             Vector2 headPosition = Vector2.Lerp(firstChunk.lastPos, firstChunk.pos, timeStacker);
             float rotation = PlayerHeadInfo(wearers as Player, timeStacker, ref headPosition);
@@ -756,32 +836,20 @@ namespace CowBoySlug
             headPosition -= camPos;
             Vector2 vector =
                 headPosition + Custom.DegToVec(rotation + FixHatRotation(wearers as Player)) * (7f);
-            
+
             // 获取帽子在列表中的索引位置
             int hatIndex = 0;
             float heightOffset = 0f;
-            
-            if (wearers is Player player)
+
+            if (wearers is Player player3)
             {
-                var exPlayer = player.GetCowBoyData();
+                var exPlayer = player3.GetCowBoyData();
                 hatIndex = exPlayer.hatList.IndexOf(this);
-                
-                // 根据索引计算高度偏移，每顶帽子向上偏移3个单位
+
+                // 根据索引计算高度偏移，每顶帽子向上偏移8个单位
                 heightOffset = hatIndex * 8f;
-                
-                // 调整精灵的显示顺序
-                // 由于FNode.depth是只读的，我们需要使用其他方法来调整显示顺序
-                // 我们可以通过调整容器中的顺序来实现
-                for (int i = 0; i < sLeaser.sprites.Length; i++)
-                {
-                    if (sLeaser.sprites[i].container != null)
-                    {
-                        // 将精灵移到容器的最前面
-                        sLeaser.sprites[i].MoveToFront();
-                    }
-                }
             }
-            
+
             // 根据高度偏移调整帽子位置
             vector += Custom.DegToVec(rotation + FixHatRotation(wearers as Player)) * heightOffset;
 
@@ -949,7 +1017,7 @@ namespace CowBoySlug
                 exPlayer.UnstackHat(this);
                 Hat.RemoveHat(player);
             }
-            
+
             base.Destroy();
         }
     }

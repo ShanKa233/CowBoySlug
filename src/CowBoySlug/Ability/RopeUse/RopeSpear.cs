@@ -3,7 +3,6 @@ using System.Runtime.CompilerServices;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using UnityEngine;
-using CowBoySlug.Compatibility;
 
 namespace CowBoySlug.CowBoy.Ability.RopeUse
 {
@@ -94,13 +93,14 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
     }
   }
 
-  public static class ExSpear
+  public static class RopeSpearExtension
   {
-    public static ConditionalWeakTable<Spear, RopeData> modules =
-        new ConditionalWeakTable<Spear, RopeData>();
+    private static readonly ConditionalWeakTable<Spear, RopeData> ropeTable = new ConditionalWeakTable<Spear, RopeData>();
 
-    public static RopeData rope(this Spear spear) =>
-        modules.GetValue(spear, (_) => new RopeData(spear));
+    public static RopeData rope(this Spear spear)
+    {
+      return ropeTable.GetValue(spear, (s) => new RopeData(s));
+    }
   }
 
   /// <summary>
@@ -108,64 +108,67 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
   /// </summary>
   public class RopeData
   {
-    Spear spear;
+    public Spear spear;
     public Player owner;
     public CowRope rope;
 
-    public int cantRotationCount = 0;
     public int brokenCount = 0;
+    public int cantRotationCount = 0;
 
     public void Update()
     {
-      if (cantRotationCount > 0)
+      try
       {
-        cantRotationCount--;
-      }
+        if (cantRotationCount > 0)
+        {
+          cantRotationCount--;
+        }
 
-      if (cantRotationCount > 10)
-      {
-        cantRotationCount = 10;
+        if (cantRotationCount > 10)
+        {
+          cantRotationCount = 10;
+        }
+
+        if (brokenCount > 0)
+        {
+          brokenCount--;
+        }
+
+        if (brokenCount > 80)
+        {
+          brokenCount = 0;
+          RemoveRope();
+        }
       }
-      if (brokenCount > 0)
-        brokenCount--;
-      if (brokenCount > 80)
+      catch (Exception ex)
       {
-        brokenCount = 0;
-        RemoveRope();
+        Debug.LogError($"[CowBoySlug] 更新绳索数据时出错: {ex.Message}\n{ex.StackTrace}");
       }
     }
 
     public void RemoveRope()
     {
-      // 如果Rain-Meadow存在，发送网络更新
-      if (Compatibility.RopeUse.RopeUseCompat.MeadowExists && owner != null)
+      try
       {
-          var ropeMaster = RopeMaster.GetRopeMasterData(owner);
-          if (ropeMaster != null)
-          {
-              // 更新绳索状态为已收回
-              ropeMaster.RetractRope();
-              Compatibility.RopeUse.RopeUseCompat.SendRopeUpdate(ropeMaster, owner);
-          }
+        owner = null;
+        rope = null;
       }
-      
-      owner = null;
-      rope = null;
+      catch (Exception ex)
+      {
+        Debug.LogError($"[CowBoySlug] 移除绳索时出错: {ex.Message}\n{ex.StackTrace}");
+      }
     }
 
     public void GetRope(Player owner, CowRope rope)
     {
-      this.owner = owner;
-      this.rope = rope;
-      
-      // 如果Rain-Meadow存在，发送网络更新
-      if (Compatibility.RopeUse.RopeUseCompat.MeadowExists && owner != null)
+      try
       {
-          var ropeMaster = RopeMaster.GetRopeMasterData(owner);
-          if (ropeMaster != null)
-          {
-              Compatibility.RopeUse.RopeUseCompat.SendRopeUpdate(ropeMaster, owner);
-          }
+        this.owner = owner;
+        this.rope = rope;
+      }
+      catch (Exception ex)
+      {
+        Debug.LogError($"[CowBoySlug] 获取绳索时出错: {ex.Message}\n{ex.StackTrace}");
       }
     }
 

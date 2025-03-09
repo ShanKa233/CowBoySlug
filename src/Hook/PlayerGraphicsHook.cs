@@ -39,7 +39,7 @@ namespace CowBoySlug
             {
                 return;
             }
-            cowBoy.ropeColor = RopeMaster.RopeColor.GetColor(self).Value;
+            cowBoy.ropeColor =Plugin.RopeColor.GetColor(self).Value;
         }
 
         //绘制蛞蝓猫

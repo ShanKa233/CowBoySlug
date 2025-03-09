@@ -1,5 +1,4 @@
 ﻿using CowBoySlug;
-using CowBoySlug.Compatibility;
 using RWCustom;
 using System;
 using System.Collections.Generic;
@@ -70,16 +69,6 @@ namespace CowBoySlug.ExAbility
             if (remainingBounces > 0)
             {
                 remainingBounces--;
-                
-                // 如果Rain-Meadow存在，发送网络更新
-                if (Compatibility.SuperShoot.SuperShootCompat.MeadowExists && throwerPlayer != null)
-                {
-                    Compatibility.SuperShoot.SuperShootCompat.SendSuperShootUpdate(this, throwerPlayer);
-                }
-                
-                // 移除设置冷却时间
-                // reboundCooldown = ReboundCooldownMax;
-                
                 rock.room.AddObject(new Explosion.ExplosionLight(rock.firstChunk.pos, 50f, 0.3f, 3, new Color(1f, 1f, 1f)));
                 rock.room.AddObject(new Explosion.ExplosionLight(rock.firstChunk.pos, 50f, 0.3f, 2, rock.SuperRock().currentColor));
 
