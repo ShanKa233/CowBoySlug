@@ -22,10 +22,6 @@ namespace CowBoySLug
 
         public static readonly PlayerFeature<bool> RockShot = PlayerBool("cowboyslug/rock_shot"); //扔石头
         // 能使用这个能力的词条
-        public static readonly PlayerFeature<bool> RopeMasterFeature = PlayerBool(
-            "cowboyslug/rope_master"
-        );
-
         // 绳子颜色
         public static readonly PlayerColor RopeColor = new PlayerColor("Rope");
 
@@ -68,58 +64,44 @@ namespace CowBoySLug
         private void RainWorld_OnModsInit(On.RainWorld.orig_OnModsInit orig, RainWorld self)
         {
             orig(self);
-            try
+            
+            if (IsInit)
             {
-                // if (IsInit)
-                // {
-                //     return;
-                // }
-
-                // IsInit = true;
-
-                //init
-                // 检查其他mod是否启用
-                Compatibility.ModCompat_Helpers.InitModCompat();
-
-                LoadHats.Hook();
-                RopeSpear.Hook();
-
-                Hat.Hook();
-
-                //控制绳子的能力的hook
-
-                PlayerHook.Hook();
-                PlayerGraphicsHook.Hook();
-
-                Hands.Hook();
-
-                SewHook.Hook();
-
-                RopeMaster.Hook();
-                SuperShootModule.OnHook();
-
-                //Camouflage.Hook();
-                WhiteDropWorm.Hook();
-
-
-                try
-                {
-                    MachineConnector.SetRegisteredOI("CowBoySLug.ShanKa", menu);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError($"CowBoySLug.ShanKa options failed init error {menu}{ex}");
-                }
-
-                // 在初始化完成后更新补丁版本号
-                VersionManager.UpdateVersion(0);
-
-                Debug.Log("[CowBoySlug] 初始化完成");
+                return;
             }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[CowBoySlug] 初始化时出错: {ex.Message}\n{ex.StackTrace}");
-            }
+
+            IsInit = true;
+
+            // init
+            // 检查其他mod是否启用
+            Compatibility.ModCompat_Helpers.InitModCompat();
+
+            RopeMaster.Hook();
+            LoadHats.Hook();
+            RopeSpear.Hook();
+
+            Hat.Hook();
+
+            //控制绳子的能力的hook
+
+            PlayerHook.Hook();
+            PlayerGraphicsHook.Hook();
+
+            Hands.Hook();
+
+            SewHook.Hook();
+
+            SuperShootModule.OnHook();
+
+            //Camouflage.Hook();
+            WhiteDropWorm.Hook();
+
+            MachineConnector.SetRegisteredOI("CowBoySLug.ShanKa", menu);
+
+            // 在初始化完成后更新补丁版本号
+            VersionManager.UpdateVersion(0);
+
+            Debug.Log("[CowBoySlug] 初始化完成");
         }
         private void LoadResources(RainWorld rainWorld)
         {

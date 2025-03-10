@@ -17,14 +17,7 @@ namespace Compatibility
         {
             if (IsModEnabled_RainMeadow)
             {
-                try
-                {
-                    MeadowCompat.InitCompat();
-                }
-                catch (Exception e)
-                {
-                    UnityEngine.Debug.LogError($"Failed to initialize Rain Meadow compatibility: {e.Message}");
-                }
+                MeadowCompat.InitCompat();
             }
         }
     }

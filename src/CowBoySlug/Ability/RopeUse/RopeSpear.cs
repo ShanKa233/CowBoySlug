@@ -117,59 +117,38 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
 
     public void Update()
     {
-      try
+      if (cantRotationCount > 0)
       {
-        if (cantRotationCount > 0)
-        {
-          cantRotationCount--;
-        }
-
-        if (cantRotationCount > 10)
-        {
-          cantRotationCount = 10;
-        }
-
-        if (brokenCount > 0)
-        {
-          brokenCount--;
-        }
-
-        if (brokenCount > 80)
-        {
-          brokenCount = 0;
-          RemoveRope();
-        }
+        cantRotationCount--;
       }
-      catch (Exception ex)
+
+      if (cantRotationCount > 10)
       {
-        Debug.LogError($"[CowBoySlug] 更新绳索数据时出错: {ex.Message}\n{ex.StackTrace}");
+        cantRotationCount = 10;
+      }
+
+      if (brokenCount > 0)
+      {
+        brokenCount--;
+      }
+
+      if (brokenCount > 80)
+      {
+        brokenCount = 0;
+        RemoveRope();
       }
     }
 
     public void RemoveRope()
     {
-      try
-      {
-        owner = null;
-        rope = null;
-      }
-      catch (Exception ex)
-      {
-        Debug.LogError($"[CowBoySlug] 移除绳索时出错: {ex.Message}\n{ex.StackTrace}");
-      }
+      owner = null;
+      rope = null;
     }
 
     public void GetRope(Player owner, CowRope rope)
     {
-      try
-      {
-        this.owner = owner;
-        this.rope = rope;
-      }
-      catch (Exception ex)
-      {
-        Debug.LogError($"[CowBoySlug] 获取绳索时出错: {ex.Message}\n{ex.StackTrace}");
-      }
+      this.owner = owner;
+      this.rope = rope;
     }
 
     //检测是否是带绳的矛

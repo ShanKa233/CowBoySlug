@@ -40,49 +40,42 @@ namespace CowBoySlug
         )
         {
             orig.Invoke(self, ow);
-            
-            try
-            {
-                // 检查是否是牛仔猫或网络玩家
-                bool shouldHaveScarf = false;
-                
-                // 检查是否是牛仔猫
-                if (self.player.slugcatStats.name == CowBoyModule.Name)
-                {
-                    shouldHaveScarf = true;
-                }
-            
-                if (shouldHaveScarf || (HaveScarf.TryGet(self.player, out var value) && value))
-                {
-                    // 检查键是否已经存在
-                    if (!modules.TryGetValue(self.player, out _))
-                    {
-                        modules.Add(self.player, new ScarfModule(self.player));
-                    }
-                }
-                
-                if (!modules.TryGetValue(self.player, out var module))
-                    return;
 
-                // 检查 ribbon 是否已经初始化
-                if (module.ribbon == null)
+            // 检查是否是牛仔猫或网络玩家
+            bool shouldHaveScarf = false;
+
+            // 检查是否是牛仔猫
+            if (self.player.slugcatStats.name == CowBoyModule.Name)
+            {
+                shouldHaveScarf = true;
+            }
+
+            if (shouldHaveScarf || (HaveScarf.TryGet(self.player, out var value) && value))
+            {
+                // 检查键是否已经存在
+                if (!modules.TryGetValue(self.player, out _))
                 {
-                    module.ribbon = new GenericBodyPart[2];
-                    for (int i = 0; i < module.ribbon.Length; i++)
-                    {
-                        module.ribbon[i] = new GenericBodyPart(
-                            self,
-                            1,
-                            0.8f,
-                            0.3f,
-                            self.player.mainBodyChunk
-                        );
-                    }
+                    modules.Add(self.player, new ScarfModule(self.player));
                 }
             }
-            catch (Exception ex)
+
+            if (!modules.TryGetValue(self.player, out var module))
+                return;
+
+            // 检查 ribbon 是否已经初始化
+            if (module.ribbon == null)
             {
-                UnityEngine.Debug.LogError($"[CowBoySlug] Exception in Ribbon_ctor: {ex.Message}\n{ex.StackTrace}");
+                module.ribbon = new GenericBodyPart[2];
+                for (int i = 0; i < module.ribbon.Length; i++)
+                {
+                    module.ribbon[i] = new GenericBodyPart(
+                        self,
+                        1,
+                        0.8f,
+                        0.3f,
+                        self.player.mainBodyChunk
+                    );
+                }
             }
         }
 
@@ -195,10 +188,10 @@ namespace CowBoySlug
         )
         {
             orig.Invoke(self, sLeaser, rCam, timeStacker, camPos);
-            
+
             // 检查是否是牛仔猫或网络玩家
             bool shouldDrawScarf = false;
-            
+
             // 检查是否是牛仔猫
             if (self.player.slugcatStats.name == CowBoyModule.Name)
             {
@@ -206,17 +199,17 @@ namespace CowBoySlug
             }
             if (!shouldDrawScarf && !modules.TryGetValue(self.player, out var module))
                 return;
-                
+
             if (!elementLoaded())
                 return;
-                
+
             if (!modules.TryGetValue(self.player, out module))
                 return;
 
             var scarfIndex = module.scarfIndex;
             //颜色设定
             Color scarfColor = ScarfColor.GetColor(self).Value;
-            
+
             sLeaser.sprites[scarfIndex].color = scarfColor;
 
             //材质赋值
