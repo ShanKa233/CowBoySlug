@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using Compatibility;
+using Compatibility.Meadow;
 using RWCustom;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -11,11 +13,17 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
         #region 用来使用绳子的方法
         public static void SpawnRope(Player player, Spear spear, Color start, Color end)
         {
-            if (!RopeMaster.modules.TryGetValue(player, out var module))
-                return;
+            SpawnRope_Local(player, spear, start, end);
+            if (ModCompat_Helpers.RainMeadow_IsOnline)
+            {
+                MeadowCompat.CreateRopeSpear(player, spear,start,end);
+            }
+        }
 
+        public static void SpawnRope_Local(Player player, Spear spear, Color start, Color end)
+
+        {
             var rope = new CowRope(player, spear, start, end); //新建一个在矛上的丝线
-
             player.room.AddObject(rope); //召唤这个线
         }
 

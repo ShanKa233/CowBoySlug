@@ -53,8 +53,6 @@ namespace CowBoySLug
             On.RainWorld.OnModsInit += RainWorld_OnModsInit;
 
             Content.Register(new CowBoyHatFisob());
-            // 初始化版本管理器
-            VersionManager.Initialize();
         }
 
         public static RemixMenu menu = new RemixMenu();
@@ -77,6 +75,8 @@ namespace CowBoySLug
             Compatibility.ModCompat_Helpers.InitModCompat();
 
             RopeMaster.Hook();
+            SuperShootModule.OnHook();
+
             LoadHats.Hook();
             RopeSpear.Hook();
 
@@ -91,15 +91,11 @@ namespace CowBoySLug
 
             SewHook.Hook();
 
-            SuperShootModule.OnHook();
 
-            //Camouflage.Hook();
+            // Camouflage.Hook();
             WhiteDropWorm.Hook();
 
             MachineConnector.SetRegisteredOI("CowBoySLug.ShanKa", menu);
-
-            // 在初始化完成后更新补丁版本号
-            VersionManager.UpdateVersion(0);
 
             Debug.Log("[CowBoySlug] 初始化完成");
         }
