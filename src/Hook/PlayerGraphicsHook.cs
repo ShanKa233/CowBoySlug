@@ -6,8 +6,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CowBoySLug;
-using CowBoySlug.CowBoy;
-using CowBoySlug.CowBoy.Ability.RopeUse;
 using RWCustom;
 using SlugBase.DataTypes;
 using UnityEngine;
@@ -35,7 +33,7 @@ namespace CowBoySlug
         )
         {
             orig.Invoke(self, sLeaser, rCam);
-            if (!RopeMaster.modules.TryGetValue(self.player, out var cowBoy))
+            if (!CowBoySlug.Mechanics.RopeSkill.UserData.modules.TryGetValue(self.player, out var cowBoy))
             {
                 return;
             }

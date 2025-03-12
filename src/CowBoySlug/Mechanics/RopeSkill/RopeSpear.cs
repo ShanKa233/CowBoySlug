@@ -4,7 +4,7 @@ using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using UnityEngine;
 
-namespace CowBoySlug.CowBoy.Ability.RopeUse
+namespace CowBoySlug.Mechanics.RopeSkill
 {
   internal class RopeSpear
   {
@@ -110,7 +110,7 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
   {
     public Spear spear;
     public Player owner;
-    public CowRope rope;
+    public Simulator rope;
 
     public int brokenCount = 0;
     public int cantRotationCount = 0;
@@ -145,7 +145,7 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
       rope = null;
     }
 
-    public void GetRope(Player owner, CowRope rope)
+    public void GetRope(Player owner, Simulator rope)
     {
       this.owner = owner;
       this.rope = rope;

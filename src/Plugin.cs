@@ -1,8 +1,6 @@
 using System;
 using BepInEx;
 using CowBoySlug;
-using CowBoySlug.CowBoy.Ability.RopeUse;
-using CowBoySlug.ExAbility;
 using CowBoySlug.Menu;
 using Fisobs.Core;
 using MonoMod.ModInterop;
@@ -74,11 +72,11 @@ namespace CowBoySLug
             // 检查其他mod是否启用
             Compatibility.ModCompat_Helpers.InitModCompat();
 
-            RopeMaster.Hook();
-            SuperShootModule.OnHook();
+            CowBoySlug.Mechanics.RopeSkill.UserData.Hook();
+            CowBoySlug.Mechanics.ShootSkill.SuperShootModule.OnHook();
 
             LoadHats.Hook();
-            RopeSpear.Hook();
+            CowBoySlug.Mechanics.RopeSkill.RopeSpear.Hook();
 
             Hat.Hook();
 
@@ -87,7 +85,7 @@ namespace CowBoySLug
             PlayerHook.Hook();
             PlayerGraphicsHook.Hook();
 
-            Hands.Hook();
+            CowBoySlug.Mechanics.Hands.Hook();
 
             SewHook.Hook();
 

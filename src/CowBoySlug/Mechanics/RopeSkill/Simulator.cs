@@ -6,29 +6,13 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 using Vector2 = UnityEngine.Vector2;
 
-namespace CowBoySlug.CowBoy.Ability.RopeUse
+namespace CowBoySlug.Mechanics.RopeSkill
 {
-    public class CowRope : CosmeticSprite
+    public class Simulator : CosmeticSprite
     {
         #region 用来使用绳子的方法
-        public static void SpawnRope(Player player, Spear spear, Color start, Color end)
-        {
-            SpawnRope_Local(player, spear, start, end);
-            if (ModCompat_Helpers.RainMeadow_IsOnline)
-            {
-                MeadowCompat.CreateRopeSpear(player, spear,start,end);
-            }
-        }
-
-        public static void SpawnRope_Local(Player player, Spear spear, Color start, Color end)
-
-        {
-            var rope = new CowRope(player, spear, start, end); //新建一个在矛上的丝线
-            player.room.AddObject(rope); //召唤这个线
-        }
-
         #endregion
-        public CowRope(Player player, Spear spear, Color colorStart, Color colorEnd)
+        public Simulator(Player player, Spear spear, Color colorStart, Color colorEnd)
         {
             this.room = player.room; //所在房间
 
@@ -188,11 +172,6 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
             {
                 spear.rope().rope = null;
             }
-            // spear.rope().RemoveRope();
-            //if (RopeMaster.modules.TryGetValue(player, out var ropeMaster))
-            //{
-            //    ropeMaster.ropes.Remove(this);
-            //}
             base.Destroy();
         }
 

@@ -12,7 +12,7 @@ using UnityEngine;
 using Color = UnityEngine.Color;
 using Random = UnityEngine.Random;
 
-namespace CowBoySlug.ExAbility
+namespace CowBoySlug.Mechanics.ShootSkill
 {
     public static class ExRock
     {
@@ -36,11 +36,11 @@ namespace CowBoySlug.ExAbility
         Rock rock;
         public Rock Rock => rock;
         public int remainingBounces = 0;
-        
+
         // 添加玩家引用
         private Player throwerPlayer;
         public Player ThrowerPlayer => throwerPlayer;
-        
+
         // 移除反弹冷却时间
         // private int reboundCooldown = 0;
         // private const int ReboundCooldownMax = 5; // 5帧的冷却时间
@@ -49,7 +49,7 @@ namespace CowBoySlug.ExAbility
         public Color superShotColor = Color.yellow;
 
         public Color currentColor => Color.Lerp(normalColor, superShotColor, Mathf.InverseLerp(0, MaxBounceCount, remainingBounces));
-        
+
         // 添加玩家参数，如果为null则使用已保存的throwerPlayer
         public void Bounce(Vector2? bounceDirection = null, Player player = null)
         {
@@ -58,13 +58,13 @@ namespace CowBoySlug.ExAbility
             {
                 throwerPlayer = player;
             }
-            
+
             // 移除冷却检查
             // if (reboundCooldown > 0)
             // {
             //     return;
             // }
-            
+
             // 每次反弹时减少剩余反弹次数
             if (remainingBounces > 0)
             {
@@ -82,11 +82,11 @@ namespace CowBoySlug.ExAbility
                 rock.throwDir = new IntVector2(Math.Sign(-direction.x), Math.Sign(-direction.y));
                 rock.changeDirCounter = 3;
                 rock.ChangeOverlap(true);
-                
+
                 // 根据剩余的反弹次数调整速度
                 float speedMultiplier = Custom.LerpMap(remainingBounces, 0, MaxBounceCount, 0.5f, 10f);
                 rock.firstChunk.vel = direction * 40f * speedMultiplier;
-                
+
                 rock.ChangeMode(Rock.Mode.Thrown);
                 rock.setRotation = direction;
                 rock.rotationSpeed = 10f;
@@ -154,7 +154,7 @@ namespace CowBoySlug.ExAbility
             if (origFlag && self.IsSuperRock(out SuperShootModule superRock))
             {
                 if (result.obj is Creature)
-                
+
                 {
                     (result.obj as Creature).Violence(self.firstChunk, new Vector2?(self.firstChunk.vel * self.firstChunk.mass), result.chunk, result.onAppendagePos, Creature.DamageType.Blunt, 5, 80);
                 }
@@ -173,7 +173,7 @@ namespace CowBoySlug.ExAbility
                 // {
                 //     superRock.reboundCooldown--;
                 // }
-                
+
                 // 只有当还有剩余反弹次数时才检查接触点
                 if (superRock.remainingBounces > 0 && (self.firstChunk.ContactPoint.x != 0 || self.firstChunk.ContactPoint.y != 0))
                 {
@@ -206,7 +206,7 @@ namespace CowBoySlug.ExAbility
 
             orig.Invoke(self);
         }
-        
+
         private static void Weapon_WeaponDeflect(On.Weapon.orig_WeaponDeflect orig, Weapon self, Vector2 inbetweenPos, Vector2 deflectDir, float bounceSpeed)
         {
             if (self.IsSuperRock(out var superRock) && superRock.remainingBounces > 0)
@@ -250,14 +250,32 @@ namespace CowBoySlug.ExAbility
 
                 self.mushroomCounter = 2;
                 self.mushroomEffect = 0.5f;
-
-                // 设置初始反弹次数为最大值
-                rock.SuperRock().remainingBounces = MaxBounceCount;
-                rock.SuperRock().SetColor(Color.red);
-                // 传递玩家引用
-                rock.SuperRock().Bounce(new Vector2(self.ThrowDirection, self.input[0].y), self);
+                SuperShoot(self, rock);
             }
         }
+        public static void SuperShoot( Player player,Rock rock)
+        {
+            // 调用本地方法
+            SuperShoot_Local(player, rock);
+            
+            // 如果在线模式，调用兼容方法
+            if (Compatibility.ModCompat_Helpers.RainMeadow_IsOnline)
+            {
+                Compatibility.Meadow.MeadowCompat.SuperShoot(player, rock);
+            }
+        }
+
+        /// <summary>
+        /// 处理本地超级射击的方法
+        /// </summary>
+        /// <param name="rock">被射击的石头</param>
+        /// <param name="player">射击的玩家</param>
+        public static void SuperShoot_Local(Player player,Rock rock)
+        {
+            rock.SuperRock().remainingBounces = MaxBounceCount;
+            rock.SuperRock().SetColor(Color.red);
+            rock.SuperRock().Bounce(new Vector2(player.ThrowDirection, player.input[0].y), player);
+        }
     }
-  
+
 }

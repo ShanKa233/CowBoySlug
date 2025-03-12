@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading.Tasks;
 using CowBoySlug;
 using CowBoySLug;
-using CowBoySlug.CowBoy.Ability.RopeUse;
 using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
 using RWCustom;

@@ -1,9 +1,9 @@
-﻿using CowBoySLug;
+﻿using CowBoySlug.Mechanics.RopeSkill;
 using RWCustom;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-namespace CowBoySlug.CowBoy.Ability.RopeUse
+namespace CowBoySlug.Mechanics
 {
     public static class Hands
     {
@@ -22,7 +22,7 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
 
             self.player.HandData().Update();
 
-            if (!RopeMaster.modules.TryGetValue(self.player, out var module)) return;
+            if (!UserData.modules.TryGetValue(self.player, out var module)) return;
             //if (self.player.FreeHand() == -1) return;
 
 
@@ -140,7 +140,7 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
     }
     public class HandData
     {
-        public CowRope pullinggRope;
+        public Simulator pullinggRope;
         public int pullCount = 0;
         public int handEngagedInPull;
 
@@ -151,7 +151,7 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
 
 
         }
-        public void Pulling(int count, CowRope rope, int useHand)
+        public void Pulling(int count, Simulator rope, int useHand)
         {
             if (pullCount < 2)
             {
@@ -168,7 +168,7 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
     public class HandModules
     {
         public Player player;
-        public CowRope rope;
+        public Simulator rope;
 
 
         #region 用于控制动画方式的参数
@@ -211,7 +211,7 @@ namespace CowBoySlug.CowBoy.Ability.RopeUse
             return Hands.Cubicbezier(abxy[0], abxy[1], abxy[2], abxy[3], t);
         }
 
-        public void move(Vector2 start, Vector2 end, int moveCount, float cycleTime, CowRope rope, float[] abxy, bool look)
+        public void move(Vector2 start, Vector2 end, int moveCount, float cycleTime, Simulator rope, float[] abxy, bool look)
         {
             this.rope = rope;
             this.posStart = start;
