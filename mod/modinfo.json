@@ -1,12 +1,13 @@
 {
 	"id": "CowBoySLug.ShanKa",
 	"name": "CowBoySLugCat",
-	"version": "0.2.57",
+	"version": "0.2.58",
 	"authors": "ShanKa",
 	"description": "Add new slug ,CowBoySlug<LINE>Only put [pickup]to drag your spear<LINE>if you want spear go back more fast use [up]+[pickup]<LINE>only click onece you can use spear damege other creature<LINE>when your spear stack in some place than you hold [jump]+[pickup]to move that direction<LINE><LINE>when you damage lot of time you can make hat use creature throw than use your head catch to wear hat",
 	"requirements": [ "slime-cubed.slugbase" ,"moreslugcats","fisobs"],
 	"requirements_names": [ "SlugBase" ]
 }
+
 
 
 

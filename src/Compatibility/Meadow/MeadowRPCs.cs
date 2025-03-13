@@ -72,6 +72,30 @@ namespace Compatibility.Meadow
         }
 
         /// <summary>
+        /// 处理绳子断裂的RPC方法
+        /// 当玩家的绳子断裂时，通过网络同步断裂效果
+        /// </summary>
+        /// <param name="event">RPC事件参数</param>
+        /// <param name="playerOpo">玩家的在线物理对象</param>
+        /// <param name="spearOpo">矛的在线物理对象</param>
+        [RPCMethod]
+        public static void HandleRopeBreaking(RPCEvent @event, OnlinePhysicalObject playerOpo, OnlinePhysicalObject spearOpo)
+        {
+            if (playerOpo?.apo?.realizedObject is not Player player)
+            {
+                return;
+            }
+
+            if (spearOpo?.apo?.realizedObject is not Spear spear)
+            {
+                return;
+            }
+
+            // 调用本地方法处理绳子断裂的逻辑
+            Handler.HandleRopeBreaking_Local(player, spear);
+        }
+
+        /// <summary>
         /// 处理超级射击的RPC方法
         /// 当玩家使用超级射击时，通过网络同步石头的行为
         /// </summary>

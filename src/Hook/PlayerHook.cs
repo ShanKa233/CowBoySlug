@@ -21,23 +21,6 @@ namespace CowBoySLug
             On.Player.ctor += CowBoy_ctor;
             On.Player.Update += Player_Update;
         }
-
-        //private static void Player_GrabUpdate(On.Player.orig_GrabUpdate orig, Player self, bool eu)
-        //{
-        //    orig.Invoke(self, eu);
-        //    if (Hat.modules.TryGetValue(self,out var hatModule))
-        //    {
-        //        bool flag = hatModule.haveHat;
-        //        bool flag2 = self.wantToPickUp>0&&self.input[0].y < 0&&self.grasps[0]==null&&self.grasps[1]==null;
-        //        if (flag&&flag2)
-        //        {
-        //            Hat.PlacePlayerHat(self, hatModule);
-
-
-        //        }
-        //    }
-        //}
-
         //初始化牛仔角色
         private static void CowBoy_ctor(
             On.Player.orig_ctor orig,
@@ -85,8 +68,7 @@ namespace CowBoySLug
         private static void Player_Update(On.Player.orig_Update orig, Player self, bool eu)
         {
             orig.Invoke(self, eu);
-            bool isCowBoy = self.IsCowBoys(out var cowBoyModule);
-            if (!isCowBoy)
+            if (!self.IsCowBoys(out var cowBoyModule))
             {
                 // 不是牛仔角色，直接返回
                 return;

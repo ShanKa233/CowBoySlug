@@ -114,16 +114,40 @@ namespace Compatibility.Meadow
 
             foreach (var onlinePlayer in OnlineManager.players)
             {
-                if (onlinePlayer.isMe)
+                if (!onlinePlayer.isMe)
                 {
-                    continue;
+                    onlinePlayer.InvokeRPC(
+                        typeof(MeadowRPCs).GetMethod(nameof(MeadowRPCs.CallBackSpear))!
+                        .CreateDelegate(typeof(Action<RPCEvent, OnlinePhysicalObject>)),
+                        playerOpo);
                 }
+            }
+        }
 
-                // 用反射来调用RPC方法
-                onlinePlayer.InvokeRPC(
-                    typeof(MeadowRPCs).GetMethod(nameof(MeadowRPCs.CallBackSpear))!
-                    .CreateDelegate(typeof(Action<RPCEvent, OnlinePhysicalObject>)),
-                    playerOpo);
+        /// <summary>
+        /// 处理绳子断裂的网络同步方法
+        /// </summary>
+        /// <param name="player">玩家</param>
+        /// <param name="spear">连接的矛</param>
+        internal static void HandleRopeBreaking(Player player, Spear spear)
+        {
+            var playerOpo = player.abstractPhysicalObject.GetOnlineObject();
+            var spearOpo = spear.abstractPhysicalObject.GetOnlineObject();
+            if (playerOpo is null || spearOpo is null)
+            {
+                return;
+            }
+
+            foreach (var onlinePlayer in OnlineManager.players)
+            {
+                if (!onlinePlayer.isMe)
+                {
+                    onlinePlayer.InvokeRPC(
+                        typeof(MeadowRPCs).GetMethod(nameof(MeadowRPCs.HandleRopeBreaking))!
+                        .CreateDelegate(typeof(Action<RPCEvent, OnlinePhysicalObject, OnlinePhysicalObject>)),
+                        playerOpo,
+                        spearOpo);
+                }
             }
         }
 

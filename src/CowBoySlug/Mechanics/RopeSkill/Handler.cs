@@ -20,6 +20,11 @@ namespace CowBoySlug.Mechanics.RopeSkill
 
         public static void SpawnRope_Local(Player player, Spear spear, Color start, Color end)
         {
+            // TODO: 修复围巾无法正常显示的问题
+            // 问题描述：当前围巾的渲染存在问题，无法在所有情况下正确显示。
+            // 需要检查围巾的渲染逻辑，可能与材质、光照或动画系统有关。
+            // 考虑重新实现围巾的视觉效果或调整现有的渲染参数。
+            
             var rope = new Simulator(player, spear, start, end); //新建一个在矛上的丝线
             player.room.AddObject(rope); //召唤这个线
         }
@@ -68,6 +73,61 @@ namespace CowBoySlug.Mechanics.RopeSkill
             );
         }
 
+
+        /// <summary>
+        /// 处理绳子断裂的方法，支持网络同步
+        /// </summary>
+        /// <param name="player">玩家</param>
+        /// <param name="spear">连接的矛</param>
+        public static void HandleRopeBreaking(Player player, Spear spear)
+        {
+            // 调用本地方法
+            HandleRopeBreaking_Local(player, spear);
+
+            // 如果在线模式，调用兼容方法
+            if (ModCompat_Helpers.RainMeadow_IsOnline)
+            {
+                MeadowCompat.HandleRopeBreaking(player, spear);
+            }
+        }
+
+        /// <summary>
+        /// 处理本地绳子断裂的方法
+        /// </summary>
+        /// <param name="player">玩家</param>
+        /// <param name="spear">连接的矛</param>
+        public static void HandleRopeBreaking_Local(Player player, Spear spear)
+        {
+            // 增加绳子的断裂计数
+            spear.rope().brokenCount += 10;
+
+            // 播放声音和生成火花效果
+            if (spear.rope().brokenCount > 30)
+            {
+                player.room.PlaySound(
+                    SoundID.Miros_Beak_Snap_Hit_Other,
+                    player.firstChunk,
+                    false,
+                    0.5f,
+                    0.2f
+                );
+
+                for (int n = 2; n > 0; n--)
+                {
+                    player.room.AddObject(
+                        new Spark(
+                            player.firstChunk.pos,
+                            Custom.RNV(),
+                            Color.white,
+                            null,
+                            10,
+                            20
+                        )
+                    );
+                }
+            }
+        }
+
         /// <summary>
         /// 处理召回矛的方法，支持网络同步
         /// </summary>
@@ -78,10 +138,17 @@ namespace CowBoySlug.Mechanics.RopeSkill
             var umbilical = UserData.NiceRope(player);
             if (umbilical == null || umbilical.spear == null)
                 return;
-                
+
+            if (UserData.CanNotCall(player))
+                return;
             // 调用本地方法
             CallBackSpear_Local(player);
-            
+
+            // TODO: 修复矛收回时网络不同步导致的小故障
+            // 问题描述：当网络延迟较高时，矛的收回动作在不同客户端之间可能不同步，
+            // 导致视觉上的不一致或功能异常。需要改进网络同步机制，
+            // 可能需要添加额外的状态检查或预测机制。
+
             // 如果在线模式，调用兼容方法
             if (ModCompat_Helpers.RainMeadow_IsOnline)
             {
@@ -99,9 +166,9 @@ namespace CowBoySlug.Mechanics.RopeSkill
             var umbilical = UserData.NiceRope(player);
             if (umbilical == null || umbilical.spear == null)
                 return;
-                
+
             var spear = umbilical.spear;
-            
+
             // 检查矛是否可以用
             if (!(player.room == spear.room && spear.vibrate <= 0))
                 return;

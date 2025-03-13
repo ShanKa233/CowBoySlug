@@ -51,34 +51,7 @@ namespace CowBoySlug.Mechanics.RopeSkill
 
                 if (rope != null)
                 {
-                    // 增加绳子的断裂计数
-                    rope.spear.rope().brokenCount += 10;
-
-                    // 播放声音和生成火花效果
-                    if (rope.spear.rope().brokenCount > 30)
-                    {
-                        player.room.PlaySound(
-                            SoundID.Miros_Beak_Snap_Hit_Other,
-                            player.firstChunk,
-                            false,
-                            0.5f,
-                            0.2f
-                        );
-
-                        for (int n = 2; n > 0; n--)
-                        {
-                            player.room.AddObject(
-                                new Spark(
-                                    player.firstChunk.pos,
-                                    Custom.RNV(),
-                                    Color.white,
-                                    null,
-                                    10,
-                                    20
-                                )
-                            );
-                        }
-                    }
+                    Handler.HandleRopeBreaking(player, rope.spear);
                 }
             }
             // 调用原始的抓取更新方法

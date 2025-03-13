@@ -27,6 +27,7 @@ namespace CowBoySlug
     public class ExPlayer
     {
         public Player player;
+        public ScarfModule scarf;
 
         public List<CowBoyHat> hatList=new List<CowBoyHat>();
         public bool HaveHat => hatList.Count > 0;
@@ -55,6 +56,25 @@ namespace CowBoySlug
             stopTime = 0;
             changeHand = 0;
             timeToRemoveFood = 1200;
+            
+            //如果是牛仔猫就增加用于显示围巾的变量
+            if (player.IsCowBoys())
+            {
+
+                scarf = new ScarfModule(player);
+                // 初始化围巾的两个部分（上下两条飘带）
+                scarf.ribbon = new GenericBodyPart[2];
+                for (int i = 0; i < scarf.ribbon.Length; i++)
+                {
+                    scarf.ribbon[i] = new GenericBodyPart(
+                        player.graphicsModule,
+                        1,      // 重量
+                        0.8f,   // 弹性
+                        0.3f,   // 阻力
+                        player.mainBodyChunk  // 连接到玩家的主体
+                    );
+                }
+            }
             
         }
 
