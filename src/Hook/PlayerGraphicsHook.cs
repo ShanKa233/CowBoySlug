@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using CowBoySlug.Graphics;
 using CowBoySLug;
 using RWCustom;
 using SlugBase.DataTypes;
@@ -18,8 +20,18 @@ namespace CowBoySlug
         public static void Hook()
         {
             Scarf.Hook();
+            On.PlayerGraphics.AddToContainer += CowBoy_AddToContainer;
             On.PlayerGraphics.InitiateSprites += CowBoy_InitiateSprites;
             On.PlayerGraphics.DrawSprites += CowBoy_DrawSprites;
+        }
+
+        private static void CowBoy_AddToContainer(On.PlayerGraphics.orig_AddToContainer orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, FContainer newContatiner)
+        {
+            orig.Invoke(self, sLeaser, rCam, newContatiner);
+            if (self.player.GetCowBoyData().scarf != null&&Helper.elementLoaded())
+            {
+                self.player.GetCowBoyData().scarf.AddToContainer(sLeaser, rCam, newContatiner);
+            }
         }
 
         #region 和猫猫样子有关的部分
@@ -33,11 +45,18 @@ namespace CowBoySlug
         )
         {
             orig.Invoke(self, sLeaser, rCam);
-            if (!CowBoySlug.Mechanics.RopeSkill.UserData.modules.TryGetValue(self.player, out var cowBoy))
+            if (self.player.GetCowBoyData().scarf != null&&Helper.elementLoaded())
             {
-                return;
+                self.player.GetCowBoyData().scarf.InitiateSprites(sLeaser, rCam);
             }
-            cowBoy.ropeColor =Plugin.RopeColor.GetColor(self).Value;
+            if (Mechanics.RopeSkill.UserData.modules.TryGetValue(self.player, out var cowBoy))
+            {
+                cowBoy.ropeColor = Plugin.RopeColor.GetColor(self).Value;
+            }
+
+
+            // 将围巾添加到容器中
+            self.AddToContainer(sLeaser, rCam, null);
         }
 
         //绘制蛞蝓猫
@@ -51,11 +70,14 @@ namespace CowBoySlug
         )
         {
             orig.Invoke(self, sLeaser, rCam, timeStacker, camPos);
-            if (!self.player.IsCowBoys(out var cowBoy))
+            if (self.player.GetCowBoyData().scarf != null&&Helper.elementLoaded())
             {
-                return;
+                self.player.GetCowBoyData().scarf.DrawSprites(sLeaser, rCam, timeStacker, camPos);
             }
-            DrawUseRopeAnimetion(self, sLeaser, rCam, timeStacker, camPos);
+            if (self.player.IsCowBoys(out var cowBoy))
+            {
+                DrawUseRopeAnimetion(self, sLeaser, rCam, timeStacker, camPos);
+            }
         }
 
         //精灵图位置

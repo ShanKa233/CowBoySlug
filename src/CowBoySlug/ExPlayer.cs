@@ -57,8 +57,8 @@ namespace CowBoySlug
             changeHand = 0;
             timeToRemoveFood = 1200;
             
-            //如果是牛仔猫就增加用于显示围巾的变量
-            if (player.IsCowBoys())
+            //如果有围巾就增加用于显示围巾的变量
+            if (Scarf.HaveScarf.TryGet(player, out var haveScarf) && haveScarf)
             {
 
                 scarf = new ScarfModule(player);

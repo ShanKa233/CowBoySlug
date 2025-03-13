@@ -29,12 +29,6 @@ namespace CowBoySlug
         public static void Hook()
         {
             On.PlayerGraphics.Update += Ribbon_Update;
-
-            // 精灵和渲染相关钩子
-            On.PlayerGraphics.InitiateSprites += PlayerGraphics_InitiateSprites;
-            On.PlayerGraphics.AddToContainer += PlayerGraphics_AddToContainer;
-            On.PlayerGraphics.DrawSprites += PlayerGraphics_DrawSprites;
-
             // 重置围巾状态的钩子
             On.PlayerGraphics.Reset += Ribbon_Reset;
         }
@@ -64,77 +58,6 @@ namespace CowBoySlug
             }
         }
 
-        /// <summary>
-        /// 初始化围巾的精灵
-        /// </summary>
-        private static void PlayerGraphics_InitiateSprites(
-            On.PlayerGraphics.orig_InitiateSprites orig,
-            PlayerGraphics self,
-            RoomCamera.SpriteLeaser sLeaser,
-            RoomCamera rCam
-        )
-        {
-            // 调用原始精灵初始化方法
-            orig.Invoke(self, sLeaser, rCam);
-
-            // 检查玩家是否有围巾模块
-            if (self.player.IsCowBoys(out var exPlayer) && exPlayer.scarf != null)
-            {
-                exPlayer.scarf.InitiateSprites(sLeaser, rCam);
-            }
-
-
-            // 将围巾添加到容器中
-            self.AddToContainer(sLeaser, rCam, null);
-        }
-
-        /// <summary>
-        /// 将围巾精灵添加到适当的渲染容器中
-        /// </summary>
-        private static void PlayerGraphics_AddToContainer(
-            On.PlayerGraphics.orig_AddToContainer orig,
-            PlayerGraphics self,
-            RoomCamera.SpriteLeaser sLeaser,
-            RoomCamera rCam,
-            FContainer newContatiner
-        )
-        {
-            // 调用原始添加容器方法
-            orig.Invoke(self, sLeaser, rCam, newContatiner);
-
-            if (self.player.IsCowBoys(out var exPlayer) && exPlayer.scarf != null)
-            {
-                exPlayer.scarf.AddToContainer(sLeaser, rCam, newContatiner);
-            }
-        }
-
-        /// <summary>
-        /// 绘制围巾精灵，处理围巾的位置、旋转和颜色
-        /// </summary>
-        private static void PlayerGraphics_DrawSprites(
-            On.PlayerGraphics.orig_DrawSprites orig,
-            PlayerGraphics self,
-            RoomCamera.SpriteLeaser sLeaser,
-            RoomCamera rCam,
-            float timeStacker,
-            UnityEngine.Vector2 camPos
-        )
-        {
-            // 调用原始绘制精灵方法
-            orig.Invoke(self, sLeaser, rCam, timeStacker, camPos);
-
-
-            // 检查围巾元素是否已加载
-            if (!Helper.elementLoaded())
-                return;
-
-
-            if (self.player.IsCowBoys(out var exPlayer) && exPlayer.scarf != null)
-            {
-                exPlayer.scarf.DrawSprites(sLeaser, rCam, timeStacker, camPos);
-            }
-
-        }
     }
 
     /// <summary>

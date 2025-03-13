@@ -74,9 +74,9 @@ namespace CowBoySLug
 
             CowBoySlug.Mechanics.RopeSkill.UserData.Hook();
             CowBoySlug.Mechanics.ShootSkill.SuperShootModule.OnHook();
+            CowBoySlug.Mechanics.RopeSkill.RopeSpear.Hook();
 
             LoadHats.Hook();
-            CowBoySlug.Mechanics.RopeSkill.RopeSpear.Hook();
 
             Hat.Hook();
 
