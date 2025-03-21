@@ -13,7 +13,7 @@ using UnityEngine;
 
 namespace CowBoySLug
 {
-    [BepInPlugin(MOD_ID, "CowBoySLug.ShanKa", "0.2.50")] // 版本号在 modinfo.json 和 workshopdata.json 中更新
+    [BepInPlugin(MOD_ID, "CowBoySLug.ShanKa", "0.2.59")] // 版本号在 modinfo.json 和 workshopdata.json 中更新
     class Plugin : BaseUnityPlugin
     {
         public const string MOD_ID = "CowBoySLug.ShanKa";
@@ -50,6 +50,7 @@ namespace CowBoySLug
             On.RainWorld.OnModsInit += Extras.WrapInit(LoadResources);
             On.RainWorld.OnModsInit += RainWorld_OnModsInit;
 
+
             Content.Register(new CowBoyHatFisob());
         }
 
@@ -76,14 +77,14 @@ namespace CowBoySLug
             CowBoySlug.Mechanics.ShootSkill.SuperShootModule.OnHook();
             CowBoySlug.Mechanics.RopeSkill.RopeSpear.Hook();
 
+            PlayerHook.Hook();
+            PlayerGraphicsHook.Hook();
+
             LoadHats.Hook();
 
             Hat.Hook();
 
             //控制绳子的能力的hook
-
-            PlayerHook.Hook();
-            PlayerGraphicsHook.Hook();
 
             CowBoySlug.Mechanics.Hands.Hook();
 

@@ -28,7 +28,7 @@ namespace CowBoySlug
         private static void CowBoy_AddToContainer(On.PlayerGraphics.orig_AddToContainer orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, FContainer newContatiner)
         {
             orig.Invoke(self, sLeaser, rCam, newContatiner);
-            if (self.player.GetCowBoyData().scarf != null&&Helper.elementLoaded())
+            if (self.player.GetCowBoyData().scarf != null)
             {
                 self.player.GetCowBoyData().scarf.AddToContainer(sLeaser, rCam, newContatiner);
             }
@@ -45,13 +45,13 @@ namespace CowBoySlug
         )
         {
             orig.Invoke(self, sLeaser, rCam);
-            if (self.player.GetCowBoyData().scarf != null&&Helper.elementLoaded())
+            if (self.player.GetCowBoyData().scarf != null)
             {
                 self.player.GetCowBoyData().scarf.InitiateSprites(sLeaser, rCam);
             }
             if (Mechanics.RopeSkill.UserData.modules.TryGetValue(self.player, out var cowBoy))
             {
-                cowBoy.ropeColor = Plugin.RopeColor.GetColor(self).Value;
+                cowBoy.ropeColor = Plugin.RopeColor.GetColor(self)?? PlayerGraphics.JollyColor(self.player.playerState.playerNumber,3);
             }
 
 
@@ -70,7 +70,7 @@ namespace CowBoySlug
         )
         {
             orig.Invoke(self, sLeaser, rCam, timeStacker, camPos);
-            if (self.player.GetCowBoyData().scarf != null&&Helper.elementLoaded())
+            if (self.player.GetCowBoyData().scarf != null)
             {
                 self.player.GetCowBoyData().scarf.DrawSprites(sLeaser, rCam, timeStacker, camPos);
             }

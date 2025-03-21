@@ -70,8 +70,8 @@ namespace CowBoySlug.Mechanics.RopeSkill
             // 检查玩家是否有 RopeMaster 模块
             if (!modules.TryGetValue(self, out var mod))
                 return;
-           
-           Handler.ThrowSpearWithRope(self, spear, mod.ropeColor);
+
+            Handler.ThrowSpearWithRope(self, spear, mod.ropeColor);
         }
 
         private static void Player_UpdateMSC(On.Player.orig_UpdateMSC orig, Player self)
@@ -239,12 +239,7 @@ namespace CowBoySlug.Mechanics.RopeSkill
                 if (spear.mode == Weapon.Mode.StuckInWall)
                 {
                     // 取下矛
-                    spear.resetHorizontalBeamState();
-                    spear.stuckInWall = new Vector2?(default(Vector2));
-                    spear.vibrate = 10;
-                    spear.firstChunk.collideWithTerrain = true;
-                    spear.abstractSpear.stuckInWallCycles = 0;
-                    spear.ChangeMode(Spear.Mode.Free);
+                    Handler.PullSpearFromWall(spear);
                 }
             }
             // 如果插到了生物就拖动他

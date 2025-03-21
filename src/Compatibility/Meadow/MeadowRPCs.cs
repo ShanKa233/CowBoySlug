@@ -118,5 +118,23 @@ namespace Compatibility.Meadow
             // 调用本地方法处理超级射击的逻辑
             CowBoySlug.Mechanics.ShootSkill.SuperShootModule.SuperShoot_Local(player, rock);
         }
+
+        /// <summary>
+        /// 处理从墙上拔出矛的RPC方法
+        /// 当玩家从墙上拔出矛时，通过网络同步矛的行为
+        /// </summary>
+        /// <param name="event">RPC事件参数</param>
+        /// <param name="spearOpo">矛的在线物理对象</param>
+        [RPCMethod]
+        public static void PullSpearFromWall(RPCEvent @event, OnlinePhysicalObject spearOpo)
+        {
+            if (spearOpo?.apo?.realizedObject is not Spear spear)
+            {
+                return;
+            }
+
+            // 调用本地方法处理从墙上拔出矛的逻辑
+            Handler.PullSpearFromWall_Local(spear);
+        }
     }
 }

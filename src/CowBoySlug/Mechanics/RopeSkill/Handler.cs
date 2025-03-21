@@ -145,9 +145,7 @@ namespace CowBoySlug.Mechanics.RopeSkill
             CallBackSpear_Local(player);
 
             // TODO: 修复矛收回时网络不同步导致的小故障
-            // 问题描述：当网络延迟较高时，矛的收回动作在不同客户端之间可能不同步，
-            // 导致视觉上的不一致或功能异常。需要改进网络同步机制，
-            // 可能需要添加额外的状态检查或预测机制。
+            // 问题描述：矛插着的时候回收,其他端口嗯用户会残余一个看不见的矛在地上
 
             // 如果在线模式，调用兼容方法
             if (ModCompat_Helpers.RainMeadow_IsOnline)
@@ -277,6 +275,36 @@ namespace CowBoySlug.Mechanics.RopeSkill
             {
                 spear.ChangeMode(Weapon.Mode.Free);
             }
+        }
+
+        /// <summary>
+        /// 从墙上拔出矛的方法，支持网络同步
+        /// </summary>
+        /// <param name="spear">需要拔出的矛</param>
+        public static void PullSpearFromWall(Spear spear)
+        {
+            // 调用本地方法
+            PullSpearFromWall_Local(spear);
+
+            // 如果在线模式，调用兼容方法
+            if (ModCompat_Helpers.RainMeadow_IsOnline)
+            {
+                MeadowCompat.PullSpearFromWall(spear);
+            }
+        }
+
+        /// <summary>
+        /// 本地从墙上拔出矛的方法
+        /// </summary>
+        /// <param name="spear">需要拔出的矛</param>
+        public static void PullSpearFromWall_Local(Spear spear)
+        {
+            spear.resetHorizontalBeamState();
+            spear.stuckInWall = new Vector2?(default(Vector2));
+            spear.vibrate = 10;
+            spear.firstChunk.collideWithTerrain = true;
+            spear.abstractSpear.stuckInWallCycles = 0;
+            spear.ChangeMode(Spear.Mode.Free);
         }
     }
 }

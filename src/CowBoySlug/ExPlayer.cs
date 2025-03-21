@@ -7,19 +7,19 @@ namespace CowBoySlug
     public static class CowBoyModule
     {
         public static ConditionalWeakTable<Player, ExPlayer> modules = new ConditionalWeakTable<Player, ExPlayer>();
-        public static SlugcatStats.Name Name = new SlugcatStats.Name("CowBoySLug", true);
+        public static string CowboySlugID = "CowBoySLug";
 
         public static ExPlayer GetCowBoyData(this Player player) => modules.GetValue(player, (_) => new ExPlayer(player));
 
-        public static bool IsCowBoys(this Player player) => player.slugcatStats.name == Name;
+        public static bool IsCowBoys(this Player player) => player.slugcatStats.name.value == CowboySlugID;
         public static bool IsCowBoys(this Player player, out ExPlayer exPlayer)
         {
-            exPlayer = null;
             if (player.IsCowBoys())
             {
-                exPlayer = player.GetCowBoyData();
+                exPlayer = modules.GetValue(player, (_) => new ExPlayer(player));
                 return true;
             }
+            exPlayer = null;
             return false;
         }
     }
@@ -27,9 +27,33 @@ namespace CowBoySlug
     public class ExPlayer
     {
         public Player player;
-        public ScarfModule scarf;
+        public ScarfModule scarf
+        {
+            get
+            {
+                if (_scarf == null &&
+                (player.IsCowBoys() || (Scarf.HaveScarf.TryGet(player, out var haveScarf) && haveScarf)))
+                {
+                    _scarf = new ScarfModule(player);
+                    _scarf.ribbon = new GenericBodyPart[2];
+                    for (int i = 0; i < _scarf.ribbon.Length; i++)
+                    {
+                        _scarf.ribbon[i] = new GenericBodyPart(
+                            player.graphicsModule,
+                            1,      // 重量
+                            0.8f,   // 弹性
+                            0.3f,   // 阻力
+                            player.mainBodyChunk  // 连接到玩家的主体
+                        );
+                    }
+                }
+                return _scarf;
+            }
+            set => _scarf = value;
+        }
+        private ScarfModule _scarf;
 
-        public List<CowBoyHat> hatList=new List<CowBoyHat>();
+        public List<CowBoyHat> hatList = new List<CowBoyHat>();
         public bool HaveHat => hatList.Count > 0;
 
         // 新增的方法
@@ -56,26 +80,26 @@ namespace CowBoySlug
             stopTime = 0;
             changeHand = 0;
             timeToRemoveFood = 1200;
-            
-            //如果有围巾就增加用于显示围巾的变量
-            if (Scarf.HaveScarf.TryGet(player, out var haveScarf) && haveScarf)
-            {
 
-                scarf = new ScarfModule(player);
-                // 初始化围巾的两个部分（上下两条飘带）
-                scarf.ribbon = new GenericBodyPart[2];
-                for (int i = 0; i < scarf.ribbon.Length; i++)
-                {
-                    scarf.ribbon[i] = new GenericBodyPart(
-                        player.graphicsModule,
-                        1,      // 重量
-                        0.8f,   // 弹性
-                        0.3f,   // 阻力
-                        player.mainBodyChunk  // 连接到玩家的主体
-                    );
-                }
-            }
-            
+            //如果有围巾就增加用于显示围巾的变量
+            // if (player.IsCowBoys() || (Scarf.HaveScarf.TryGet(player, out var haveScarf) && haveScarf))
+            // {
+
+            //     scarf = new ScarfModule(player);
+            //     // 初始化围巾的两个部分（上下两条飘带）
+            //     scarf.ribbon = new GenericBodyPart[2];
+            //     for (int i = 0; i < scarf.ribbon.Length; i++)
+            //     {
+            //         scarf.ribbon[i] = new GenericBodyPart(
+            //             player.graphicsModule,
+            //             1,      // 重量
+            //             0.8f,   // 弹性
+            //             0.3f,   // 阻力
+            //             player.mainBodyChunk  // 连接到玩家的主体
+            //         );
+            //     }
+            // }
+
         }
 
         int timeToRemoveFood = 900; //减少食物的时间

@@ -32,7 +32,6 @@ namespace CowBoySlug
             // 重置围巾状态的钩子
             On.PlayerGraphics.Reset += Ribbon_Reset;
         }
-
         /// <summary>
         /// 更新围巾的物理效果和位置
         /// </summary>
@@ -40,9 +39,9 @@ namespace CowBoySlug
         {
             // 调用原始更新方法
             orig.Invoke(self);
-            if (self.player.IsCowBoys(out var exPlayer) && exPlayer.scarf != null)
+            if (self.player.GetCowBoyData().scarf != null)
             {
-                exPlayer.scarf.Update();
+                self.player.GetCowBoyData().scarf.Update();
             }
         }
 
@@ -52,9 +51,9 @@ namespace CowBoySlug
         private static void Ribbon_Reset(On.PlayerGraphics.orig_Reset orig, PlayerGraphics self)
         {
             orig.Invoke(self);
-            if (self.player.IsCowBoys(out var exPlayer) && exPlayer.scarf != null)
+            if (self.player.GetCowBoyData().scarf != null)
             {
-                exPlayer.scarf.ribbonReset(); //重置丝巾位置防止拉丝
+                self.player.GetCowBoyData().scarf.ribbonReset(); //重置丝巾位置防止拉丝
             }
         }
 
@@ -188,7 +187,7 @@ namespace CowBoySlug
             
             var scarfIndex = this.scarfIndex;
             //颜色设定 - 从玩家特性中获取围巾颜色
-            Color scarfColor = Scarf.ScarfColor.GetColor(playerGraphics).Value;
+            Color scarfColor = Scarf.ScarfColor.GetColor(playerGraphics) ?? PlayerGraphics.JollyColor(player.playerState.playerNumber, 2);
 
             sLeaser.sprites[scarfIndex].color = scarfColor;
 

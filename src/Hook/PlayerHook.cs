@@ -30,15 +30,19 @@ namespace CowBoySLug
         )
         {
             orig.Invoke(self, abstractCreature, world);
-
+            if (!self.IsCowBoys(out var cowBoyModule))
+            {
+                return;
+            }
+            
             // 检查必要的对象
-            if (self == null || 
-                Plugin.menu == null || 
-                Plugin.menu.foodMod == null || 
-                self.room == null || 
-                self.room.world == null || 
-                self.room.world.game == null || 
-                self.room.world.game.session == null || 
+            if (self == null ||
+                Plugin.menu == null ||
+                Plugin.menu.foodMod == null ||
+                self.room == null ||
+                self.room.world == null ||
+                self.room.world.game == null ||
+                self.room.world.game.session == null ||
                 self.room.world.game.session.characterStats == null)
             {
                 return;
@@ -47,7 +51,7 @@ namespace CowBoySLug
             //特殊饱腹度系统相关
             if (
                 Plugin.menu.foodMod.Value
-                && self.room.world.game.session.characterStats.name == CowBoyModule.Name
+                && self.room.world.game.session.characterStats.name.value == CowBoyModule.CowboySlugID
             )
             {
                 if (self.PlaceKarmaFlower)
@@ -59,7 +63,7 @@ namespace CowBoySLug
                     self.playerState.foodInStomach = self.slugcatStats.maxFood;
                 }
             }
-            else if (self.room.world.game.session.characterStats.name == CowBoyModule.Name)
+            else if (self.room.world.game.session.characterStats.name.value == CowBoyModule.CowboySlugID)
             {
                 self.slugcatStats.foodToHibernate = self.slugcatStats.maxFood;
             }
@@ -73,6 +77,7 @@ namespace CowBoySLug
                 // 不是牛仔角色，直接返回
                 return;
             }
+
             cowBoyModule.Update();
 
             // 检查Plugin.menu
@@ -89,15 +94,15 @@ namespace CowBoySLug
             }
 
             // 检查self.room.world及其相关对象
-            if (self.room.world == null || 
-                self.room.world.game == null || 
-                self.room.world.game.session == null || 
+            if (self.room.world == null ||
+                self.room.world.game == null ||
+                self.room.world.game.session == null ||
                 self.room.world.game.session.characterStats == null)
             {
                 return;
             }
 
-            if (self.room.world.game.session.characterStats.name == CowBoyModule.Name)
+            if (self.room.world.game.session.characterStats.name.value == CowBoyModule.CowboySlugID)
             {
                 cowBoyModule.UseFood();
             }

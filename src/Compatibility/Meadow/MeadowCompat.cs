@@ -180,5 +180,32 @@ namespace Compatibility.Meadow
                     rockOpo);
             }
         }
+
+        /// <summary>
+        /// 处理从墙上拔出矛的网络同步
+        /// </summary>
+        /// <param name="spear">需要拔出的矛</param>
+        internal static void PullSpearFromWall(Spear spear)
+        {
+            var spearOpo = spear.abstractPhysicalObject.GetOnlineObject();
+            if (spearOpo is null)
+            {
+                return;
+            }
+
+            foreach (var onlinePlayer in OnlineManager.players)
+            {
+                if (onlinePlayer.isMe)
+                {
+                    continue;
+                }
+
+                // 用反射来调用RPC方法
+                onlinePlayer.InvokeRPC(
+                    typeof(MeadowRPCs).GetMethod(nameof(MeadowRPCs.PullSpearFromWall))!
+                    .CreateDelegate(typeof(Action<RPCEvent, OnlinePhysicalObject>)),
+                    spearOpo);
+            }
+        }
     }
 }
