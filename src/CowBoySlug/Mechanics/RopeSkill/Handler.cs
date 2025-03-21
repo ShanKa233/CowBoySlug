@@ -194,7 +194,10 @@ namespace CowBoySlug.Mechanics.RopeSkill
             if (spear.mode != Weapon.Mode.Carried)
             {
                 player.swallowAndRegurgitateCounter = 0;
-                player.slugOnBack.counter = 0;
+                if (player.slugOnBack != null)
+                {
+                    player.slugOnBack.counter = 0;
+                }
             }
 
             // 在无重力情况下给玩家施加移动力

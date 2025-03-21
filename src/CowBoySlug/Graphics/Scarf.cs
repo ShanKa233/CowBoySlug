@@ -172,8 +172,8 @@ namespace CowBoySlug
             // 绘制围巾精灵的代码将在这里实现
 
             var scarfIndex = this.scarfIndex;
-            //颜色设定 - 从玩家特性中获取围巾颜色
-            Color scarfColor = Scarf.ScarfColor.GetColor(playerGraphics) ?? PlayerGraphics.JollyColor(player.playerState.playerNumber, 2);
+            //颜色设定 - 从玩家特性中获取围巾颜色，如果找不到就青蓝色
+            Color scarfColor = Scarf.ScarfColor.GetColor(playerGraphics) ?? new Color(0, 1, 1);
 
             sLeaser.sprites[scarfIndex].color = scarfColor;
 
