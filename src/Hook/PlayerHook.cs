@@ -30,6 +30,7 @@ namespace CowBoySLug
         )
         {
             orig.Invoke(self, abstractCreature, world);
+            //对cowboymodule进行初始化
             if (!self.IsCowBoys(out var cowBoyModule))
             {
                 return;

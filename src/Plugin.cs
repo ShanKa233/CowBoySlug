@@ -71,14 +71,16 @@ namespace CowBoySLug
 
             // init
             // 检查其他mod是否启用
-            Compatibility.ModCompat_Helpers.InitModCompat();
+            
+            PlayerHook.Hook();
+            PlayerGraphicsHook.Hook();
 
+            Compatibility.ModCompat_Helpers.InitModCompat();
+            
             CowBoySlug.Mechanics.RopeSkill.UserData.Hook();
             CowBoySlug.Mechanics.ShootSkill.SuperShootModule.OnHook();
             CowBoySlug.Mechanics.RopeSkill.RopeSpear.Hook();
 
-            PlayerHook.Hook();
-            PlayerGraphicsHook.Hook();
 
             LoadHats.Hook();
 

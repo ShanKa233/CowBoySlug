@@ -28,35 +28,8 @@ namespace CowBoySlug
         /// </summary>
         public static void Hook()
         {
-            On.PlayerGraphics.Update += Ribbon_Update;
-            // 重置围巾状态的钩子
-            On.PlayerGraphics.Reset += Ribbon_Reset;
+            ScarfGraphics.Hook();
         }
-        /// <summary>
-        /// 更新围巾的物理效果和位置
-        /// </summary>
-        private static void Ribbon_Update(On.PlayerGraphics.orig_Update orig, PlayerGraphics self)
-        {
-            // 调用原始更新方法
-            orig.Invoke(self);
-            if (self.player.GetCowBoyData().scarf != null)
-            {
-                self.player.GetCowBoyData().scarf.Update();
-            }
-        }
-
-        /// <summary>
-        /// 重置围巾状态，防止拉丝现象
-        /// </summary>
-        private static void Ribbon_Reset(On.PlayerGraphics.orig_Reset orig, PlayerGraphics self)
-        {
-            orig.Invoke(self);
-            if (self.player.GetCowBoyData().scarf != null)
-            {
-                self.player.GetCowBoyData().scarf.ribbonReset(); //重置丝巾位置防止拉丝
-            }
-        }
-
     }
 
     /// <summary>
@@ -65,7 +38,7 @@ namespace CowBoySlug
     public class ScarfModule
     {
         public Player player;           // 关联的玩家
-        public PlayerGraphics playerGraphics=>player.graphicsModule as PlayerGraphics; // 关联的玩家图形
+        public PlayerGraphics playerGraphics => player.graphicsModule as PlayerGraphics; // 关联的玩家图形
 
         public int scarfIndex;          // 围巾主体精灵的索引
         public int ribbonIndex;         // 围巾飘带精灵的起始索引
@@ -76,14 +49,27 @@ namespace CowBoySlug
         /// 创建新的围巾模块
         /// </summary>
         /// <param name="player">关联的玩家</param>
-        public ScarfModule(Player player)
+        public ScarfModule(Player player,PlayerGraphics playerGraphics)
         {
             this.player = player;
+            // 移除对playerGraphics的赋值,因为它是只读属性
+            
+            ribbon = new GenericBodyPart[2];
+            for (int i = 0; i < ribbon.Length; i++)
+            {
+                ribbon[i] = new GenericBodyPart(
+                    playerGraphics,
+                    1,      // 重量
+                    0.8f,   // 弹性
+                    0.3f,   // 阻力
+                    player.mainBodyChunk  // 连接到玩家的主体
+                );
+            }
         }
 
         public void Update()
         {
-        
+
             var y = player.mainBodyChunk.Rotation;  // 获取玩家主体的旋转方向
             var x = -Custom.PerpendicularVector(y); // 获取垂直于旋转方向的向量
 
@@ -184,7 +170,7 @@ namespace CowBoySlug
         public void DrawSprites(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
         {
             // 绘制围巾精灵的代码将在这里实现
-            
+
             var scarfIndex = this.scarfIndex;
             //颜色设定 - 从玩家特性中获取围巾颜色
             Color scarfColor = Scarf.ScarfColor.GetColor(playerGraphics) ?? PlayerGraphics.JollyColor(player.playerState.playerNumber, 2);
