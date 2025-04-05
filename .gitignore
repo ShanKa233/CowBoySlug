@@ -1,4 +1,9 @@
 mod/plugins/
+# 忽略所有版本下的插件文件夹（包括dll和pdb文件）
+mod/*/plugins/
+mod/newest/plugins/
+**/bin/
+**/obj/
 
 # 自定义忽略文件夹
 .cursor/
