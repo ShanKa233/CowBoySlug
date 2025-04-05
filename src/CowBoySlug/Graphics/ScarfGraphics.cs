@@ -73,7 +73,7 @@ namespace CowBoySlug.Graphics
             if (Mechanics.RopeSkill.UserData.modules.TryGetValue(self.player, out var cowBoy))
             {
                 // cowBoy.ropeColor = PlayerGraphics.JollyColor(self.player.playerState.playerNumber, 3);
-                cowBoy.ropeColor = Plugin.RopeColor.GetColor(self) ?? PlayerGraphics.JollyColor(self.player.playerState.playerNumber, 3);
+                cowBoy.ropeColor = Plugin.RopeColor.GetColor(self) ?? Color.gray;
             }
 
 
