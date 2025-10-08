@@ -10,10 +10,11 @@ using System.Reflection;
 using System.Linq;
 using SlugBase.DataTypes;
 using UnityEngine;
+using src.testStuff;
 
 namespace CowBoySLug
 {
-    [BepInPlugin(MOD_ID, "CowBoySLug.ShanKa", "0.2.59")] // 版本号在 modinfo.json 和 workshopdata.json 中更新
+    [BepInPlugin(MOD_ID, "CowBoySLug.ShanKa", "0.2.65")] // 版本号在 modinfo.json 和 workshopdata.json 中更新
     class Plugin : BaseUnityPlugin
     {
         public const string MOD_ID = "CowBoySLug.ShanKa";
@@ -23,11 +24,6 @@ namespace CowBoySLug
         // 绳子颜色
         public static readonly PlayerColor RopeColor = new PlayerColor("Rope");
 
-
-
-        //public static readonly PlayerFeature<bool> HaveScarf = PlayerBool("cowboyslug/scarf");//有围巾
-
-        //public static readonly PlayerColor ScarfColor = new PlayerColor("Scarf");//围巾颜色
 
         #region 检查其他mod是否启用
         //检查猫拳是否启用
@@ -51,7 +47,6 @@ namespace CowBoySLug
             On.RainWorld.OnModsInit += RainWorld_OnModsInit;
 
 
-            Content.Register(new CowBoyHatFisob());
         }
 
         public static RemixMenu menu = new RemixMenu();
@@ -61,7 +56,7 @@ namespace CowBoySLug
         private void RainWorld_OnModsInit(On.RainWorld.orig_OnModsInit orig, RainWorld self)
         {
             orig(self);
-            
+
             if (IsInit)
             {
                 return;
@@ -69,14 +64,20 @@ namespace CowBoySLug
 
             IsInit = true;
 
+            // waterAbility.Hook();//仅测试使用之后需要删除
+            // LizardOnBackHook.Hook();//测试使用之后需要删除
+            // grabupdateTest.Hook();
+
             // init
             // 检查其他mod是否启用
-            
+            Content.Register(new CowBoyHatFisob());
+
             PlayerHook.Hook();
             PlayerGraphicsHook.Hook();
 
+            //兼容其他mod用的东西
             Compatibility.ModCompat_Helpers.InitModCompat();
-            
+
             CowBoySlug.Mechanics.RopeSkill.UserData.Hook();
             CowBoySlug.Mechanics.ShootSkill.SuperShootModule.OnHook();
             CowBoySlug.Mechanics.RopeSkill.RopeSpear.Hook();
@@ -92,13 +93,14 @@ namespace CowBoySLug
 
             SewHook.Hook();
 
-
+            
             // Camouflage.Hook();
+
             WhiteDropWorm.Hook();
 
             MachineConnector.SetRegisteredOI("CowBoySLug.ShanKa", menu);
 
-            Debug.Log("[CowBoySlug] 初始化完成");
+            // Debug.Log("[CowBoySlug] 初始化完成");
         }
         private void LoadResources(RainWorld rainWorld)
         {

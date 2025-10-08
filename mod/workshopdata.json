@@ -3,7 +3,7 @@
   "Description": "Add new slug ,CowBoySlug",
   "ID": "CowBoySLug.ShanKa",
   "Version": "0.2.65",
-  "TargetGameVersion": "v1.9.06",
+  "TargetGameVersion": "v1.10",
   "Requirements": "slime-cubed.slugbase,moreslugcats,fisobs",
   "RequirementNames": "SlugBase",
   "Authors": "ShanKa",
