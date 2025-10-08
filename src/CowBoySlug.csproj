@@ -1,79 +1,39 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-    
-    <PropertyGroup>
-        <TargetFramework>net48</TargetFramework>
-        <LangVersion>11</LangVersion>
-    </PropertyGroup>
-    
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Rain World 核心引用 -->
+    <Reference
+      Include="C:\Program Files (x86)\Steam\steamapps\common\Rain World\RainWorld_Data\Managed\*.dll" />
+    <Reference
+      Include="C:\Program Files (x86)\Steam\steamapps\common\Rain World\BepInEx\plugins\*.dll" />
+    <Reference Include="C:\Program Files (x86)\Steam\steamapps\common\Rain World\BepInEx\core\*.dll" />
+    <Reference
+      Include="C:\Program Files (x86)\Steam\steamapps\common\Rain World\BepInEx\utils\*.dll" />
+
+    <!-- MOD 依赖 -->
+    <Reference
+      Include="C:\Program Files (x86)\Steam\steamapps\workshop\content\312520\2933196558\newest\plugins\slugbase.dll" />
+    <Reference
+      Include="C:\Program Files (x86)\Steam\steamapps\workshop\content\312520\2920541687\newest\plugins\*.dll" />
+    <Reference
+      Include="C:\Program Files (x86)\Steam\steamapps\workshop\content\312520\3388224007\plugins\*.dll" />
+  </ItemGroup>
+
+  <Target Name="GenerateMod" AfterTargets="PostBuildEvent">
     <ItemGroup>
-      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+      <RemovePlugins Include="../mod/newest/plugins/*.dll" />
     </ItemGroup>
-    
+
     <ItemGroup>
-        <Reference Include="..\lib\BepInEx.dll">
-          <Private>false</Private>
-        </Reference>
-        <Reference Include="..\lib\Mono.Cecil.dll">
-          <Private>false</Private>
-        </Reference>
-        <Reference Include="..\lib\Mono.Cecil.Rocks.dll">
-          <Private>false</Private>
-        </Reference>
-        <Reference Include="..\lib\MonoMod.dll">
-          <Private>false</Private>
-        </Reference>
-        <Reference Include="..\lib\MonoMod.RuntimeDetour.dll">
-          <Private>false</Private>
-        </Reference>
-        <Reference Include="..\lib\MonoMod.Utils.dll">
-          <Private>false</Private>
-        </Reference>
-        <Reference Include="..\lib\SlugBase.dll">
-          <Private>false</Private>
-        </Reference>
-        <Reference Include="..\lib\UnityEngine.CoreModule.dll">
-          <Private>false</Private>
-        </Reference>
-        <Reference Include="..\lib\UnityEngine.dll">
-          <Private>false</Private>
-        </Reference>
-        <Reference Include="Assembly-CSharp-firstpass">
-          <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Rain World\RainWorld_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
-        </Reference>
+      <CopyPlugins Include="$(TargetPath);$(TargetDir)$(TargetName).pdb" />
     </ItemGroup>
-    
-    <ItemGroup>
-      <Reference Include="CatPunchPunchDP">
-        <HintPath>C:\Program Files (x86)\Steam\steamapps\workshop\content\312520\2987261371\plugins\CatPunchPunchDP.dll</HintPath>
-      </Reference>
-      <Reference Include="Assembly-CSharp">
-        <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Rain World\BepInEx\utils\PUBLIC-Assembly-CSharp.dll</HintPath>
-      </Reference>
-      <Reference Include="Fisobs">
-        <HintPath>C:\Program Files (x86)\Steam\steamapps\workshop\content\312520\2920541687\newest\plugins\Fisobs.dll</HintPath>
-      </Reference>
-      <Reference Include="HOOKS-Assembly-CSharp">
-        <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Rain World\BepInEx\plugins\HOOKS-Assembly-CSharp.dll</HintPath>
-      </Reference>
-      <Reference Include="Rain Meadow">
-        <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\workshop\content\312520\3388224007\plugins\Rain Meadow.dll</HintPath>
-      </Reference>
-      <Reference Include="System.Web.Extensions" />
-      <Reference Include="Unity.Mathematics">
-        <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Rain World\RainWorld_Data\Managed\Unity.Mathematics.dll</HintPath>
-      </Reference>
-    </ItemGroup>
-    
-    <Target Name="GenerateMod" AfterTargets="PostBuildEvent">
-		<ItemGroup>
-			<RemovePlugins Include="../mod/newest/plugins/*.dll" />
-		</ItemGroup>
-		<ItemGroup>
-			<CopyPlugins Include="$(TargetPath)" />
-		</ItemGroup>
-		
-        <Delete Files="@(RemovePlugins)" />
-        <Copy SourceFiles="@(CopyPlugins)" DestinationFolder="../mod/newest/plugins/" />
-    </Target>
-    
+
+    <Delete Files="@(RemovePlugins)" />
+    <Copy SourceFiles="@(CopyPlugins)" DestinationFolder="../mod/newest/plugins/" />
+
+  </Target>
 </Project>
