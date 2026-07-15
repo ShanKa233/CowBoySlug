@@ -46,7 +46,7 @@ namespace CowBoySlug
         public override AbstractPhysicalObject Parse(
             World world,
             EntitySaveData saveData,
-            SandboxUnlock? unlock
+            SandboxUnlock unlock
         )
         {
             // 解析保存的数据
@@ -636,7 +636,7 @@ namespace CowBoySlug
         public void AddToContainer(
             RoomCamera.SpriteLeaser sLeaser,
             RoomCamera rCam,
-            FContainer? newContainer
+            FContainer newContainer
         )
         {
             newContainer ??= rCam.ReturnFContainer("Items"); // 获取容器

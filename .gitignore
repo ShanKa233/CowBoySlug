@@ -408,3 +408,5 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+.kiro/steering/项目概览.md
+.kiro/steering/useunitydebug.md
