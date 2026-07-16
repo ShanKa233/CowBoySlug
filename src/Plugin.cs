@@ -19,6 +19,7 @@ namespace CowBoySLug
     {
         public const string MOD_ID = "CowBoySLug.ShanKa";
 
+
         public static readonly PlayerFeature<bool> RockShot = PlayerBool("cowboyslug/rock_shot"); //扔石头
         // 能使用这个能力的词条
         // 绳子颜色
@@ -93,7 +94,7 @@ namespace CowBoySLug
 
             SewHook.Hook();
 
-            
+
             // Camouflage.Hook();
 
             WhiteDropWorm.Hook();

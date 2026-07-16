@@ -9,15 +9,14 @@
   <!--
     路径配置：
     设置环境变量 RW_PATH 指向 Rain World 安装目录即可跨平台使用。
-    未设置时自动使用 Windows 默认路径。
-    SteamOS 示例：export RW_PATH="$HOME/.steam/steam/steamapps/common/Rain World"
   -->
   <PropertyGroup>
     <RWPath Condition="'$(RWPath)' == ''">/home/deck/.local/share/Steam/steamapps/common/Rain World/</RWPath>
   </PropertyGroup>
 
   <PropertyGroup>
-    <WorkshopPath Condition="'$(WorkshopPath)' == ''">/home/deck/.local/share/Steam/steamapps/workshop/content/312520/</WorkshopPath>
+    <WorkshopPath Condition="'$(WorkshopPath)' == ''">
+      /home/deck/.local/share/Steam/steamapps/workshop/content/312520/</WorkshopPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -36,7 +35,7 @@
     <Reference
       Include="$(WorkshopPath)/2920541687/newest/plugins/Fisobs.dll" />
     <Reference
-      Include="$(WorkshopPath)/3388224007/plugins/*.dll" />
+      Include="$(WorkshopPath)/3388224007/plugins/*.dll" /><!-- Meadowmode -->
   </ItemGroup>
 
   <Target Name="GenerateMod" AfterTargets="PostBuildEvent">
