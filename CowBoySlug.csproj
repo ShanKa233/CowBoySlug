@@ -11,12 +11,9 @@
     设置环境变量 RW_PATH 指向 Rain World 安装目录即可跨平台使用。
   -->
   <PropertyGroup>
-    <RWPath Condition="'$(RWPath)' == ''">/home/deck/.local/share/Steam/steamapps/common/Rain World/</RWPath>
-  </PropertyGroup>
-
-  <PropertyGroup>
+    <RWPath Condition="'$(RWPath)' == ''">$(RW_PATH)</RWPath>
     <WorkshopPath Condition="'$(WorkshopPath)' == ''">
-      /home/deck/.local/share/Steam/steamapps/workshop/content/312520/</WorkshopPath>
+      $(RW_WORKSHOP_PATH)</WorkshopPath>
   </PropertyGroup>
 
   <ItemGroup>

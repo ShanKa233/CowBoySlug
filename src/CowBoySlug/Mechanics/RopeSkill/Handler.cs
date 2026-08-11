@@ -20,11 +20,6 @@ namespace CowBoySlug.Mechanics.RopeSkill
 
         public static void SpawnRope_Local(Player player, Spear spear, Color start, Color end)
         {
-            // TODO: 修复围巾无法正常显示的问题
-            // 问题描述：当前围巾的渲染存在问题，无法在所有情况下正确显示。
-            // 需要检查围巾的渲染逻辑，可能与材质、光照或动画系统有关。
-            // 考虑重新实现围巾的视觉效果或调整现有的渲染参数。
-            
             var rope = new Simulator(player, spear, start, end); //新建一个在矛上的丝线
             player.room.AddObject(rope); //召唤这个线
         }

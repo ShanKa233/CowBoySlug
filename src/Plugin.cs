@@ -11,7 +11,6 @@ using System.Linq;
 using SlugBase.DataTypes;
 using UnityEngine;
 using src.testStuff;
-
 namespace CowBoySLug
 {
     [BepInPlugin(MOD_ID, "CowBoySLug.ShanKa", "0.2.65")] // 版本号在 modinfo.json 和 workshopdata.json 中更新
