@@ -64,43 +64,37 @@ namespace CowBoySLug
 
             IsInit = true;
 
-            // waterAbility.Hook();//仅测试使用之后需要删除
-            // LizardOnBackHook.Hook();//测试使用之后需要删除
-            // grabupdateTest.Hook();
-
             // init
             // 检查其他mod是否启用
             Content.Register(new CowBoyHatFisob());
+            //兼容其他mod用的东西
+            Compatibility.ModCompat_Helpers.InitModCompat();
+
 
             PlayerHook.Hook();
             PlayerGraphicsHook.Hook();
-
-            //兼容其他mod用的东西
-            Compatibility.ModCompat_Helpers.InitModCompat();
 
             CowBoySlug.Mechanics.RopeSkill.UserData.Hook();
             CowBoySlug.Mechanics.ShootSkill.SuperShootModule.OnHook();
             CowBoySlug.Mechanics.RopeSkill.RopeSpear.Hook();
 
-
-            LoadHats.Hook();
-
-            Hat.Hook();
-
-            //控制绳子的能力的hook
-
             CowBoySlug.Mechanics.Hands.Hook();
 
+            //控制绳子的能力的hook
+            LoadHats.Hook();
+            Hat.Hook();
             SewHook.Hook();
 
 
-            // Camouflage.Hook();
 
             WhiteDropWorm.Hook();
 
             MachineConnector.SetRegisteredOI("CowBoySLug.ShanKa", menu);
 
-            // Debug.Log("[CowBoySlug] 初始化完成");
+            // waterAbility.Hook();//仅测试使用之后需要删除
+            // LizardOnBackHook.Hook();//测试使用之后需要删除
+            // grabupdateTest.Hook();
+            // Camouflage.Hook();//迷彩之类的东西仅用于测试
         }
         private void LoadResources(RainWorld rainWorld)
         {
