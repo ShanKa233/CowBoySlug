@@ -10,7 +10,6 @@ using System.Reflection;
 using System.Linq;
 using SlugBase.DataTypes;
 using UnityEngine;
-using src.testStuff;
 namespace CowBoySLug
 {
     [BepInPlugin(MOD_ID, "CowBoySLug.ShanKa", "0.2.65")] // 版本号在 modinfo.json 和 workshopdata.json 中更新
@@ -91,9 +90,7 @@ namespace CowBoySLug
 
             MachineConnector.SetRegisteredOI("CowBoySLug.ShanKa", menu);
 
-            // waterAbility.Hook();//仅测试使用之后需要删除
             // LizardOnBackHook.Hook();//测试使用之后需要删除
-            // grabupdateTest.Hook();
             // Camouflage.Hook();//迷彩之类的东西仅用于测试
         }
         private void LoadResources(RainWorld rainWorld)
