@@ -35,6 +35,8 @@
       Include="$(WorkshopPath)/2920541687/newest/plugins/Fisobs.dll" />
     <Reference
       Include="$(WorkshopPath)/3388224007/plugins/*.dll" /><!-- Meadowmode -->
+    <Reference
+      Include="$(WorkshopPath)/2987261371/newest/plugins/CatPunchPunchDP.dll" />
   </ItemGroup>
 
   <Target Name="GenerateMod" AfterTargets="PostBuildEvent">
