@@ -35,6 +35,19 @@ namespace CowBoySlug.Mechanics.RopeSkill
 
             // 注册更新 MSC 事件的钩子
             On.Player.UpdateMSC += Player_UpdateMSC;
+
+            // 注册玩家更新事件的钩子,维护钩索惯性计数器
+            On.Player.Update += Player_Update;
+
+            // 钩索惯性期间让原版地面摩擦不生效的 ILHook
+            FrictionIL.Hook();
+        }
+
+        private static void Player_Update(On.Player.orig_Update orig, Player self, bool eu)
+        {
+            // 更新钩索惯性计数器
+            UpdateRopeMomentum(self);
+            orig.Invoke(self, eu);
         }
 
         private static void BreakRopeUpdate(On.Player.orig_GrabUpdate orig, Player self, bool eu)
@@ -111,9 +124,42 @@ namespace CowBoySlug.Mechanics.RopeSkill
         // 绳子颜色
         public Color ropeColor = new Color(247 / 255f, 213 / 255f, 131 / 255f);
 
+        // 钩索惯性:拉绳子时充满,不拉时慢慢消散
+        public int ropeMomentum = 0;
+        // 钩索惯性的最大值
+        public const int RopeMomentumMax = 20;
+
         public UserData(Player player)
         {
             this.player = player;
+        }
+
+        /// <summary>
+        /// 更新钩索惯性计数器:拉绳时充满,不拉时递减
+        /// </summary>
+        public static void UpdateRopeMomentum(Player player)
+        {
+            if (!modules.TryGetValue(player, out var module))
+                return;
+            if (player.HandData().pullCount > 0)
+            {
+                module.ropeMomentum = RopeMomentumMax;
+            }
+            else if (module.ropeMomentum > 0)
+            {
+                module.ropeMomentum--;
+            }
+        }
+
+        /// <summary>
+        /// 供 ILHook 调用:判断物理对象的主人是否处于钩索惯性状态
+        /// 有惯性时原版的地面/表面摩擦不应该生效
+        /// </summary>
+        public static bool OwnerHasRopeMomentum(PhysicalObject owner)
+        {
+            return owner is Player player
+                && modules.TryGetValue(player, out var module)
+                && module.ropeMomentum > 0;
         }
 
         // 检查玩家是否不能召回矛
