@@ -32,6 +32,8 @@ namespace CowBoySlug
         public List<CowBoyHat> hatList = new List<CowBoyHat>();
         public bool HaveHat => hatList.Count > 0;
         public bool isCowboy = false;
+        // 防止同一帧内多个帽子被级联移除
+        public bool hatRemovedThisFrame = false;
         // 新增的方法
         public void StackHat(CowBoyHat hat)
         {
@@ -85,6 +87,7 @@ namespace CowBoySlug
 
         public void Update()
         {
+            hatRemovedThisFrame = false; // 每帧重置帽子移除标志
             if (player.playerState.foodInStomach > 0)
             {
                 player.playerState.permanentDamageTracking = 0;

@@ -358,6 +358,10 @@ namespace CowBoySlug
                 {
                     var exPlayer = player.GetCowBoyData();
 
+                    // 防止同一帧内级联移除多个帽子
+                    if (exPlayer.hatRemovedThisFrame)
+                        return;
+
                     // 只取下列表中最后一个帽子（即索引最大的帽子）
                     if (exPlayer.hatList.Count > 0)
                     {
@@ -371,6 +375,7 @@ namespace CowBoySlug
                         }
 
                         // 如果是最后一个帽子，则取下
+                        exPlayer.hatRemovedThisFrame = true;
                         room.PlaySound(SoundID.Big_Spider_Spit, firstChunk);
 
                         if (myStick != null)
@@ -392,6 +397,10 @@ namespace CowBoySlug
                 {
                     var exPlayer = player.GetCowBoyData();
 
+                    // 防止同一帧内级联移除多个帽子
+                    if (exPlayer.hatRemovedThisFrame)
+                        return;
+
                     // 只取下列表中最后一个帽子（即索引最大的帽子）
                     if (exPlayer.hatList.Count > 0)
                     {
@@ -405,6 +414,7 @@ namespace CowBoySlug
                         }
 
                         // 如果是最后一个帽子，则取下
+                        exPlayer.hatRemovedThisFrame = true;
                         room.PlaySound(SoundID.Big_Spider_Spit, firstChunk);
 
                         if (myStick != null)
