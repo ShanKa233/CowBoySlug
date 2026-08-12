@@ -179,6 +179,9 @@ namespace CowBoySlug
         // 佩戴者
         public PhysicalObject wearers;
 
+        // 这个帽子对应的 AbstractHatWearStick，用于在管道过渡时保持连接
+        public AbstractHatWearStick myStick;
+
         // 飞行方向
         public Vector2 rotation;
         public Vector2 lastRotation = Vector2.zero;
@@ -323,10 +326,26 @@ namespace CowBoySlug
                 {
                     var exPlayer = player.GetCowBoyData();
                     exPlayer.UnstackHat(this);
-                    Hat.RemoveHat(player);
+                    if (myStick != null)
+                    {
+                        Hat.RemoveHat(player, myStick);
+                        myStick = null;
+                    }
                 }
                 wearers = null;
             }
+
+            // 如果佩戴者正在进入管道或已经在管道中，不干涉帽子的位置
+            // 让游戏的 ShortcutHandler 系统通过 AbstractObjectStick 自动处理帽子的移动
+            if (Weared && wearers is Player playerInShortcut)
+            {
+                if (playerInShortcut.inShortcut)
+                {
+                    this.CollideWithObjects = false;
+                    return;
+                }
+            }
+
             if (Weared && wearers is Player)
             {
                 var player = (Player)wearers;
@@ -354,10 +373,10 @@ namespace CowBoySlug
                         // 如果是最后一个帽子，则取下
                         room.PlaySound(SoundID.Big_Spider_Spit, firstChunk);
 
-                        if (Hat.TryGetHat(player, out var abstractHatWearStick) && abstractHatWearStick != null)
+                        if (myStick != null)
                         {
-                            abstractHatWearStick.Deactivate(); // 取消佩戴
-                            Hat.RemoveHat(player);
+                            Hat.RemoveHat(player, myStick);
+                            myStick = null;
                         }
 
                         // 从玩家的帽子列表中移除
@@ -388,10 +407,10 @@ namespace CowBoySlug
                         // 如果是最后一个帽子，则取下
                         room.PlaySound(SoundID.Big_Spider_Spit, firstChunk);
 
-                        if (Hat.TryGetHat(player, out var abstractHatWearStick) && abstractHatWearStick != null)
+                        if (myStick != null)
                         {
-                            abstractHatWearStick.Deactivate(); // 取消佩戴
-                            Hat.RemoveHat(player);
+                            Hat.RemoveHat(player, myStick);
+                            myStick = null;
                         }
 
                         // 从玩家的帽子列表中移除
@@ -531,14 +550,14 @@ namespace CowBoySlug
                 wearers = wearer; // 设置佩戴者
                 if (wearer is Player player)
                 {
-                    // 使用新的AddHat方法添加帽子和玩家的关系
-                    Hat.AddHat(
-                        player,
-                        new AbstractHatWearStick(
-                            this.abstractPhysicalObject,
-                            player.abstractPhysicalObject as AbstractCreature
-                        )
+                    // 为这个帽子创建独立的 AbstractHatWearStick
+                    // 不再替换旧 stick，而是累加——这样所有帽子的 stick 都在 player.stuckObjects 中
+                    // GetAllConnectedObjects() 才能找到所有帽子，管道过渡时才会正确移除它们
+                    myStick = new AbstractHatWearStick(
+                        this.abstractPhysicalObject,
+                        player.abstractPhysicalObject as AbstractCreature
                     );
+                    Hat.AddHat(player, myStick);
 
                     // 将帽子添加到玩家的帽子列表中
                     var exPlayer = player.GetCowBoyData();
@@ -682,8 +701,16 @@ namespace CowBoySlug
             Vector2 camPos
         )
         {
+
             if (Weared)
             {
+                // 如果佩戴者已经在管道中（已被 SuckedIntoShortCut 移除），不渲染帽子
+                if (wearers is Player player && player.inShortcut)
+                {
+                    if (slatedForDeletetion || room != rCam.room)
+                        sLeaser.CleanSpritesAndRemove();
+                    return;
+                }
                 WearDraw(sLeaser, rCam, timeStacker, camPos);
                 return;
             }
@@ -1015,7 +1042,11 @@ namespace CowBoySlug
             {
                 var exPlayer = player.GetCowBoyData();
                 exPlayer.UnstackHat(this);
-                Hat.RemoveHat(player);
+                if (myStick != null)
+                {
+                    Hat.RemoveHat(player, myStick);
+                    myStick = null;
+                }
             }
 
             base.Destroy();

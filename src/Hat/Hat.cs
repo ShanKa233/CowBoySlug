@@ -9,32 +9,45 @@ namespace CowBoySlug
 {
     public static class Hat
     {
-        public static Dictionary<Player, AbstractHatWearStick> modules = new Dictionary<Player, AbstractHatWearStick>();
+        // 每个玩家可能有多个帽子，每个帽子有自己独立的 AbstractHatWearStick
+        // 这样每个帽子的 stick 都保留在 player.stuckObjects 中，
+        // GetAllConnectedObjects() 才能找到所有帽子，管道过渡时才会正确移除它们
+        public static Dictionary<Player, List<AbstractHatWearStick>> modules = new Dictionary<Player, List<AbstractHatWearStick>>();
 
         public static void AddHat(Player player, AbstractHatWearStick stick)
         {
-            if (modules.ContainsKey(player))
+            if (!modules.ContainsKey(player))
+                modules[player] = new List<AbstractHatWearStick>();
+            modules[player].Add(stick);
+        }
+
+        public static void RemoveHat(Player player, AbstractHatWearStick stick)
+        {
+            if (modules.TryGetValue(player, out var list))
             {
-                modules[player].Deactivate();
-                modules[player] = stick;
-            }
-            else
-            {
-                modules.Add(player, stick);
+                stick.Deactivate();
+                list.Remove(stick);
+                if (list.Count == 0)
+                    modules.Remove(player);
             }
         }
 
-        public static void RemoveHat(Player player)
+        /// <summary>
+        /// 移除玩家所有的帽子 stick 连接（用于玩家被销毁时）
+        /// </summary>
+        public static void RemoveAllHats(Player player)
         {
-            if (modules.ContainsKey(player))
+            if (modules.TryGetValue(player, out var list))
             {
+                foreach (var stick in list)
+                    stick.Deactivate();
                 modules.Remove(player);
             }
         }
 
-        public static bool TryGetHat(Player player, out AbstractHatWearStick stick)
+        public static bool TryGetHatSticks(Player player, out List<AbstractHatWearStick> sticks)
         {
-            return modules.TryGetValue(player, out stick);
+            return modules.TryGetValue(player, out sticks);
         }
 
         public static void Hook()
