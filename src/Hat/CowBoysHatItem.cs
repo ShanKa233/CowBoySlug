@@ -650,7 +650,7 @@ namespace CowBoySlug
 
                 // 使用特殊的容器，确保帽子按照正确的顺序显示
                 // 下标更大的帽子（后添加的）显示在下标更小的帽子（先添加的）之上
-                newContainer = rCam.ReturnFContainer("HUD");
+                // newContainer = rCam.ReturnFContainer("HUD");
 
                 // 先从容器中移除所有精灵，然后按照正确的顺序重新添加
                 foreach (FSprite fsprite in sLeaser.sprites)
