@@ -596,6 +596,11 @@ namespace CowBoySlug.Mechanics.RopeSkill
                         player.bodyChunks[1].vel += playerToRopeDir * 3f * RopeConfig.PullForceFactor(range);
                         UserData.FillRopeMomentum(player);
                     }
+                    // 组合1历史行为:钓竿键未按下时也自动轻拽
+                    if (RopeConfig.Controls.FishingLightWhenIdle)
+                    {
+                        LightDragCreature(player, spear, umbilical);
+                    }
                 }
             }
             // 对拿着这个矛的生物操作

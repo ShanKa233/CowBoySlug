@@ -79,6 +79,12 @@ namespace CowBoySlug.Mechanics.RopeSkill
         /// </summary>
         public virtual bool FishingStandalone => false;
 
+        /// <summary>
+        /// 钓竿键未按下时是否仍轻拉被插住的生物(组合1的历史行为:召回流程中自动轻拽;
+        /// 组合2为 false,轻拉只由长按钓竿键触发)
+        /// </summary>
+        public virtual bool FishingLightWhenIdle => false;
+
         #endregion
 
         #region 攻击模式(甩矛)
@@ -133,6 +139,9 @@ namespace CowBoySlug.Mechanics.RopeSkill
 
         // 组合1没有点按/长按概念,想要拾取时全是重拉(行为与重构后一致)
         public override bool FishingHeavy(Player player) => player.wantToPickUp > 0;
+
+        // 组合1历史行为:不想要拾取时(距离够远)也自动轻拽生物
+        public override bool FishingLightWhenIdle => true;
 
         public override bool AttackTrigger(Player player) =>
             player.input[1].pckp && !player.input[0].pckp;
