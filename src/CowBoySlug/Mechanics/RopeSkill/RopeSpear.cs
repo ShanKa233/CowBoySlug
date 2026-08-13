@@ -1,11 +1,14 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+using System;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using UnityEngine;
 
 namespace CowBoySlug.Mechanics.RopeSkill
 {
+  /// <summary>
+  /// 矛侧的钩子:维护 RopeData 计时器、防止拉回时乱转、同步绳索渲染层级、降低插墙速度需求。
+  /// 矛的关联数据见 RopeData(通过 spear.rope() 获取)。
+  /// </summary>
   internal class RopeSpear
   {
     public static void Hook()
@@ -90,77 +93,6 @@ namespace CowBoySlug.Mechanics.RopeSkill
             }
         );
       }
-    }
-  }
-
-  public static class RopeSpearExtension
-  {
-    private static readonly ConditionalWeakTable<Spear, RopeData> ropeTable = new ConditionalWeakTable<Spear, RopeData>();
-
-    public static RopeData rope(this Spear spear)
-    {
-      return ropeTable.GetValue(spear, (s) => new RopeData(s));
-    }
-  }
-
-  /// <summary>
-  /// 用于记录与获取和矛所关联的绳子的信息的类
-  /// </summary>
-  public class RopeData
-  {
-    public Spear spear;
-    public Player owner;
-    public Simulator rope;
-
-    public int brokenCount = 0;
-    public int cantRotationCount = 0;
-
-    // 飞行锚点速度阈值:滑铲加速投出的矛(+15)飞行速度显著高于普通投掷,
-    // 飞行中速度高于此值的矛可以作为钩索锚点位移,钩索会消耗矛的飞行速度
-    public const float HookEnergySpeedThreshold = 28f;
-
-    public void Update()
-    {
-      if (cantRotationCount > 0)
-      {
-        cantRotationCount--;
-      }
-
-      if (cantRotationCount > 10)
-      {
-        cantRotationCount = 10;
-      }
-
-      if (brokenCount > 0)
-      {
-        brokenCount--;
-      }
-
-      if (brokenCount > 80)
-      {
-        brokenCount = 0;
-        RemoveRope();
-      }
-    }
-
-    public void RemoveRope()
-    {
-      owner = null;
-      rope = null;
-    }
-
-    public void GetRope(Player owner, Simulator rope)
-    {
-      this.owner = owner;
-      this.rope = rope;
-    }
-
-    //检测是否是带绳的矛
-    public bool IsRopeSpear => rope != null && owner != null && owner.room == rope.room;
-
-    public RopeData(Spear spear)
-    {
-      this.spear = spear;
     }
   }
 }

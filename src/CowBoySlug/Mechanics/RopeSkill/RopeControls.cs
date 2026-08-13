@@ -3,7 +3,7 @@ namespace CowBoySlug.Mechanics.RopeSkill
     /// <summary>
     /// 绳子技能按键组合的抽象基类。
     /// 每个方法对应一个动作的按键判定;新建组合继承本类或 RopeControlsV1 只重写想改的动作。
-    /// 切换组合:修改 UserData.Controls 的赋值。
+    /// 切换组合:修改 RopeConfig.Controls 的赋值。
     ///
     /// 添加新组合示例:
     /// <code>
@@ -11,7 +11,7 @@ namespace CowBoySlug.Mechanics.RopeSkill
     /// {
     ///     public override bool FastCallBack(Player player) => player.input[0].pckp;
     /// }
-    /// // UserData.cs 里: UserData.Controls = new RopeControlsV2();
+    /// // RopeConfig.cs 里: RopeConfig.Controls = new RopeControlsV2();
     /// </code>
     /// </summary>
     public abstract class RopeControls
