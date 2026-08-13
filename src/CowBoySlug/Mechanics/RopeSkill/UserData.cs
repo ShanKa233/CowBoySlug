@@ -205,6 +205,17 @@ namespace CowBoySlug.Mechanics.RopeSkill
             }
         }
 
+        // 收矛距离(与 Handler.CallBackSpear_Local 的收矛判定共用)
+        public const float PickUpRange = 80f;
+
+        /// <summary>
+        /// 钩索拉升力系数:距离越近越弱,收矛距离的一半处为0,收矛距离处为满值
+        /// </summary>
+        public static float PullForceFactor(float range)
+        {
+            return Mathf.InverseLerp(PickUpRange / 2f, PickUpRange, range);
+        }
+
         /// <summary>
         /// 供 ILHook 调用:判断物理对象的主人是否处于钩索惯性状态
         /// 有惯性时原版的地面/表面摩擦不应该生效
@@ -309,6 +320,35 @@ namespace CowBoySlug.Mechanics.RopeSkill
                 umbilical.RopePos(umbilical.rope.TotalPositions - 2)
             );
 
+            // 滑铲加速投出的矛在飞行中可以作为钩索锚点位移
+            // 检测速度:飞行速度高于阈值才是锚点;钩索消耗矛的飞行速度,速度耗尽后矛静止,失去锚点能力
+            if (
+                spear.mode == Weapon.Mode.Thrown
+                && spear.firstChunk.vel.magnitude > RopeData.HookEnergySpeedThreshold
+            )
+            {
+                player.HandData().Pulling(10, umbilical, player.FreeHand());
+                if (range > 10 && player.gravity > 0 && Controls.WallJumpPull(player))
+                {
+                    // 拉绳方向与矛的飞行方向至少差90度(反向拉扯)才提供位移
+                    Vector2 spearFlyDir = spear.firstChunk.vel.normalized;
+                    if (Vector2.Dot(playerToRopeDir, spearFlyDir) < 0f)
+                    {
+                        // 像普通拉取模式一样给玩家向量速度,矛按原版自然减速,
+                        // 速度降到阈值以下后矛静止,自然失去锚点能力
+                        player.circuitSwimResistance *= Mathf.InverseLerp(
+                            player.mainBodyChunk.vel.magnitude + player.bodyChunks[1].vel.magnitude,
+                            15f,
+                            9f
+                        );
+                        player.bodyChunks[1].vel += playerToRopeDir * 3f * PullForceFactor(range);
+                        FillRopeMomentum(player);
+                        return true;
+                    }
+                }
+                return false;
+            }
+
             // 如果插到墙上就拔下来然后变成自由状态
             if (
                 (spear.hasHorizontalBeamState && spear.mode == Weapon.Mode.StuckInWall)
@@ -324,7 +364,8 @@ namespace CowBoySlug.Mechanics.RopeSkill
                         15f,
                         9f
                     );
-                    player.bodyChunks[1].vel += playerToRopeDir * 3f;
+                    // 距离越近拉升越弱,收矛距离一半处为0
+                    player.bodyChunks[1].vel += playerToRopeDir * 3f * PullForceFactor(range);
                     FillRopeMomentum(player);
                     return true;
                 }
@@ -351,7 +392,9 @@ namespace CowBoySlug.Mechanics.RopeSkill
                     {
                         FillRopeMomentum(player);
                     }
-                    player.bodyChunks[1].vel += playerToRopeDir * pullForce * 20;
+                    // 距离越近拉升越弱,收矛距离一半处为0
+                    player.bodyChunks[1].vel +=
+                        playerToRopeDir * pullForce * 20 * PullForceFactor(range);
                     spear.stuckInObject.bodyChunks[spear.stuckInChunkIndex].vel +=
                         spearToEndPointDir
                         * Mathf.InverseLerp(
@@ -365,7 +408,8 @@ namespace CowBoySlug.Mechanics.RopeSkill
                 {
                     if (Controls.CreatureJumpPull(player))
                     {
-                        player.bodyChunks[1].vel += playerToRopeDir * 3f;
+                        // 距离越近拉升越弱,收矛距离一半处为0
+                        player.bodyChunks[1].vel += playerToRopeDir * 3f * PullForceFactor(range);
                         FillRopeMomentum(player);
                     }
                     spear.stuckInObject.bodyChunks[spear.stuckInChunkIndex].vel +=

@@ -182,7 +182,12 @@ namespace CowBoySlug.Mechanics.RopeSkill
             Vector2 playerToFristPoint = Custom.DirVec(umbilical.playerPos, umbilical.RopePos(1));
 
             umbilical.used = true;
-            if (UserData.WhenSpearOnSomeThing(spear, player, range, umbilical))
+            // 快速唤回(上+召回)只在收矛范围内优先于拉力模式;
+            // 超出收矛范围时拉力模式优先,进行中途不会被快速唤回打断
+            if (
+                !(flagFastBackAction && range <= UserData.PickUpRange)
+                && UserData.WhenSpearOnSomeThing(spear, player, range, umbilical)
+            )
                 return;
 
             // 防止吃东西 吐东西
@@ -203,7 +208,7 @@ namespace CowBoySlug.Mechanics.RopeSkill
             }
 
             // 如果玩家离矛很近而且可以直视矛而且按了拿取按键就拿起矛
-            if (range < 80 && flagSee && spear.mode != Weapon.Mode.Carried)
+            if (range < UserData.PickUpRange && flagSee && spear.mode != Weapon.Mode.Carried)
             {
                 if (player.FreeHand() != -1)
                 {
@@ -215,6 +220,12 @@ namespace CowBoySlug.Mechanics.RopeSkill
             // 回收矛模式
             else if (flagFastBackAction && range > 50)
             {
+                // 墙上的矛先走完正常拔矛流程(清横梁状态/卡墙数据),避免残留
+                if (spear.mode == Weapon.Mode.StuckInWall)
+                {
+                    PullSpearFromWall(spear);
+                }
+
                 // 拉绳子手部动作
                 player.HandData().Pulling(15, umbilical, player.FreeHand());
 

@@ -115,6 +115,10 @@ namespace CowBoySlug.Mechanics.RopeSkill
     public int brokenCount = 0;
     public int cantRotationCount = 0;
 
+    // 飞行锚点速度阈值:滑铲加速投出的矛(+15)飞行速度显著高于普通投掷,
+    // 飞行中速度高于此值的矛可以作为钩索锚点位移,钩索会消耗矛的飞行速度
+    public const float HookEnergySpeedThreshold = 28f;
+
     public void Update()
     {
       if (cantRotationCount > 0)
