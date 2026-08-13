@@ -53,11 +53,12 @@ namespace CowBoySlug.Mechanics.RopeSkill
         private static void BreakRopeUpdate(On.Player.orig_GrabUpdate orig, Player self, bool eu)
         {
             var player = self;
-            // 检查玩家是否是牛仔猫并且按下了抓取键
+            // 检查玩家是否是牛仔猫并且按下了特殊键
             if (
                 player.IsCowBoys()
                 && player.input[0].y < 0 // 长按下和拾取
-                && player.input[0].pckp
+                // && player.input[0].pckp
+                && player.input[0].spec
             )
             {
                 var rope = NiceRope(player); // 获取与玩家连接的绳子
@@ -127,7 +128,7 @@ namespace CowBoySlug.Mechanics.RopeSkill
         // 钩索惯性:拉绳子时充满,不拉时慢慢消散
         public int ropeMomentum = 0;
         // 钩索惯性的最大值
-        public const int RopeMomentumMax = 20;
+        public const int RopeMomentumMax = 5;
 
         public UserData(Player player)
         {
@@ -135,19 +136,26 @@ namespace CowBoySlug.Mechanics.RopeSkill
         }
 
         /// <summary>
-        /// 更新钩索惯性计数器:拉绳时充满,不拉时递减
+        /// 更新钩索惯性计数器:不拉时递减
         /// </summary>
         public static void UpdateRopeMomentum(Player player)
         {
             if (!modules.TryGetValue(player, out var module))
                 return;
-            if (player.HandData().pullCount > 0)
-            {
-                module.ropeMomentum = RopeMomentumMax;
-            }
-            else if (module.ropeMomentum > 0)
+            if (module.ropeMomentum > 0)
             {
                 module.ropeMomentum--;
+            }
+        }
+
+        /// <summary>
+        /// 玩家被绳子拉动时充满钩索惯性
+        /// </summary>
+        public static void FillRopeMomentum(Player player)
+        {
+            if (modules.TryGetValue(player, out var module))
+            {
+                module.ropeMomentum = RopeMomentumMax;
             }
         }
 
@@ -279,6 +287,7 @@ namespace CowBoySlug.Mechanics.RopeSkill
                         9f
                     );
                     player.bodyChunks[1].vel += playerToRopeDir * 3f;
+                    FillRopeMomentum(player);
                     return true;
                 }
 
@@ -294,15 +303,17 @@ namespace CowBoySlug.Mechanics.RopeSkill
                 player.HandData().Pulling(10, umbilical, player.FreeHand());
                 if (player.wantToPickUp > 0)
                 {
-                    // 玩家受到拉力
-                    player.bodyChunks[1].vel +=
-                        playerToRopeDir
-                        * Mathf.InverseLerp(
-                            1,
-                            10,
-                            (spear.stuckInObject.TotalMass / player.TotalMass)
-                        )
-                        * 20;
+                    // 玩家受到拉力(生物越重拉力越小)
+                    float pullForce = Mathf.InverseLerp(
+                        1,
+                        10,
+                        spear.stuckInObject.TotalMass / player.TotalMass
+                    );
+                    if (pullForce > 0)
+                    {
+                        FillRopeMomentum(player);
+                    }
+                    player.bodyChunks[1].vel += playerToRopeDir * pullForce * 20;
                     spear.stuckInObject.bodyChunks[spear.stuckInChunkIndex].vel +=
                         spearToEndPointDir
                         * Mathf.InverseLerp(
@@ -317,6 +328,7 @@ namespace CowBoySlug.Mechanics.RopeSkill
                     if (player.input[0].jmp)
                     {
                         player.bodyChunks[1].vel += playerToRopeDir * 3f;
+                        FillRopeMomentum(player);
                     }
                     spear.stuckInObject.bodyChunks[spear.stuckInChunkIndex].vel +=
                         spearToEndPointDir * 3f;

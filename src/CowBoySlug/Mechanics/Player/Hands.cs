@@ -39,7 +39,7 @@ namespace CowBoySlug.Mechanics
                     var playerToRopeDir = Custom.DirVec(rope.points[0, 0], rope.RopeShowPos(1));
 
                     self.hands[pullHand].reachingForObject = true;
-                    self.hands[pullHand].absoluteHuntPos = Custom.ClosestPointOnLine(rope.points[0, 0], rope.RopeShowPos(1), rope.points[0,0] + playerToRopeDir * handData.pullCount*4);
+                    self.hands[pullHand].absoluteHuntPos = Custom.ClosestPointOnLine(rope.points[0, 0], rope.RopeShowPos(1), rope.points[0,0] + playerToRopeDir * handData.pullCount*6);
 
 
                     int min = 0;

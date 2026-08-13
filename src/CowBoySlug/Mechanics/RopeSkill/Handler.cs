@@ -97,7 +97,7 @@ namespace CowBoySlug.Mechanics.RopeSkill
             spear.rope().brokenCount += 10;
 
             // 播放声音和生成火花效果
-            if (spear.rope().brokenCount > 30)
+            if (spear.rope().brokenCount > 60)
             {
                 player.room.PlaySound(
                     SoundID.Miros_Beak_Snap_Hit_Other,
@@ -199,6 +199,7 @@ namespace CowBoySlug.Mechanics.RopeSkill
             if (spear.mode != Weapon.Mode.Carried && player.gravity <= 0)
             {
                 player.mainBodyChunk.vel -= spearToEndPointDir / 2;
+                UserData.FillRopeMomentum(player);
             }
 
             // 如果玩家离矛很近而且可以直视矛而且按了拿取按键就拿起矛
