@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using UnityEngine;
@@ -157,6 +158,44 @@ namespace CowBoySlug.Mechanics.RopeSkill
             else
             {
                 UnityEngine.Debug.Log("FrictionIL.frictionhook5: 未能定位到贴地移动逼近");
+            }
+
+            // base.bodyChunks[1].pos = feetStuckPos.Value;
+            // 站立时脚被每帧硬钉回地面,向上的拉力被抹掉
+            // 惯性时跳过整个赋值序列(脚的位置保持不变=身体的位置),否则原样执行
+            // 用独立的 c2 游标从头定位,不受上面定位的游标位置影响
+            // 完整 7 条序列在 DLL 中唯一(已验证命中偏移 719)
+            var c2 = new ILCursor(il);
+            var feetStuckPosField = typeof(Player).GetField(
+                "feetStuckPos",
+                BindingFlags.NonPublic | BindingFlags.Instance
+            );
+            if (c2.TryGotoNext(MoveType.Before,
+                i => i.MatchLdarg(0),
+                i => i.MatchCall<PhysicalObject>("get_bodyChunks"),
+                i => i.MatchLdcI4(1),
+                i => i.MatchLdelemRef(),
+                i => i.MatchLdarg(0),
+                i => i.MatchLdflda(feetStuckPosField),
+                i => i.Match(OpCodes.Call)
+                ))
+            {
+                // cursor 在序列第一条之前,栈: [](序列压 2 弹 2,净空)
+                var keep = c2.DefineLabel();
+                var skip = c2.DefineLabel();
+                c2.Emit(OpCodes.Ldarg, 0);
+                c2.Emit(OpCodes.Call, typeof(UserData).GetMethod(nameof(UserData.OwnerHasRopeMomentum)));
+                c2.Emit(OpCodes.Brfalse, keep);
+                // 钩索惯性:跳过整个赋值序列,pos 保持不变(=身体的位置)
+                c2.Emit(OpCodes.Br, skip);
+                c2.MarkLabel(keep);
+                // 非惯性:原序列照常执行(pos 字段声明在 BodyChunk 上,类型是 Vector2)
+                c2.GotoNext(MoveType.After, i => i.MatchStfld<BodyChunk>("pos"));
+                c2.MarkLabel(skip);
+            }
+            else
+            {
+                UnityEngine.Debug.Log("FrictionIL.frictionhook5: 未能定位到脚钉复位");
             }
         }
     }
