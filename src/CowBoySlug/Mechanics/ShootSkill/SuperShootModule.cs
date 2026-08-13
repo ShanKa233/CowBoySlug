@@ -1,4 +1,5 @@
-﻿using CowBoySlug;
+﻿using Compatibility;
+using CowBoySlug;
 using RWCustom;
 using System;
 using System.Collections.Generic;
@@ -151,7 +152,8 @@ namespace CowBoySlug.Mechanics.ShootSkill
         private static bool Rock_HitSomething(On.Rock.orig_HitSomething orig, Rock self, SharedPhysics.CollisionResult result, bool eu)
         {
             bool origFlag = orig.Invoke(self, result, eu);
-            if (origFlag && self.IsSuperRock(out SuperShootModule superRock))
+            // 碰撞双端都会触发,伤害只由本机模拟的石头结算,避免双倍伤害
+            if (origFlag && self.IsLocal() && self.IsSuperRock(out SuperShootModule superRock))
             {
                 if (result.obj is Creature)
 
@@ -239,6 +241,9 @@ namespace CowBoySlug.Mechanics.ShootSkill
             //获取扔的石头
             Rock rock = self.grasps[grasp].grabbed as Rock;
             orig.Invoke(self, grasp, eu);
+
+            //远端玩家对象也会触发扔石头(输入同步),超级射击只能由本机模拟的玩家触发
+            if (!self.IsLocal()) return;
 
             //检查是否有资格使用超级射击
             bool canSuperShoot = rock != null && CowBoySLug.Plugin.RockShot.TryGet(self, out bool flag) && flag;

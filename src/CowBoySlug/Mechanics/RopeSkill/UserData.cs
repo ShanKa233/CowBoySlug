@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Compatibility;
 using RWCustom;
 using SlugBase.Features;
 using UnityEngine;
@@ -47,6 +48,9 @@ namespace CowBoySlug.Mechanics.RopeSkill
             // 更新钩索惯性计数器
             UpdateRopeMomentum(self);
             orig.Invoke(self, eu);
+            // 远端玩家对象由 Meadow 状态驱动,惯性越障只在本机模拟的玩家上执行
+            if (!self.IsLocal())
+                return;
             // 惯性期间贴墙时抬升,越过一格高的障碍
             StepOverObstacle(self);
         }
@@ -98,8 +102,8 @@ namespace CowBoySlug.Mechanics.RopeSkill
         private static void BreakRopeUpdate(On.Player.orig_GrabUpdate orig, Player self, bool eu)
         {
             var player = self;
-            // 检查玩家是否是牛仔猫并且按下了断绳组合
-            if (player.IsCowBoys() && RopeConfig.Controls.BreakRope(player))
+            // 检查玩家是否是牛仔猫并且按下了断绳组合(远端玩家对象输入是同步的,只有本机模拟的玩家才执行)
+            if (player.IsCowBoys() && player.IsLocal() && RopeConfig.Controls.BreakRope(player))
             {
                 var rope = Handler.NiceRope(player); // 获取与玩家连接的绳子
 
@@ -121,6 +125,10 @@ namespace CowBoySlug.Mechanics.RopeSkill
             // 调用原始的扔矛方法
             orig.Invoke(self, spear);
 
+            // 远端玩家对象也会触发扔矛(输入同步),但绳矛只能由本机模拟的玩家创建
+            if (!self.IsLocal())
+                return;
+
             // 检查玩家是否有 RopeMaster 模块
             if (!modules.TryGetValue(self, out var mod))
                 return;
@@ -132,6 +140,10 @@ namespace CowBoySlug.Mechanics.RopeSkill
         {
             // 调用原始的更新 MSC 方法
             orig.Invoke(self);
+
+            // 远端玩家对象的输入是同步的,召回/钓竿只能由本机模拟的玩家执行,否则双端重复操作矛
+            if (!self.IsLocal())
+                return;
 
             // 检查玩家是否有 RopeMaster 模块
             if (!modules.TryGetValue(self, out var module))

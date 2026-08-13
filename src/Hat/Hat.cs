@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Compatibility;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using UnityEngine;
@@ -48,6 +49,38 @@ namespace CowBoySlug
         public static bool TryGetHatSticks(Player player, out List<AbstractHatWearStick> sticks)
         {
             return modules.TryGetValue(player, out sticks);
+        }
+
+        /// <summary>
+        /// 佩戴帽子的本地执行:设置佩戴者、建立 stick、加入玩家帽子列表。
+        /// 所有者端由碰撞触发,远端由 Meadow 状态同步(HatSyncData)重建。
+        /// </summary>
+        public static void WearHatLocal(Player player, CowBoyHat hat)
+        {
+            if (hat.Weared)
+                return;
+
+            hat.wearers = player;
+            hat.myStick = new AbstractHatWearStick(
+                hat.abstractPhysicalObject,
+                player.abstractPhysicalObject as AbstractCreature
+            );
+            AddHat(player, hat.myStick);
+            player.GetCowBoyData().StackHat(hat);
+        }
+
+        /// <summary>
+        /// 摘下帽子的本地执行:拆除 stick、移出玩家帽子列表、清空佩戴者。
+        /// </summary>
+        public static void UnwearHatLocal(Player player, CowBoyHat hat)
+        {
+            if (hat.myStick != null)
+            {
+                RemoveHat(player, hat.myStick);
+                hat.myStick = null;
+            }
+            player.GetCowBoyData().UnstackHat(hat);
+            hat.wearers = null;
         }
 
         public static void Hook()
@@ -137,9 +170,9 @@ namespace CowBoySlug
             bool eu
         )
         {
-            // 如果扔的是帽子就改变一下帽子的飞行方向
+            // 如果扔的是帽子就改变一下帽子的飞行方向(远端玩家对象的扔帽是 Meadow 驱动的,飞行方向由状态同步覆盖)
             CowBoyHat hat = self.grasps[grasp].grabbed as CowBoyHat;
-            if (hat != null)
+            if (hat != null && self.IsLocal())
             {
                 if (self.input[0].x == 0 && self.input[0].y > 0)
                 {

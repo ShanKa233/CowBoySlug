@@ -1,4 +1,5 @@
 ﻿
+using Compatibility;
 using CowBoySLug;
 using Mono.Cecil;
 using System;
@@ -35,6 +36,11 @@ namespace CowBoySlug
         private static void SewLizard_Violence(On.Lizard.orig_Violence orig, Lizard self, BodyChunk source, Vector2? directionAndMomentum, BodyChunk hitChunk, PhysicalObject.Appendage.Pos onAppendagePos, Creature.DamageType type, float damage, float stunBonus)
         {
             orig.Invoke(self, source, directionAndMomentum,hitChunk,onAppendagePos,type,damage,stunBonus);
+            // 死亡事件双端都会触发,只有本机模拟的生物才能生成帽子,否则双端各生成一个帽子
+            if (!self.IsLocal())
+            {
+                return;
+            }
             if (!self.State.dead||hitChunk==self.firstChunk|| source == null)
             {
                 //确认生物死了没
@@ -59,6 +65,11 @@ namespace CowBoySlug
         private static void SewCreature_Violence(On.Creature.orig_Violence orig, Creature self, BodyChunk source, Vector2? directionAndMomentum, BodyChunk hitChunk, PhysicalObject.Appendage.Pos hitAppendage, Creature.DamageType type, float damage, float stunBonus)
         {
             orig.Invoke(self, source, directionAndMomentum, hitChunk, hitAppendage, type, damage, stunBonus);
+            // 死亡事件双端都会触发,只有本机模拟的生物才能生成帽子,否则双端各生成一个帽子
+            if (!self.IsLocal())
+            {
+                return;
+            }
             if (!self.State.dead||source==null)
             {
                 //确认生物死了没

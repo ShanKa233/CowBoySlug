@@ -11,6 +11,8 @@ using Fisobs.Core;
 using Fisobs.Items;
 using Fisobs.Properties;
 using Fisobs.Sandbox;
+using Compatibility;
+using Compatibility.Meadow;
 using IL.MoreSlugcats;
 using RWCustom;
 using UnityEngine;
@@ -300,6 +302,11 @@ namespace CowBoySlug
             buoyancy = 0.999f; // 浮力
             GoThroughFloors = true; // 穿过地板
             canBeHitByWeapons = true; // 可以被武器击中
+
+            // 进入 Meadow 的同步流:佩戴状态/姿态随实体状态同步。
+            // 执行期检查是必需的:门面方法体会触发 RainMeadow 程序集解析,单机不能调用
+            if (ModCompat_Helpers.RainMeadow_IsOnline)
+                MeadowCompat.TryAttachHat(this);
         }
 
         // 让被打了之后帽子掉落
@@ -319,7 +326,7 @@ namespace CowBoySlug
 
         public void WearersUpdate()
         {
-            // 如果帽子有佩戴者而且佩戴者不存在就不再记录佩戴者
+            // 如果帽子有佩戴者而且佩戴者不存在就不再记录佩戴者(所有端都需要,防止引用死对象)
             if (wearers != null && wearers.slatedForDeletetion)
             {
                 if (wearers is Player player)
@@ -335,6 +342,23 @@ namespace CowBoySlug
                 wearers = null;
             }
 
+            // 摘下检测与佩戴物理只在帽子主人端执行;
+            // 远端帽子的佩戴关系由 HatSyncData 状态同步驱动,位置由 Meadow 状态覆盖
+            if (this.IsLocal())
+            {
+                UpdateWornLocally();
+            }
+
+            // 碰撞开关所有端一致:佩戴中不与其他物体碰撞
+            this.CollideWithObjects = !Weared;
+        }
+
+        /// <summary>
+        /// 帽子主人端专属:佩戴时跟随佩戴者、检测摘下动作(下+拾取或距离过远)。
+        /// 佩戴者输入由 Meadow 同步(本地玩家无延迟),摘下后由 HatSyncData 同步给远端。
+        /// </summary>
+        private void UpdateWornLocally()
+        {
             // 如果佩戴者正在进入管道或已经在管道中，不干涉帽子的位置
             // 让游戏的 ShortcutHandler 系统通过 AbstractObjectStick 自动处理帽子的移动
             if (Weared && wearers is Player playerInShortcut)
@@ -346,15 +370,17 @@ namespace CowBoySlug
                 }
             }
 
-            if (Weared && wearers is Player)
+            if (Weared && wearers is Player player)
             {
-                var player = (Player)wearers;
                 bool flag2 =
                     player.wantToPickUp > 0
                     && player.input[0].y < 0
                     && player.grasps[0] == null
                     && player.grasps[1] == null;
-                if (flag2)
+                bool tooFar =
+                    Vector2.Distance(wearers.firstChunk.pos, firstChunk.pos) > 300;
+
+                if (flag2 || tooFar)
                 {
                     var exPlayer = player.GetCowBoyData();
 
@@ -377,56 +403,7 @@ namespace CowBoySlug
                         // 如果是最后一个帽子，则取下
                         exPlayer.hatRemovedThisFrame = true;
                         room.PlaySound(SoundID.Big_Spider_Spit, firstChunk);
-
-                        if (myStick != null)
-                        {
-                            Hat.RemoveHat(player, myStick);
-                            myStick = null;
-                        }
-
-                        // 从玩家的帽子列表中移除
-                        exPlayer.UnstackHat(this);
-
-                        wearers = null; // 清空佩戴者
-                    }
-                }
-            }
-            if (Weared && Vector2.Distance(wearers.firstChunk.pos, firstChunk.pos) > 300)
-            {
-                if (wearers is Player player)
-                {
-                    var exPlayer = player.GetCowBoyData();
-
-                    // 防止同一帧内级联移除多个帽子
-                    if (exPlayer.hatRemovedThisFrame)
-                        return;
-
-                    // 只取下列表中最后一个帽子（即索引最大的帽子）
-                    if (exPlayer.hatList.Count > 0)
-                    {
-                        // 获取最后一个帽子
-                        CowBoyHat lastHat = exPlayer.hatList[exPlayer.hatList.Count - 1];
-
-                        // 如果当前帽子不是最后一个帽子，则不取下
-                        if (lastHat != this)
-                        {
-                            return;
-                        }
-
-                        // 如果是最后一个帽子，则取下
-                        exPlayer.hatRemovedThisFrame = true;
-                        room.PlaySound(SoundID.Big_Spider_Spit, firstChunk);
-
-                        if (myStick != null)
-                        {
-                            Hat.RemoveHat(player, myStick);
-                            myStick = null;
-                        }
-
-                        // 从玩家的帽子列表中移除
-                        exPlayer.UnstackHat(this);
-
-                        wearers = null; // 清空佩戴者
+                        Hat.UnwearHatLocal(player, this);
                     }
                 }
             }
@@ -554,33 +531,40 @@ namespace CowBoySlug
 
         public void WearHat(PhysicalObject wearer)
         {
-            if (!Weared)
+            // 碰撞只在帽子主人端触发权威佩戴;远端由 HatSyncData 状态同步重建佩戴关系
+            if (Weared || !this.IsLocal())
+                return;
+
+            room.PlaySound(SoundID.Big_Spider_Spit, firstChunk);
+            wearers = wearer; // 设置佩戴者
+            if (wearer is Player player)
             {
-                room.PlaySound(SoundID.Big_Spider_Spit, firstChunk);
-                wearers = wearer; // 设置佩戴者
-                if (wearer is Player player)
-                {
-                    // 为这个帽子创建独立的 AbstractHatWearStick
-                    // 不再替换旧 stick，而是累加——这样所有帽子的 stick 都在 player.stuckObjects 中
-                    // GetAllConnectedObjects() 才能找到所有帽子，管道过渡时才会正确移除它们
-                    myStick = new AbstractHatWearStick(
-                        this.abstractPhysicalObject,
-                        player.abstractPhysicalObject as AbstractCreature
-                    );
-                    Hat.AddHat(player, myStick);
+                // 为这个帽子创建独立的 AbstractHatWearStick
+                // 不再替换旧 stick，而是累加——这样所有帽子的 stick 都在 player.stuckObjects 中
+                // GetAllConnectedObjects() 才能找到所有帽子，管道过渡时才会正确移除它们
+                myStick = new AbstractHatWearStick(
+                    this.abstractPhysicalObject,
+                    player.abstractPhysicalObject as AbstractCreature
+                );
+                Hat.AddHat(player, myStick);
 
-                    // 将帽子添加到玩家的帽子列表中
-                    var exPlayer = player.GetCowBoyData();
-                    exPlayer.StackHat(this);
-
-                 
-                }
+                // 将帽子添加到玩家的帽子列表中
+                var exPlayer = player.GetCowBoyData();
+                exPlayer.StackHat(this);
             }
+
+            // 确保佩戴状态进入 Meadow 的同步流(新玩家加入时自动获得)
+            if (ModCompat_Helpers.RainMeadow_IsOnline)
+                MeadowCompat.TryAttachHat(this);
         }
 
         public override void PlaceInRoom(Room placeRoom)
         {
             base.PlaceInRoom(placeRoom);
+
+            // 换房间/生成时兜底:确保帽子在 Meadow 的同步流里(幂等)
+            if (ModCompat_Helpers.RainMeadow_IsOnline)
+                MeadowCompat.TryAttachHat(this);
 
             Vector2 center = placeRoom.MiddleOfTile(abstractPhysicalObject.pos);
 

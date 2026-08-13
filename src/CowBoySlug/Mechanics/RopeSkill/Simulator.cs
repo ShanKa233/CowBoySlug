@@ -59,6 +59,12 @@ namespace CowBoySlug.Mechanics.RopeSkill
         public float loose = 0; //松紧度0是完全没有弹力1是百分之五十左右的弹力
         public bool used = false; //是否处在收紧中
 
+        /// <summary>
+        /// 远端视觉同步:绳子收紧状态由权威端(RopeSyncData 状态流)驱动,
+        /// 有值时 Update 不再用本地模拟的结果覆盖 used。
+        /// </summary>
+        public bool? syncedUsed;
+
         public bool limited = false; //线开始消散
 
         private Color blackColor;
@@ -356,7 +362,8 @@ namespace CowBoySlug.Mechanics.RopeSkill
             }
 
             loose = Custom.LerpAndTick(loose, (used) ? 1f : 0.2f, 0.07f, 0.1f / 3f);
-            used = false;
+            // 远端绳子:used 由权威状态驱动;本地绳子保持"每帧检测收紧"的语义
+            used = syncedUsed ?? false;
 
             if (brocked)
                 Destroy();

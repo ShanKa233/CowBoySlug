@@ -55,7 +55,9 @@ namespace Compatibility.Meadow
 
         /// <summary>
         /// 处理召回矛的RPC方法
-        /// 当玩家召回矛时，通过网络同步矛的行为
+        /// 远端不重放玩家对象的召回逻辑(拔矛/捡矛/施力由 Meadow 状态同步权威驱动,
+        /// 双端执行会与权威状态冲突),只让绳子进入收紧视觉状态;
+        /// 收紧状态随后由 RopeSyncData 状态流持续接管。
         /// </summary>
         /// <param name="event">RPC事件参数</param>
         /// <param name="playerOpo">玩家的在线物理对象</param>
@@ -67,8 +69,13 @@ namespace Compatibility.Meadow
                 return;
             }
 
-            // 调用本地方法处理召回矛的逻辑
-            Handler.CallBackSpear_Local(player);
+            var umbilical = Handler.NiceRope(player);
+            if (umbilical != null)
+            {
+                // 本地模拟路径(单机)与远端视觉路径(联机)都收紧
+                umbilical.used = true;
+                umbilical.syncedUsed = true;
+            }
         }
 
         /// <summary>

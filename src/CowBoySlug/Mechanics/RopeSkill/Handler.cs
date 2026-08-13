@@ -25,6 +25,8 @@ namespace CowBoySlug.Mechanics.RopeSkill
             SpawnRope_Local(player, spear, start, end);
             if (ModCompat_Helpers.RainMeadow_IsOnline)
             {
+                // 绳矛状态进入 Meadow 同步流(新加入玩家自动补建)
+                MeadowCompat.TryAttachRope(spear);
                 MeadowCompat.CreateRopeSpear(player, spear, start, end);
             }
         }
@@ -49,6 +51,8 @@ namespace CowBoySlug.Mechanics.RopeSkill
             // 如果在线模式，调用兼容方法
             if (ModCompat_Helpers.RainMeadow_IsOnline)
             {
+                // 绳矛状态进入 Meadow 同步流(存在性/归属/收紧状态,新加入玩家自动补建)
+                MeadowCompat.TryAttachRope(spear);
                 MeadowCompat.ThrowSpearWithRope(player, spear, ropeColor);
             }
         }
@@ -157,10 +161,9 @@ namespace CowBoySlug.Mechanics.RopeSkill
             // 调用本地方法
             CallBackSpear_Local(player);
 
-            // TODO: 修复矛收回时网络不同步导致的小故障
-            // 问题描述：矛插着的时候回收,其他端口嗯用户会残余一个看不见的矛在地上
-
             // 如果在线模式，调用兼容方法
+            // 注:原先"矛插着回收时其他端残余隐形矛"的故障,根源是远端玩家对象(输入同步)
+            // 也执行了本地召回逻辑;现在钩子已按 IsLocal 门控,RPC 远端也只做视觉反馈
             if (ModCompat_Helpers.RainMeadow_IsOnline)
             {
                 MeadowCompat.CallBackSpear(player);
