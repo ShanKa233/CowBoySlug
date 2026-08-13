@@ -167,7 +167,7 @@ namespace CowBoySlug.Mechanics.RopeSkill
                 return;
 
             // 是否做出快速唤回动作
-            bool flagFastBackAction = player.input[0].y > 0;
+            bool flagFastBackAction = UserData.Controls.FastCallBack(player);
             // 检查能不能直视到
             bool flagSee = player.room.VisualContact(spear.firstChunk.pos, player.firstChunk.pos);
             // 检查距离
@@ -231,17 +231,9 @@ namespace CowBoySlug.Mechanics.RopeSkill
                 }
             }
             // 攻击模式
-            else if (player.input[1].pckp && !player.input[0].pckp && range > 35)
+            else if (UserData.Controls.AttackTrigger(player) && range > 35)
             {
-                int pckpTime = 0;
-                for (int i = 0; i < 7; i++)
-                {
-                    if (player.input[i].pckp)
-                    {
-                        pckpTime++;
-                    }
-                }
-                if (pckpTime > 5)
+                if (UserData.Controls.MashCancel(player))
                 {
                     return;
                 }
@@ -261,7 +253,7 @@ namespace CowBoySlug.Mechanics.RopeSkill
                 spear.firstChunk.vel += spear.throwDir.ToVector2() * 50 * spear.spearDamageBonus;
             }
             // 慢速模式
-            else if (player.input[0].pckp)
+            else if (UserData.Controls.SlowPull(player))
             {
                 spear.rope().cantRotationCount += 3;
                 // 控制手和绳子

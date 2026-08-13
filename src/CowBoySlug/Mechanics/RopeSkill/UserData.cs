@@ -48,18 +48,59 @@ namespace CowBoySlug.Mechanics.RopeSkill
             // 更新钩索惯性计数器
             UpdateRopeMomentum(self);
             orig.Invoke(self, eu);
+            // 惯性期间贴墙时抬升,越过一格高的障碍
+            StepOverObstacle(self);
+        }
+
+        /// <summary>
+        /// 钩索惯性期间,被绳子拖着撞上一格台阶时,朝绳子的目标点方向注入动量帮助越过障碍
+        /// 模仿原版滑铲(bellySlide)每帧正弦冲量的构造(Player.cs 8350)
+        /// </summary>
+        private static void StepOverObstacle(Player player)
+        {
+            if (!modules.TryGetValue(player, out var module) || module.ropeMomentum <= 0)
+                return;
+            var rope = player.HandData().pullinggRope;
+            if (rope == null || rope.player != player)
+                return;
+
+            // 绳子下一段的方向(拉绳子位移的目标点,与 WhenSpearOnSomeThing 的 playerToRopeDir 一致)
+            if (Custom.DistLess(player.mainBodyChunk.pos, rope.RopeShowPos(1), 0.5f))
+                return;
+            Vector2 pullDir = Custom.DirVec(player.mainBodyChunk.pos, rope.RopeShowPos(1));
+            // 玩家沿目标方向的速度投影(趋近0说明被障碍挡住了)
+            float speedAlongPull = Vector2.Dot(player.mainBodyChunk.vel, pullDir);
+
+            for (int i = 0; i < 2; i++)
+            {
+                var chunk = player.bodyChunks[i];
+                if (chunk.ContactPoint.x == 0)
+                    continue;
+                // 只有绳子的目标点在墙后(被拖着撞墙,而不是自己走向墙)才越障
+                if (pullDir.x * chunk.ContactPoint.x < 0.2f)
+                    continue;
+                // 贴着的墙那一格:实心且上方一格是空气(一格高的台阶)
+                var wallTile =
+                    player.room.GetTilePosition(chunk.pos) + new IntVector2(chunk.ContactPoint.x, 0);
+                if (
+                    !player.room.GetTile(wallTile).Solid
+                    || player.room.GetTile(wallTile + new IntVector2(0, 1)).Solid
+                )
+                    continue;
+                // 身体块还没越过墙顶且移动受阻时,朝目标点方向注入动量+向上抬升
+                float wallTop = (wallTile.y + 1) * 20f;
+                if (chunk.pos.y < wallTop + chunk.rad && speedAlongPull < 2f)
+                {
+                    chunk.vel += pullDir * 2f + new Vector2(0f, 3f);
+                }
+            }
         }
 
         private static void BreakRopeUpdate(On.Player.orig_GrabUpdate orig, Player self, bool eu)
         {
             var player = self;
-            // 检查玩家是否是牛仔猫并且按下了特殊键
-            if (
-                player.IsCowBoys()
-                && player.input[0].y < 0 // 长按下和拾取
-                // && player.input[0].pckp
-                && player.input[0].spec
-            )
+            // 检查玩家是否是牛仔猫并且按下了断绳组合
+            if (player.IsCowBoys() && Controls.BreakRope(player))
             {
                 var rope = NiceRope(player); // 获取与玩家连接的绳子
 
@@ -130,6 +171,11 @@ namespace CowBoySlug.Mechanics.RopeSkill
         // 钩索惯性的最大值
         public const int RopeMomentumMax = 5;
 
+        /// <summary>
+        /// 当前生效的按键组合(调试时改这里切换,如 new RopeControlsV2())
+        /// </summary>
+        public static RopeControls Controls = new RopeControlsV1();
+
         public UserData(Player player)
         {
             this.player = player;
@@ -173,10 +219,10 @@ namespace CowBoySlug.Mechanics.RopeSkill
         // 检查玩家是否不能召回矛
         public static bool CanNotCall(Player player)
         {
-            bool flag = (player.input[0].pckp || player.input[1].pckp); // 如果玩家在两帧内按下过拿取键
-            bool flag2 = player.eatMeat <= 1 && player.eatExternalFoodSourceCounter <= 1; // 玩家没有在吃东西
-            bool flag3 = player.input[0].y >= 0 && player.FreeHand() != -1; // 玩家没有按下而且有一只空手
-            return !(flag && flag2 && flag3);
+            bool canCall = Controls.CallBackTrigger(player); // 按键组合条件
+            bool notEating = player.eatMeat <= 1 && player.eatExternalFoodSourceCounter <= 1; // 玩家没有在吃东西
+            bool handFree = player.FreeHand() != -1; // 有一只空手
+            return !(canCall && notEating && handFree);
         }
 
         // 获取与玩家连接的绳子
@@ -270,16 +316,8 @@ namespace CowBoySlug.Mechanics.RopeSkill
             )
             {
                 // 爬墙
-                int canGrab = 0;
                 player.HandData().Pulling(10, umbilical, player.FreeHand());
-                for (int i = 0; i < 10; i++)
-                {
-                    if (player.input[i].jmp || player.input[0].jmp)
-                    {
-                        canGrab++;
-                    }
-                }
-                if (range > 10 && player.gravity > 0 && canGrab > 2)
+                if (range > 10 && player.gravity > 0 && Controls.WallJumpPull(player))
                 {
                     player.circuitSwimResistance *= Mathf.InverseLerp(
                         player.mainBodyChunk.vel.magnitude + player.bodyChunks[1].vel.magnitude,
@@ -301,7 +339,7 @@ namespace CowBoySlug.Mechanics.RopeSkill
             else if (spear.mode == Spear.Mode.StuckInCreature)
             {
                 player.HandData().Pulling(10, umbilical, player.FreeHand());
-                if (player.wantToPickUp > 0)
+                if (Controls.DragCreature(player))
                 {
                     // 玩家受到拉力(生物越重拉力越小)
                     float pullForce = Mathf.InverseLerp(
@@ -325,7 +363,7 @@ namespace CowBoySlug.Mechanics.RopeSkill
                 }
                 else if (!Custom.DistLess(player.mainBodyChunk.pos, spear.stuckInChunk.pos, 60))
                 {
-                    if (player.input[0].jmp)
+                    if (Controls.CreatureJumpPull(player))
                     {
                         player.bodyChunks[1].vel += playerToRopeDir * 3f;
                         FillRopeMomentum(player);
