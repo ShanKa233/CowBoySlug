@@ -50,6 +50,12 @@ namespace CowBoySlug.Mechanics.RopeSkill
             //    vel.x += (num16 - vel.x) * Mathf.Pow(surfaceFriction, 1.5f);
             //    改法:惯性时把逼近系数改为0(不逼近),绳子给的速度不被吃掉
             IL.Player.MovementUpdate += frictionhook5;
+
+            // 6. 惯性时 TerrainImpact 不撞晕不撞死
+            //    原版位置:Player.TerrainImpact,Player.cs 6462-6584 行
+            //    speed > num → Die(),speed > num2 → Stun()
+            //    改法:惯性时把 speed 参数归零,所有伤害/眩晕/死亡分支都不触发,只剩轻碰声
+            IL.Player.TerrainImpact += frictionhook6;
         }
 
         private static void frictionhook1(ILContext il)
@@ -197,6 +203,64 @@ namespace CowBoySlug.Mechanics.RopeSkill
             {
                 UnityEngine.Debug.Log("FrictionIL.frictionhook5: 未能定位到脚钉复位");
             }
+
+            //比较意义不明的部分
+
+            // // 惯性时跳过 WallClimb 接管(Player.cs 12147),防止贴墙爬墙模式干扰被拉越障
+            // // 注意:赋值序列是 ldarg.0 → ldsfld → stfld 三条,ldarg.0 也在序列内
+            // if (c2.TryGotoNext(MoveType.Before,
+            //     i => i.MatchLdarg(0),
+            //     i => i.MatchLdsfld<Player.BodyModeIndex>("WallClimb"),
+            //     i => i.MatchStfld<Player>("bodyMode")
+            //     ))
+            // {
+            //     // 栈: [](ldsfld 压1 stfld 弹1,净空)
+            //     var skipWallClimb = c2.DefineLabel();
+            //     c2.Emit(OpCodes.Ldarg, 0);
+            //     c2.Emit(OpCodes.Call, typeof(UserData).GetMethod(nameof(UserData.OwnerHasRopeMomentum)));
+            //     c2.Emit(OpCodes.Brtrue, skipWallClimb);
+            //     c2.GotoNext(MoveType.After, i => i.MatchStfld<Player>("bodyMode"));
+            //     c2.MarkLabel(skipWallClimb);
+            // }
+            // else
+            // {
+            //     UnityEngine.Debug.Log("FrictionIL.frictionhook5: 未能定位到 WallClimb 接管");
+            // }
+
+            // // 惯性时跳过 LedgeGrab 吸边触发(Player.cs 12363-12366),防止被吸在台阶边缘
+            // // 注意:赋值序列是 ldarg.0 → ldsfld → stfld 三条,ldarg.0 也在序列内
+            // if (c2.TryGotoNext(MoveType.Before,
+            //     i => i.MatchLdarg(0),
+            //     i => i.MatchLdsfld<Player.AnimationIndex>("LedgeGrab"),
+            //     i => i.MatchStfld<Player>("animation")
+            //     ))
+            // {
+            //     // 栈: [](净空)
+            //     var skipLedgeGrab = c2.DefineLabel();
+            //     c2.Emit(OpCodes.Ldarg, 0);
+            //     c2.Emit(OpCodes.Call, typeof(UserData).GetMethod(nameof(UserData.OwnerHasRopeMomentum)));
+            //     c2.Emit(OpCodes.Brtrue, skipLedgeGrab);
+            //     c2.GotoNext(MoveType.After, i => i.MatchStfld<Player>("animation"));
+            //     c2.MarkLabel(skipLedgeGrab);
+            // }
+            // else
+            // {
+            //     UnityEngine.Debug.Log("FrictionIL.frictionhook5: 未能定位到 LedgeGrab 触发");
+            // }
+        }
+
+        private static void frictionhook6(ILContext il)
+        {
+            var c = new ILCursor(il);
+            // 方法开头:惯性时把 speed 参数归零,避免 TerrainImpact 撞晕/撞死
+            // 参数索引(实例方法):1=chunk, 2=direction, 3=speed, 4=firstContact
+            var keep = c.DefineLabel();
+            c.Emit(OpCodes.Ldarg, 0);
+            c.Emit(OpCodes.Call, typeof(UserData).GetMethod(nameof(UserData.OwnerHasRopeMomentum)));
+            c.Emit(OpCodes.Brfalse, keep);
+            c.Emit(OpCodes.Ldc_R4, 0f);
+            c.Emit(OpCodes.Starg, 3); // speed = 0
+            c.MarkLabel(keep);
         }
     }
 }
