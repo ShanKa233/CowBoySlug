@@ -6,11 +6,16 @@ using UnityEngine;
 namespace CowBoySlug.Mechanics.RopeSkill
 {
     /// <summary>
-    /// 钩索惯性期间,用 ILHook 让原版的地面/表面摩擦从源头不生效
+    /// 钩索惯性期间,用 ILHook 让原版的地面/表面摩擦从源头削弱
     /// 判定条件:UserData.OwnerHasRopeMomentum(owner)
     /// </summary>
     public static class FrictionIL
     {
+        /// <summary>
+        /// 惯性模式下保留的原版摩擦比例(1=摩擦不变,0=完全无摩擦)
+        /// </summary>
+        public const float FrictionKeepRatio = 0.3f;
+
         public static void Hook()
         {
             // 1. 斜坡横向摩擦
@@ -66,9 +71,12 @@ namespace CowBoySlug.Mechanics.RopeSkill
                 {
                     // 栈: [..., &vel, &vel.x, 乘数]
                     c.Emit(OpCodes.Ldarg, 0); // owner
-                    // 有钩索惯性时乘数改为1(不刹车),否则按原值
+                    // 有钩索惯性时按比例保留刹车,否则按原值
                     c.EmitDelegate<Func<float, PhysicalObject, float>>(
-                        (friction, owner) => UserData.OwnerHasRopeMomentum(owner) ? 1f : friction
+                        (friction, owner) =>
+                            UserData.OwnerHasRopeMomentum(owner)
+                                ? 1f - (1f - friction) * FrictionKeepRatio
+                                : friction
                     );
                 }
                 else
@@ -102,9 +110,12 @@ namespace CowBoySlug.Mechanics.RopeSkill
             {
                 // 栈: [..., dot, 1 - sf * 2]
                 c.Emit(OpCodes.Ldarg, 0); // owner
-                // 有钩索惯性时 Clamp01 的参数改为0(系数为0,不刹车),否则按原值
+                // 有钩索惯性时按比例保留刹车,否则按原值
                 c.EmitDelegate<Func<float, PhysicalObject, float>>(
-                    (friction, owner) => UserData.OwnerHasRopeMomentum(owner) ? 0f : friction
+                    (friction, owner) =>
+                        UserData.OwnerHasRopeMomentum(owner)
+                            ? friction * FrictionKeepRatio
+                            : friction
                 );
             }
             else
@@ -137,9 +148,10 @@ namespace CowBoySlug.Mechanics.RopeSkill
             {
                 // 栈: [..., 逼近系数]
                 c.Emit(OpCodes.Ldarg, 0); // this
-                // 有钩索惯性时逼近系数改为0(不逼近),否则按原值
+                // 有钩索惯性时按比例保留逼近,否则按原值
                 c.EmitDelegate<Func<float, Player, float>>(
-                    (x, player) => UserData.OwnerHasRopeMomentum(player) ? 0f : x
+                    (x, player) =>
+                        UserData.OwnerHasRopeMomentum(player) ? x * FrictionKeepRatio : x
                 );
             }
             else
