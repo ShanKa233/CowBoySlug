@@ -49,6 +49,13 @@ namespace CowBoySlug.Mechanics.RopeSkill
         /// <summary>慢速收线(矛慢慢靠近)</summary>
         public abstract bool SlowRetrieve(Player player);
 
+        /// <summary>
+        /// 慢速收线时矛插在生物上是否先拔下来再收线。
+        /// 组合2为 true:拾取长按是回收意图,解除插生物状态后正常慢速回收;
+        /// 组合1为 false:拾取长按是钓竿意图,不拔矛,慢速收线动作带着生物走。
+        /// </summary>
+        public virtual bool SlowRetrievePullsSpearOut => false;
+
         #endregion
 
         #region 钩爪模式(让玩家移动)
@@ -167,5 +174,8 @@ namespace CowBoySlug.Mechanics.RopeSkill
             player.input[0].spec && !player.input[1].spec;
 
         public override bool FishingStandalone => true;
+
+        // 组合2:拾取长按是回收意图,先把矛从生物身上拔下来,再正常慢速回收
+        public override bool SlowRetrievePullsSpearOut => true;
     }
 }
