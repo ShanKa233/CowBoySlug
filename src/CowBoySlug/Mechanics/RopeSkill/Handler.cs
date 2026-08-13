@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using Compatibility;
 using Compatibility.Meadow;
 using RWCustom;
@@ -179,7 +180,7 @@ namespace CowBoySlug.Mechanics.RopeSkill
                 return;
 
             // 是否做出快速唤回动作
-            bool flagFastBackAction = RopeConfig.Controls.FastCallBack(player);
+            bool flagFastBackAction = RopeConfig.Controls.FastRetrieve(player);
             // 检查能不能直视到
             bool flagSee = player.room.VisualContact(spear.firstChunk.pos, player.firstChunk.pos);
             // 检查距离
@@ -201,6 +202,14 @@ namespace CowBoySlug.Mechanics.RopeSkill
                 && WhenSpearOnSomeThing(spear, player, range, umbilical)
             )
                 return;
+
+            // 矛还插在墙上时统一先走拔矛流程(清横梁/卡墙数据),
+            // 保证后面的捡起/快唤/攻击/慢速各模式分支面对的都是已拔出的矛,
+            // 避免原版把插墙矛钉回墙或横梁残留
+            if (spear.mode == Weapon.Mode.StuckInWall)
+            {
+                PullSpearFromWall(spear);
+            }
 
             // 防止吃东西 吐东西
             if (spear.mode != Weapon.Mode.Carried)
@@ -229,15 +238,9 @@ namespace CowBoySlug.Mechanics.RopeSkill
                     spear.canBeHitByWeapons = true; // 让矛可以挡下攻击
                 }
             }
-            // 回收矛模式
+            // 回收模式-快速唤回(矛飞回来)
             else if (flagFastBackAction && range > 50)
             {
-                // 墙上的矛先走完正常拔矛流程(清横梁状态/卡墙数据),避免残留
-                if (spear.mode == Weapon.Mode.StuckInWall)
-                {
-                    PullSpearFromWall(spear);
-                }
-
                 // 拉绳子手部动作
                 player.HandData().Pulling(15, umbilical, player.FreeHand());
 
@@ -275,8 +278,8 @@ namespace CowBoySlug.Mechanics.RopeSkill
                 spear.firstChunk.pos -= spearToEndPointDir;
                 spear.firstChunk.vel += spear.throwDir.ToVector2() * 50 * spear.spearDamageBonus;
             }
-            // 慢速模式
-            else if (RopeConfig.Controls.SlowPull(player))
+            // 回收模式-慢速收线(矛慢慢靠近)
+            else if (RopeConfig.Controls.SlowRetrieve(player))
             {
                 spear.rope().cantRotationCount += 3;
                 // 控制手和绳子
@@ -322,12 +325,104 @@ namespace CowBoySlug.Mechanics.RopeSkill
             spear.vibrate = 10;
             spear.firstChunk.collideWithTerrain = true;
             spear.abstractSpear.stuckInWallCycles = 0;
+            // 刚插上的矛 addPoles 还没被原版 Update 消费(横梁标记延迟一帧生效),
+            // ChangeMode 清掉 stuckInWall 后,残留的 addPoles 会在下一帧原版 Update 里触发空引用;
+            // addPoles 是原版私有字段,用反射补清
+            addPolesField?.SetValue(spear, false);
             spear.ChangeMode(Spear.Mode.Free);
         }
+
+        // 原版 Spear 的私有字段:插墙后延迟一帧设置横梁的标记
+        private static readonly FieldInfo addPolesField = typeof(Spear).GetField(
+            "addPoles",
+            BindingFlags.NonPublic | BindingFlags.Instance
+        );
 
         #endregion
 
         #region 查询与判定
+
+        /// <summary>
+        /// 钓竿模式独立入口:组合开启 FishingStandalone 时,由 UserData.Player_UpdateMSC 调用。
+        /// 单独按钓竿键(不用按住拾取)即可拖拽被矛插住的生物,不经过召回流程。
+        /// 玩家已按住拾取(召回流程激活)时跳过,由 WhenSpearOnSomeThing 的钓竿分支处理,避免双重执行。
+        /// </summary>
+        public static void FishSpear(Player player)
+        {
+            // 召回流程激活时跳过,避免和 WhenSpearOnSomeThing 的钓竿分支重复执行
+            if (RopeConfig.Controls.CallBackTrigger(player))
+                return;
+
+            // 吃东西/吐东西或没有空手时不拖,避免和原版抓取行为冲突
+            if (player.eatMeat > 1 || player.eatExternalFoodSourceCounter > 1 || player.FreeHand() == -1)
+                return;
+
+            if (!RopeConfig.Controls.FishingPull(player))
+                return;
+
+            var umbilical = NiceRope(player);
+            if (umbilical == null || umbilical.spear == null)
+                return;
+
+            var spear = umbilical.spear;
+            if (spear.mode != Spear.Mode.StuckInCreature)
+                return;
+
+            player.HandData().Pulling(10, umbilical, player.FreeHand());
+            if (RopeConfig.Controls.FishingHeavy(player))
+            {
+                DragCreatureOnSpear(player, spear, umbilical);
+            }
+            else
+            {
+                LightDragCreature(player, spear, umbilical);
+            }
+        }
+
+        /// <summary>
+        /// 钓竿轻拉:长按钓竿键时慢慢持续拉动生物,力度小但每帧生效。
+        /// 距离太近时不拉(生物已经在玩家脸上)。
+        /// 调用前需保证 spear.mode == StuckInCreature。
+        /// </summary>
+        private static void LightDragCreature(Player player, Spear spear, Simulator umbilical)
+        {
+            if (Custom.DistLess(player.mainBodyChunk.pos, spear.stuckInChunk.pos, 60))
+                return;
+
+            Vector2 spearToEndPointDir = Custom.DirVec(
+                spear.firstChunk.pos,
+                umbilical.RopePos(umbilical.rope.TotalPositions - 2)
+            );
+            spear.stuckInObject.bodyChunks[spear.stuckInChunkIndex].vel +=
+                spearToEndPointDir * 3f;
+        }
+
+        /// <summary>
+        /// 拖拽被矛插住的生物:生物被拉向矛的方向,玩家受到反向拉力。
+        /// 调用前需保证 spear.mode == StuckInCreature。
+        /// </summary>
+        private static void DragCreatureOnSpear(Player player, Spear spear, Simulator umbilical)
+        {
+            var playerToRopeDir = Custom.DirVec(player.mainBodyChunk.pos, umbilical.RopeShowPos(1));
+            Vector2 spearToEndPointDir = Custom.DirVec(
+                spear.firstChunk.pos,
+                umbilical.RopePos(umbilical.rope.TotalPositions - 2)
+            );
+            float range = Vector2.Distance(umbilical.spearEndPos, player.bodyChunks[1].pos);
+
+            // 玩家受到反向拉力(生物越重拉力越大)
+            float pullForce = Mathf.InverseLerp(1, 10, spear.stuckInObject.TotalMass / player.TotalMass);
+            if (pullForce > 0)
+            {
+                UserData.FillRopeMomentum(player);
+            }
+            // 距离越近拉升越弱,收矛距离一半处为0
+            player.bodyChunks[1].vel +=
+                playerToRopeDir * pullForce * 20 * RopeConfig.PullForceFactor(range);
+            // 生物受拉:与玩家的反向拉力互补,生物越重越难拉动
+            spear.stuckInObject.bodyChunks[spear.stuckInChunkIndex].vel +=
+                spearToEndPointDir * (1f - pullForce) * 20;
+        }
 
         // 检查玩家是否不能召回矛
         public static bool CanNotCall(Player player)
@@ -430,7 +525,7 @@ namespace CowBoySlug.Mechanics.RopeSkill
             )
             {
                 player.HandData().Pulling(10, umbilical, player.FreeHand());
-                if (range > 10 && player.gravity > 0 && RopeConfig.Controls.WallJumpPull(player))
+                if (range > 10 && player.gravity > 0 && RopeConfig.Controls.GrapplePull(player))
                 {
                     // 拉绳方向与矛的飞行方向至少差90度(反向拉扯)才提供位移
                     Vector2 spearFlyDir = spear.firstChunk.vel.normalized;
@@ -457,9 +552,9 @@ namespace CowBoySlug.Mechanics.RopeSkill
                 || (!spear.spinning && spear.mode == Weapon.Mode.Free)
             )
             {
-                // 爬墙
+                // 钩爪模式:拉玩家(墙/飞行锚点)
                 player.HandData().Pulling(10, umbilical, player.FreeHand());
-                if (range > 10 && player.gravity > 0 && RopeConfig.Controls.WallJumpPull(player))
+                if (range > 10 && player.gravity > 0 && RopeConfig.Controls.GrapplePull(player))
                 {
                     player.circuitSwimResistance *= Mathf.InverseLerp(
                         player.mainBodyChunk.vel.magnitude + player.bodyChunks[1].vel.magnitude,
@@ -478,44 +573,29 @@ namespace CowBoySlug.Mechanics.RopeSkill
                     PullSpearFromWall(spear);
                 }
             }
-            // 如果插到了生物就拖动他
+            // 如果插到了生物:钓竿模式拖生物(点按重拉/长按轻拉),钩爪模式拽玩家
             else if (spear.mode == Spear.Mode.StuckInCreature)
             {
                 player.HandData().Pulling(10, umbilical, player.FreeHand());
-                if (RopeConfig.Controls.DragCreature(player))
+                if (RopeConfig.Controls.FishingPull(player))
                 {
-                    // 玩家受到拉力(生物越重拉力越小)
-                    float pullForce = Mathf.InverseLerp(
-                        1,
-                        10,
-                        spear.stuckInObject.TotalMass / player.TotalMass
-                    );
-                    if (pullForce > 0)
+                    if (RopeConfig.Controls.FishingHeavy(player))
                     {
-                        UserData.FillRopeMomentum(player);
+                        DragCreatureOnSpear(player, spear, umbilical);
                     }
-                    // 距离越近拉升越弱,收矛距离一半处为0
-                    player.bodyChunks[1].vel +=
-                        playerToRopeDir * pullForce * 20 * RopeConfig.PullForceFactor(range);
-                    spear.stuckInObject.bodyChunks[spear.stuckInChunkIndex].vel +=
-                        spearToEndPointDir
-                        * Mathf.InverseLerp(
-                            1,
-                            10,
-                            (player.TotalMass / spear.stuckInObject.TotalMass)
-                        )
-                        * 20;
+                    else
+                    {
+                        LightDragCreature(player, spear, umbilical);
+                    }
                 }
                 else if (!Custom.DistLess(player.mainBodyChunk.pos, spear.stuckInChunk.pos, 60))
                 {
-                    if (RopeConfig.Controls.CreatureJumpPull(player))
+                    if (RopeConfig.Controls.GrappleCreaturePull(player))
                     {
-                        // 距离越近拉升越弱,收矛距离一半处为0
+                        // 钩爪模式:距离越近拉升越弱,收矛距离一半处为0
                         player.bodyChunks[1].vel += playerToRopeDir * 3f * RopeConfig.PullForceFactor(range);
                         UserData.FillRopeMomentum(player);
                     }
-                    spear.stuckInObject.bodyChunks[spear.stuckInChunkIndex].vel +=
-                        spearToEndPointDir * 3f;
                 }
             }
             // 对拿着这个矛的生物操作

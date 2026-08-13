@@ -11,7 +11,7 @@ namespace CowBoySlug.Mechanics.RopeSkill
         /// <summary>
         /// 当前生效的按键组合(调试时改这里切换,如 new RopeControlsV2())
         /// </summary>
-        public static RopeControls Controls = new RopeControlsV1();
+        public static RopeControls Controls = new RopeControlsV2();
 
         /// <summary>
         /// 收矛距离(与 Handler.CallBackSpear_Local 的收矛判定共用)

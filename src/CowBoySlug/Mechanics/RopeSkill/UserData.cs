@@ -137,6 +137,12 @@ namespace CowBoySlug.Mechanics.RopeSkill
             if (!modules.TryGetValue(self, out var module))
                 return;
 
+            // 钓竿模式独立入口:组合开启时,不用按住拾取也能拖拽生物
+            if (RopeConfig.Controls.FishingStandalone)
+            {
+                Handler.FishSpear(self);
+            }
+
             // 召回矛
             Handler.CallBackSpear(self);
         }
