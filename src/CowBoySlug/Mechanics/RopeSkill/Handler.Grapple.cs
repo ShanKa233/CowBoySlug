@@ -25,7 +25,7 @@ namespace CowBoySlug.Mechanics.RopeSkill
             Vector2 playerToRopeDir
         )
         {
-            player.HandData().Pulling(10, umbilical, player.FreeHand());
+            player.HandData().Pulling(10, umbilical, player.FreeHand(), 2f); // 钩爪伸手更远(距离倍率2)
             if (range > 10 && player.gravity > 0 && RopeConfig.Controls.GrapplePull(player))
             {
                 // 拉绳方向与矛的飞行方向至少差90度(反向拉扯)才提供位移
@@ -59,7 +59,7 @@ namespace CowBoySlug.Mechanics.RopeSkill
             Vector2 playerToRopeDir
         )
         {
-            player.HandData().Pulling(10, umbilical, player.FreeHand());
+            player.HandData().Pulling(10, umbilical, player.FreeHand(), 2f); // 钩爪伸手更远(距离倍率2)
             if (range > 10 && player.gravity > 0 && RopeConfig.Controls.GrapplePull(player))
             {
                 player.circuitSwimResistance *= Mathf.InverseLerp(

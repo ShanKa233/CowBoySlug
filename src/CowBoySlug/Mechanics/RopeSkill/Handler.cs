@@ -268,8 +268,11 @@ namespace CowBoySlug.Mechanics.RopeSkill
             // 回收模式-慢速收线(矛慢慢靠近)
             else if (RopeConfig.Controls.SlowRetrieve(player))
             {
-                // 组合2:拾取长按是回收意图,矛插在生物上时先拔下来再正常慢速回收
-                if (RopeConfig.Controls.SlowRetrievePullsSpearOut && spear.mode == Weapon.Mode.StuckInCreature)
+                // 组合2:拾取长按是回收意图,矛插在生物上时先拔下来再正常慢速回收;
+                // 但钩爪模式(按跳跃)需要矛继续插在生物上当锚点,不拔
+                if (RopeConfig.Controls.SlowRetrievePullsSpearOut
+                    && spear.mode == Weapon.Mode.StuckInCreature
+                    && !RopeConfig.Controls.GrappleCreaturePull(player))
                 {
                     spear.ChangeMode(Weapon.Mode.Free);
                 }
