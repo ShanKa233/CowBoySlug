@@ -33,6 +33,9 @@ namespace CowBoySlug.Mechanics.RopeSkill
             // 注册抓取更新事件的钩子
             On.Player.GrabUpdate += BreakRopeUpdate;
 
+            // 注册进食判定的钩子,拉矛期间不吃东西
+            On.Player.CanEatMeat += Player_CanEatMeat;
+
             // 注册更新 MSC 事件的钩子
             On.Player.UpdateMSC += Player_UpdateMSC;
 
@@ -97,6 +100,18 @@ namespace CowBoySlug.Mechanics.RopeSkill
                     chunk.vel += pullDir * 2f + new Vector2(0f, 3f);
                 }
             }
+        }
+
+        private static bool Player_CanEatMeat(
+            On.Player.orig_CanEatMeat orig,
+            Player self,
+            Creature crit
+        )
+        {
+            // 拉矛期间不吃东西(原版吃肉靠按住拾取,与召回入口按键冲突,直接拦判定)
+            if (Handler.IsPullingRope(self))
+                return false;
+            return orig.Invoke(self, crit);
         }
 
         private static void BreakRopeUpdate(On.Player.orig_GrabUpdate orig, Player self, bool eu)

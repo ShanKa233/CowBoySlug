@@ -189,6 +189,26 @@ namespace CowBoySlug.Mechanics.RopeSkill
             if (!(player.room == spear.room && spear.vibrate <= 0))
                 return;
 
+            // 拉矛期间防止吃东西/吐东西:清空原版进食相关计数器。
+            // 放在模式分发之前,钩爪/钓竿全程都不进食;
+            // 吃肉的入口判定另由 UserData 的 CanEatMeat 钩子拦截。
+            if (spear.mode != Weapon.Mode.Carried)
+            {
+                player.eatMeat = 0;
+                player.eatExternalFoodSourceCounter = 0;
+                player.swallowAndRegurgitateCounter = 0;
+                // 吃水果/素食走 eatCounter 路径:≤15 时松开拾取也会自动继续吃,
+                // 所以不能清零(清零反而触发),顶高到 30 让它自然冷却
+                if (player.eatCounter <= 15)
+                {
+                    player.eatCounter = 30;
+                }
+                if (player.slugOnBack != null)
+                {
+                    player.slugOnBack.counter = 0;
+                }
+            }
+
             // 是否做出快速唤回动作
             bool flagFastBackAction = RopeConfig.Controls.FastRetrieve(player);
             // 检查能不能直视到
@@ -218,16 +238,6 @@ namespace CowBoySlug.Mechanics.RopeSkill
                 PullSpearFromWall(spear);
             }
 
-            // 防止吃东西 吐东西
-            if (spear.mode != Weapon.Mode.Carried)
-            {
-                player.swallowAndRegurgitateCounter = 0;
-                if (player.slugOnBack != null)
-                {
-                    player.slugOnBack.counter = 0;
-                }
-            }
-
             // 在无重力情况下给玩家施加移动力
             if (spear.mode != Weapon.Mode.Carried && player.gravity <= 0)
             {
@@ -238,12 +248,12 @@ namespace CowBoySlug.Mechanics.RopeSkill
             // 回收模式-拿取:玩家离矛很近而且可以直视矛就拿起矛
             if (range < RopeConfig.PickUpRange && flagSee && spear.mode != Weapon.Mode.Carried)
             {
-                TryPickUpSpear(player, spear);
+                PickUpSpear(player, spear);
             }
             // 回收模式-快速唤回(矛飞回来)
             else if (flagFastBackAction && range > 50)
             {
-                TryFastRetrieve(player, spear, umbilical, spearToEndPointDir);
+                FastRetrieve(player, spear, umbilical, spearToEndPointDir);
             }
             // 攻击模式-甩矛(连打取消保持整帧 return 语义,在这里检查)
             else if (RopeConfig.Controls.AttackTrigger(player) && range > 35)
@@ -253,7 +263,7 @@ namespace CowBoySlug.Mechanics.RopeSkill
                     return;
                 }
 
-                TryAttackSpear(player, spear, umbilical, spearToEndPointDir);
+                AttackSpear(player, spear, umbilical, spearToEndPointDir);
             }
             // 回收模式-慢速收线(矛慢慢靠近)
             else if (RopeConfig.Controls.SlowRetrieve(player))
@@ -263,7 +273,7 @@ namespace CowBoySlug.Mechanics.RopeSkill
                 {
                     spear.ChangeMode(Weapon.Mode.Free);
                 }
-                TrySlowRetrieve(player, spear, umbilical, spearToEndPointDir);
+                SlowRetrieve(player, spear, umbilical, spearToEndPointDir);
             }
             else if (spear.mode == Weapon.Mode.StuckInCreature)
             {
@@ -318,6 +328,25 @@ namespace CowBoySlug.Mechanics.RopeSkill
         #endregion
 
         #region 查询与判定
+
+        // 玩家是否处于拉矛操作中(召回流程激活,或组合2的钓竿独立入口激活)。
+        // 供 UserData 的 CanEatMeat 钩子使用:拉矛期间不吃东西。
+        public static bool IsPullingRope(Player player)
+        {
+            // 召回流程激活:按了召回键且能召回(没在吃东西/有空手)
+            if (RopeConfig.Controls.CallBackTrigger(player) && !CanNotCall(player))
+                return true;
+
+            // 钓竿独立入口激活:组合2单单按钓竿键(召回流程没激活时)
+            if (
+                RopeConfig.Controls.FishingStandalone
+                && !RopeConfig.Controls.CallBackTrigger(player)
+                && RopeConfig.Controls.FishingPull(player)
+            )
+                return true;
+
+            return false;
+        }
 
         // 检查玩家是否不能召回矛
         public static bool CanNotCall(Player player)

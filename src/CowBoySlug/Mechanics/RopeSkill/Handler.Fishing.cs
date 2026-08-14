@@ -87,7 +87,7 @@ namespace CowBoySlug.Mechanics.RopeSkill
 
         /// <summary>
         /// 钓竿轻拉:长按钓竿键时慢慢持续拉动生物,力度小但每帧生效。
-        /// 复用慢速收线(TrySlowRetrieve)的整套矛侧效果:防乱转+手部拉绳+矛加速朝向玩家,
+        /// 复用慢速收线(SlowRetrieve)的整套矛侧效果:防乱转+手部拉绳+矛加速朝向玩家,
         /// 矛插在生物上时这套动作就是"矛带着生物一起被拉向玩家";
         /// 另外让矛持续指向玩家,生物直接再受一点轻拉。
         /// 距离太近时不拉(生物已经在玩家脸上)。
@@ -103,7 +103,7 @@ namespace CowBoySlug.Mechanics.RopeSkill
                 umbilical.RopePos(umbilical.rope.TotalPositions - 2)
             );
             // 慢速收线同款效果:矛带着生物一起被拉向玩家
-            TrySlowRetrieve(player, spear, umbilical, spearToEndPointDir);
+            SlowRetrieve(player, spear, umbilical, spearToEndPointDir);
             // 插生物矛的世界朝向由 stuckRotation(相对生物的角度)决定,持续指向玩家
             spear.stuckRotation = Custom.Angle(spearToEndPointDir, spear.stuckInChunk.Rotation);
             // 生物直接受一点轻拉

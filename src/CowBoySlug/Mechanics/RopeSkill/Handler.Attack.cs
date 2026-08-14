@@ -14,8 +14,9 @@ namespace CowBoySlug.Mechanics.RopeSkill
 
         /// <summary>
         /// 攻击甩矛:矛加速甩向玩家方向,伤害加成略微递减。
+        /// 调用处的按键/距离/连打取消判定已做完,这里只做动作。
         /// </summary>
-        private static void TryAttackSpear(
+        private static void AttackSpear(
             Player player,
             Spear spear,
             Simulator umbilical,

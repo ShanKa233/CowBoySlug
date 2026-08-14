@@ -13,8 +13,9 @@ namespace CowBoySlug.Mechanics.RopeSkill
 
         /// <summary>
         /// 回收模式-拿取:玩家离矛很近而且可以直视矛时捡起矛。
+        /// 调用处的距离/视线/模式判定已做完,这里只做捡起动作(空手是防御性检查)。
         /// </summary>
-        private static void TryPickUpSpear(Player player, Spear spear)
+        private static void PickUpSpear(Player player, Spear spear)
         {
             if (player.FreeHand() == -1)
                 return;
@@ -26,8 +27,9 @@ namespace CowBoySlug.Mechanics.RopeSkill
 
         /// <summary>
         /// 回收模式-快速唤回:矛飞回玩家。拉绳子手部动作+绳子弹力拉满+矛朝玩家加速。
+        /// 调用处的按键/距离判定已做完,这里只做动作。
         /// </summary>
-        private static void TryFastRetrieve(
+        private static void FastRetrieve(
             Player player,
             Spear spear,
             Simulator umbilical,
@@ -52,8 +54,10 @@ namespace CowBoySlug.Mechanics.RopeSkill
 
         /// <summary>
         /// 回收模式-慢速收线:矛慢慢靠近玩家。防乱转+矛朝向绳子+轻微加速。
+        /// 调用处的按键判定已做完,这里只做动作。
+        /// 矛插在生物上时,这套动作就是"矛带着生物一起移动"(钓竿效果的一部分)。
         /// </summary>
-        private static void TrySlowRetrieve(
+        private static void SlowRetrieve(
             Player player,
             Spear spear,
             Simulator umbilical,
