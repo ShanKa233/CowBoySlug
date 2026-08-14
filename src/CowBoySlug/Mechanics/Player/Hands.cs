@@ -18,8 +18,10 @@ namespace CowBoySlug.Mechanics
 
         private static void PlayerGraphics_Update(On.PlayerGraphics.orig_Update orig, PlayerGraphics self)
         {
+            // 原版手部动画先照常跑,下面只在"拉绳中"时覆盖手的动作
             orig.Invoke(self);
 
+            // 先推进手动画状态:pullCount 每帧递减,拉绳的"力"会随时间消退
             self.player.HandData().Update();
 
             if (!UserData.modules.TryGetValue(self.player, out var module)) return;
@@ -33,22 +35,29 @@ namespace CowBoySlug.Mechanics
                 var rope = handData.pullinggRope;
 
 
+                // pullCount > 0 说明刚触发过 Pulling():手会被"推"向绳子上离身体更远的点,
+                // 之后这个点每帧朝身体缩回来,循环往复,看起来就是在一截一截地往回拽绳子
                 if (handData.pullCount > 0 && handData.pullinggRope != null)
                 {
-                    var pullHand = handData.handEngagedInPull;
-                    var playerToRopeDir = Custom.DirVec(rope.points[0, 0], rope.RopeShowPos(1));
+                    var pullHand = handData.handEngagedInPull; // Pulling() 时记录下来的拉绳手(一般是 FreeHand,哪只空着用哪只)
+                    var playerToRopeDir = Custom.DirVec(rope.points[0, 0], rope.RopeShowPos(1)); // 从绳子贴玩家那一端指向绳子前段,即"顺着绳子往远处"的方向
 
+                    // 让手进入原版"伸手够东西"模式。注意这是一次性开关:原版每帧会把它清零,所以必须每帧重设
                     self.hands[pullHand].reachingForObject = true;
+                    // 手要够到的目标点:从贴身处出发、沿绳子方向走 pullCount*6 的距离,再投影回绳子上。
+                    // pullCount 在 Pulling() 时被加到 10~20,之后逐帧递减 → 目标点由远及近,手就做出"伸手拉一把"的循环
                     self.hands[pullHand].absoluteHuntPos = Custom.ClosestPointOnLine(rope.points[0, 0], rope.RopeShowPos(1), rope.points[0,0] + playerToRopeDir * handData.pullCount*6);
 
 
+                    // 遍历所有绳子段,找出离手最近的那一段:要让绳子"穿过"手的那个点
                     int min = 0;
                     for (int i = 1; i < handData.pullinggRope.points.GetLength(0); i++)
                     {
                         var minDIs = Vector2.Distance(self.hands[pullHand].pos, handData.pullinggRope.points[min, 0]);
                         var thisDis = Vector2.Distance(self.hands[pullHand].pos, handData.pullinggRope.points[i, 0]);
-                        min = minDIs < thisDis ? min : i; 
+                        min = minDIs < thisDis ? min : i;
                     }
+                    // 把最近的绳子点直接钉在手的位置上 → 绳子像被手捏着,手往哪走绳子就跟到哪
                     handData.pullinggRope.points[min,0]= self.hands[pullHand].pos;
 
 
@@ -71,6 +80,10 @@ namespace CowBoySlug.Mechanics
 
 
 
+        /// <summary>
+        /// 把进度 t 按 bezier 缓动曲线重新映射:输入两个控制点 (ax,ay)(bx,by),输出缓动后的进度。
+        /// 例如"前快后慢"的手部动作就可以用它,让拉绳的手伸出去利落、收回来有缓冲
+        /// </summary>
         public static float Cubicbezier(float ax, float ay, float bx, float by, float t)
         {
             //see https://cubic-bezier.com/
@@ -138,11 +151,14 @@ namespace CowBoySlug.Mechanics
 
 
     }
+    /// <summary>
+    /// 拉绳动画的状态:记录"正在拉哪条绳子、还剩多少力度、用哪只手"
+    /// </summary>
     public class HandData
     {
-        public Simulator pullinggRope;
-        public int pullCount = 0;
-        public int handEngagedInPull;
+        public Simulator pullinggRope; // 正在被拉的绳子
+        public int pullCount = 0; // 剩余"拉"的力度(帧数),每帧-1,归 0 后手恢复常态
+        public int handEngagedInPull; // 这次拉绳用的是哪只手(0=左手 1=右手)
 
 
         public void Update()
@@ -151,8 +167,16 @@ namespace CowBoySlug.Mechanics
 
 
         }
+
+        /// <summary>
+        /// 各 Handler(钩爪/钓竿/回收等)在拉绳瞬间调用,触发一次拉绳动画
+        /// </summary>
+        /// <param name="count">这次动作的力度,pullCount 会累加到这个值(越大手伸得越远、动作持续越久)</param>
+        /// <param name="rope">正在拉的绳子</param>
+        /// <param name="useHand">用哪只手</param>
         public void Pulling(int count, Simulator rope, int useHand)
         {
+            // 上一次动画快结束(剩余不足 2 帧)时才允许叠加,避免动画被频繁重置、手一直伸着收不回来
             if (pullCount < 2)
             {
                 pullCount += count;
