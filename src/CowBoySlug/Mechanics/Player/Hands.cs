@@ -103,6 +103,9 @@ namespace CowBoySlug.Mechanics
                     // 把最近的绳子点直接钉在手的位置上 → 绳子像被手捏着,手往哪走绳子就跟到哪
                     handData.pullinggRope.points[min,0]= self.hands[pullHand].pos;
 
+                    // 标记"这一帧在拉绳":拉绳一停,下面的 else if 会在停止的那一帧把手收回
+                    handData.wasPulling = true;
+
 
                     //self.hands[pullHand].pos = Custom.ClosestPointOnLine(rope.points[0, 0], rope.RopeShowPos(1), rope.points[0, 0] + playerToRopeDir * handData.pullCount * 2);
 
@@ -116,6 +119,14 @@ namespace CowBoySlug.Mechanics
                     //}
 
                     //self.hands[1 - self.handEngagedInThrowing].vel -= Custom.DirVec(self.hands[pullHand].pos, self.thrownObject.firstChunk.pos) * 3f;
+                }
+                else if (handData.wasPulling)
+                {
+                    // 拉绳刚停止的这一帧:把拉绳手"啪"地收进身体(Retracted:pos/vel 由身体接管,
+                    // 残留目标点和速度全部作废,不会乱晃/乱指)。只收这一次,
+                    // 下一帧原版就会自己把手放回默认位置,生硬但干净的转折
+                    handData.wasPulling = false;
+                    self.hands[handData.handEngagedInPull].mode = Limb.Mode.Retracted;
                 }
 
             }
@@ -204,6 +215,7 @@ namespace CowBoySlug.Mechanics
         public int handEngagedInPull; // 这次拉绳用的是哪只手(0=左手 1=右手)
         public int burst = 0; // 发力窗口剩余帧数:>0 期间手会被猛地甩向绳子
         public float reachMul = 1f; // 本次拉绳的目标点距离倍率(钩爪模式传2,手伸得更远)
+        public bool wasPulling = false; // 上一帧是否在拉绳:用于检测拉绳停止的瞬间
 
 
         public void Update()
