@@ -15,7 +15,7 @@ namespace CowBoySlug.Mechanics.RopeSkill
         /// <summary>
         /// 惯性模式下保留的原版摩擦比例(1=摩擦不变,0=完全无摩擦)
         /// </summary>
-        public const float FrictionKeepRatio = 0.3f;
+        public const float FrictionKeepRatio = 0.25f;
 
         public static void Hook()
         {

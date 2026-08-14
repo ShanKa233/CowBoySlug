@@ -1,7 +1,9 @@
 using System.Runtime.CompilerServices;
 using Compatibility;
+using Noise;
 using RWCustom;
 using SlugBase.Features;
+using Unity.Mathematics;
 using UnityEngine;
 using static SlugBase.Features.FeatureTypes;
 
@@ -172,6 +174,27 @@ namespace CowBoySlug.Mechanics.RopeSkill
 
             // 召回矛
             Handler.CallBackSpear(self);
+
+            if (UserData.OwnerHasRopeMomentum(self) && self.bodyChunks[1].contactPoint.y<0 && module.scrapeCooldown <= 0 && math.abs(self.bodyChunks[1].vel.x) > 5)
+            {
+                // 冷却:触发一次后暂停几帧,避免火花/刮擦声每帧刷屏
+                module.scrapeCooldown = 2;
+
+                // 脚底位置:下半身块(腿)的底部,贴地滑行时正好是地面
+                Vector2 footPos = self.bodyChunks[1].pos + new Vector2(0f, -self.bodyChunks[1].rad);
+                Vector2 lastFootPos = self.bodyChunks[1].lastPos + new Vector2(0f, -self.bodyChunks[1].rad);
+
+                // 火花数量按这段时间滑行的距离算
+                for (int i = 0; i < 1 + (int)(Vector2.Distance(lastFootPos, footPos) / 12f); i++)
+                {
+                    self.room.AddObject(new Spark(Vector2.Lerp(lastFootPos, footPos, UnityEngine.Random.value) + Custom.DirVec(footPos, self.bodyChunks[1].pos), Custom.RNV() * 6f + (footPos - lastFootPos) * 0.4f, new Color(1f, 1f, 0.8f), null, 5, 18));
+                }
+                // pitch 是采样率倍率:0.35 播放慢近三倍,音调低沉拖长,像慢速刹车刮地
+                self.room.PlaySound(SoundID.Miros_Piston_Scrape, footPos, 0.2f, 0.80f);
+                // self.room.PlaySound(SoundID.Slugcat_Skid_On_Ground_LOOP, footPos, 0.2f, 0.8f);
+                // 玩家滑行噪声比钢鸟小一档(600 < 1200)
+                // self.room.InGameNoise(new InGameNoise(footPos, 600f, self, 1f));
+            }
         }
 
         private static void Player_ctor(
@@ -202,6 +225,8 @@ namespace CowBoySlug.Mechanics.RopeSkill
         public int ropeMomentum = 0;
         // 钩索惯性的最大值
         public const int RopeMomentumMax = 5;
+        // 刮地火花的冷却帧数,触发一次后暂停几帧
+        public int scrapeCooldown = 0;
 
         public UserData(Player player)
         {
@@ -218,6 +243,10 @@ namespace CowBoySlug.Mechanics.RopeSkill
             if (module.ropeMomentum > 0)
             {
                 module.ropeMomentum--;
+            }
+            if (module.scrapeCooldown > 0)
+            {
+                module.scrapeCooldown--;
             }
         }
 
